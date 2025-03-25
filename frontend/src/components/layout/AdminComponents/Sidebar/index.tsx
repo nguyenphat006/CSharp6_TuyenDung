@@ -48,7 +48,7 @@ export const Sidebar = () => {
       <aside
         ref={sidebarRef}
         className={cn(
-          "fixed top-0 left-0 z-50 h-full bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800",
+          "fixed top-0 left-0 z-50 h-full bg-white border-r border-gray-200",
           "transition-all duration-300 ease-in-out",
           "lg:translate-x-0",
           isExpanded ? "w-80" : "w-24",
@@ -57,7 +57,7 @@ export const Sidebar = () => {
       >
         <div className="flex flex-col h-full">
           {/* Header */}
-          <div className="flex items-center justify-between h-20 px-6 py-4 border-b border-gray-200 dark:border-gray-800">
+          <div className="flex items-center justify-between h-20 px-6 py-4 border-b border-gray-200">
             <div className="flex items-center justify-center w-full">
               {isExpanded ? (
                 <Image
@@ -65,7 +65,7 @@ export const Sidebar = () => {
                   alt="Logo"
                   width={140}
                   height={35}
-                  className="dark:hidden"
+                  className=""
                 />
               ) : (
                 <Image
@@ -73,7 +73,7 @@ export const Sidebar = () => {
                   alt="Logo"
                   width={35}
                   height={35}
-                  className="dark:hidden"
+                  className=""
                 />
               )}
             </div>

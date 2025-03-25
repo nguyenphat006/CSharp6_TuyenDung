@@ -46,8 +46,8 @@ export const SidebarItem: React.FC<SidebarItemProps> = ({ item }) => {
           onClick={handleClick}
           className={cn(
             "flex items-center gap-3 px-4 py-3.5 rounded-lg cursor-pointer transition-all",
-            "hover:bg-[#F3F4F9] dark:hover:bg-gray-800",
-            isActive && "bg-[#F3F4F9] dark:bg-gray-800",
+            "hover:bg-[#F3F4F9]",
+            isActive && "bg-[#F3F4F9]",
             !isExpanded && !isMobileOpen && "justify-center"
           )}
         >
@@ -66,7 +66,7 @@ export const SidebarItem: React.FC<SidebarItemProps> = ({ item }) => {
               <span
                 className={cn(
                   "flex-1 font-medium",
-                  isActive ? "text-[#4F46E5]" : "text-gray-700 dark:text-gray-300",
+                  isActive ? "text-[#4F46E5]" : "text-gray-700",
                   "transition-colors duration-200"
                 )}
               >
@@ -94,8 +94,8 @@ export const SidebarItem: React.FC<SidebarItemProps> = ({ item }) => {
           href={item.path || ""}
           className={cn(
             "flex items-center gap-3 px-4 py-3.5 rounded-lg transition-all",
-            "hover:bg-[#F3F4F9] dark:hover:bg-gray-800",
-            isActive && "bg-[#F3F4F9] dark:bg-gray-800",
+            "hover:bg-[#F3F4F9]",
+            isActive && "bg-[#F3F4F9]",
             !isExpanded && !isMobileOpen && "justify-center"
           )}
         >
@@ -114,7 +114,7 @@ export const SidebarItem: React.FC<SidebarItemProps> = ({ item }) => {
               <span
                 className={cn(
                   "flex-1 font-medium",
-                  isActive ? "text-[#4F46E5]" : "text-gray-700 dark:text-gray-300",
+                  isActive ? "text-[#4F46E5]" : "text-gray-700",
                   "transition-colors duration-200"
                 )}
               >
@@ -148,8 +148,8 @@ export const SidebarItem: React.FC<SidebarItemProps> = ({ item }) => {
                   href={subItem.path}
                   className={cn(
                     "flex items-center gap-2 px-4 py-3 rounded-lg transition-all",
-                    "hover:bg-[#F3F4F9] dark:hover:bg-gray-800",
-                    pathname === subItem.path && "bg-[#F3F4F9] dark:bg-gray-800"
+                    "hover:bg-[#F3F4F9]",
+                    pathname === subItem.path && "bg-[#F3F4F9]"
                   )}
                 >
                   {subItem.icon && (
@@ -166,7 +166,7 @@ export const SidebarItem: React.FC<SidebarItemProps> = ({ item }) => {
                       "font-medium",
                       pathname === subItem.path
                         ? "text-[#4F46E5]"
-                        : "text-gray-600 dark:text-gray-400",
+                        : "text-gray-600",
                       "transition-colors duration-200"
                     )}
                   >

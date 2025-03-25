@@ -32,7 +32,7 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
       <form onSubmit={form.handleSubmit(onSubmit)} className={cn('flex flex-col gap-6', className)} {...props}>
         {/* Tiêu đề */}
         <div className="flex flex-col items-center gap-2 text-center">
-          <h1 className="text-4xl font-bold dark:text-black">Chào mừng quay trở lại</h1>
+          <h1 className="text-4xl font-bold">Chào mừng quay trở lại</h1>
           <p className="text-balance text-md text-muted-foreground">
             Nhập email và mật khẩu của bạn phía bên dưới
           </p>
@@ -46,7 +46,7 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
             name="email"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="dark:text-black">Email</FormLabel>
+                <FormLabel>Email</FormLabel>
                 <FormControl>
                   <Input {...field} type="email" placeholder="m@example.com" />
                 </FormControl>
@@ -62,7 +62,7 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
             render={({ field }) => (
               <FormItem>
                 <div className="flex items-center justify-between">
-                  <FormLabel className="dark:text-black">Mật khẩu</FormLabel>
+                  <FormLabel>Mật khẩu</FormLabel>
                   <Link href="/forgot-password" className="text-sm underline-offset-4 hover:underline">
                     Quên mật khẩu?
                   </Link>

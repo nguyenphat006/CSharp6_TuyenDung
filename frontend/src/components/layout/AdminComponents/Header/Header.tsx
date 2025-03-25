@@ -13,7 +13,7 @@ export const Header = () => {
 
   return (
     <header className={cn(
-      "fixed top-0 z-40 h-20 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800",
+      "fixed top-0 z-40 h-20 bg-white border-b border-gray-200",
       "transition-all duration-300 ease-in-out",
       "right-0",
       {
@@ -29,26 +29,26 @@ export const Header = () => {
         <div className="flex items-center gap-4">
           <button
             onClick={toggleSidebar}
-            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors hidden lg:block"
+            className="p-2 rounded-lg hover:bg-gray-100 transition-colors hidden lg:block"
             aria-label="Toggle Sidebar"
           >
             <MdMenu className="w-6 h-6 text-gray-500" />
           </button>
           <button
             onClick={toggleMobileSidebar}
-            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors lg:hidden"
+            className="p-2 rounded-lg hover:bg-gray-100 transition-colors lg:hidden"
             aria-label="Toggle Mobile Sidebar"
           >
             <MdMenu className="w-6 h-6 text-gray-500" />
           </button>
           <div>
-            <h1 className="text-lg md:text-xl font-semibold text-gray-900 dark:text-white">{title}</h1>
+            <h1 className="text-lg md:text-xl font-semibold text-gray-900">{title}</h1>
             <p className="text-xs md:text-sm text-gray-500 hidden sm:block">{subtitle}</p>
           </div>
         </div>
 
         <div className="flex items-center gap-2 md:gap-4">
-          <div className="flex items-center gap-2 md:gap-4 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer transition-colors">
+          <div className="flex items-center gap-2 md:gap-4 p-2 rounded-lg hover:bg-gray-100 cursor-pointer transition-colors">
             <Image
               src="/img/logo/logo-avat.png"
               alt="User"
@@ -57,10 +57,10 @@ export const Header = () => {
               className="w-8 h-8 md:w-10 md:h-10 rounded-full"
             />
             <div className="hidden md:block">
-              <p className="text-sm font-medium text-gray-900 dark:text-white">
+              <p className="text-sm font-medium text-gray-900">
                 John Doe
               </p>
-              <p className="text-xs text-gray-500 dark:text-gray-400">
+              <p className="text-xs text-gray-500">
                 john@example.com
               </p>
             </div>
