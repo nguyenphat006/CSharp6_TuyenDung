@@ -1,8 +1,8 @@
 "use client";
 
 import React from "react";
-import { Sidebar } from "@/components/layout/Sidebar";
-import { Header } from "@/components/layout/Header";
+import { Sidebar } from "@/components/layout/AdminComponents/Sidebar";
+import { Header } from "@/components/layout/AdminComponents/Header/Header";
 import { SidebarProvider } from "@/lib/context/SidebarContext";
 import { PageTitleProvider } from "@/lib/context/PageTitleContext";
 import { useSidebar } from "@/lib/context/SidebarContext";
