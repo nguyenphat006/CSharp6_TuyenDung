@@ -1,11 +1,11 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
-namespace TuyenDungAPI.Entities
+namespace TuyenDungAPI.Controllers.Authentication
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class ProductController : ControllerBase
+    public class UsersController : ControllerBase
     {
     }
 }

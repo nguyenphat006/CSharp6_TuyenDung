@@ -1,0 +1,5 @@
+Lệnh khởi tạo Migration:
+- VS STUDIO: 
+1. add-Migration Initial
+2. Update-Database
+- VS CODE:
