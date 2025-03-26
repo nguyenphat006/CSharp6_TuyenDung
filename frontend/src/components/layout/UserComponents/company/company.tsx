@@ -1,5 +1,3 @@
-"use client";
-
 import Image from "next/image";
 import Link from "next/link";
 
@@ -15,16 +13,14 @@ interface CompanyProps {
 const Company = ({ logo, name, skills, locations, jobCount, href }: CompanyProps) => {
   return (
     <Link href={href}>
-      <div className="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow duration-300 p-6 cursor-pointer group h-full flex flex-col relative">
+      <div className="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow duration-300 p-6 cursor-pointer group h-full flex flex-col relative overflow-hidden">
         {/* Corner Decoration */}
-        <div className="absolute top-0 left-0 w-40 h-40 z-30 pointer-events-none">
+        <div className="absolute -top-4 -left-4 w-32 h-32 z-20">
           <Image
             src="/img/card.svg"
             alt="corner decoration"
-            width={160}
-            height={160}
-            className="object-contain opacity-100"
-            priority
+            fill
+            className="object-contain opacity-30"
           />
         </div>
 
