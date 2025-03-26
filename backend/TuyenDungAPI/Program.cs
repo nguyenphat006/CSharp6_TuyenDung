@@ -1,26 +1,48 @@
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 using TuyenDungAPI.Data;
-using TuyenDungAPI.Extensions;
+using TuyenDungAPI.Repositories;
+using TuyenDungAPI.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Thêm dịch vụ Swagger (OpenAPI) - Hỗ trợ API Documentation
+// Add services to the container.
+builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// Đăng ký DbContext và Repository từ ServiceExtensions
-builder.Services.ConfigureDbContext(builder.Configuration);
-builder.Services.ConfigureRepositories();
-// Đăng ký DbContext với Connection String từ `appsettings.json`
+// Add DbContext
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// Thêm Controllers
-builder.Services.AddControllers();
+// Add Repositories
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+
+// Add Services
+builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IAuthService, AuthService>();
+
+// Add JWT Authentication
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = builder.Configuration["JWT:ValidIssuer"],
+            ValidAudience = builder.Configuration["JWT:ValidAudience"],
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["JWT:Secret"]))
+        };
+    });
 
 var app = builder.Build();
 
-// Cấu hình middleware cho Swagger
+// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -28,6 +50,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseAuthentication();
+app.UseAuthorization();
 app.MapControllers();
 app.Run();
 

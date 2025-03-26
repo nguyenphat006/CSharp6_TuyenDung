@@ -1,12 +1,9 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace TuyenDungAPI.Models
+namespace TuyenDungAPI.Models.DTOs
 {
-    public class User : BaseEntity
+    public class SignupDTO
     {
-        [Key]
-        public string Id { get; set; }
-
         [Required]
         [StringLength(100)]
         public string Name { get; set; }
@@ -17,7 +14,8 @@ namespace TuyenDungAPI.Models
         public string Email { get; set; }
 
         [Required]
-        public string PasswordHash { get; set; }
+        [StringLength(100)]
+        public string Password { get; set; }
 
         [Required]
         public int Age { get; set; }
@@ -29,15 +27,22 @@ namespace TuyenDungAPI.Models
         [Required]
         [StringLength(200)]
         public string Address { get; set; }
+    }
 
-        public string? CompanyId { get; set; }
-        public Company? Company { get; set; }
+    public class LoginDTO
+    {
+        [Required]
+        [EmailAddress]
+        public string Email { get; set; }
 
         [Required]
-        public string RoleId { get; set; }
-        public Role Role { get; set; }
+        public string Password { get; set; }
+    }
 
-        public string? RefreshToken { get; set; }
-        public DateTime? RefreshTokenExpiryTime { get; set; }
+    public class AuthResponseDTO
+    {
+        public string AccessToken { get; set; }
+        public string RefreshToken { get; set; }
+        public UserResponseDTO User { get; set; }
     }
 } 
