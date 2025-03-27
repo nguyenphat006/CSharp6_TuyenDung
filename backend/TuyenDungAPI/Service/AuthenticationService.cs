@@ -42,14 +42,16 @@ namespace TuyenDungAPI.Service
             return user;
         }
 
-        public async Task<string?> LoginAsync(string email, string password)
+        public async Task<LoginResponse?> LoginAsync(string email, string password)
         {
             var user = await _dbContext.Users.FirstOrDefaultAsync(u => u.Email == email);
             if (user == null || !BCrypt.Net.BCrypt.Verify(password, user.PasswordHash))
                 return null; // Sai email hoặc mật khẩu
 
-            return GenerateToken(user);
+            string token = GenerateToken(user);
+            return new LoginResponse(user, token);
         }
+
 
         private string GenerateToken(User user)
         {

@@ -30,12 +30,13 @@ namespace TuyenDungAPI.Controllers.Authentication
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginRequest request)
         {
-            var token = await _authService.LoginAsync(request.Email, request.Password);
-            if (token == null)
+            var response = await _authService.LoginAsync(request.Email, request.Password);
+            if (response == null)
                 return Unauthorized(new { message = "Email hoặc mật khẩu không đúng!" });
 
-            return Ok(new { token });
+            return Ok(response);
         }
+
 
         [Authorize]
         [HttpGet("me")]
