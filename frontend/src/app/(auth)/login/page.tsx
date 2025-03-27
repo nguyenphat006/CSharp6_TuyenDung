@@ -1,10 +1,9 @@
-import AuthLayout from "../components/layout"
-import { LoginForm } from "./login-form"
+import { LoginForm } from './login-form'
 
 export default function LoginPage() {
   return (
-    <AuthLayout>
+    <div className="min-h-screen bg-white dark:bg-gray-900">
       <LoginForm />
-    </AuthLayout>
+    </div>
   )
 }
