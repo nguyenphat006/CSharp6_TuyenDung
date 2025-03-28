@@ -38,6 +38,17 @@ namespace TuyenDungAPI.Controllers.Authentication
             return StatusCode(response.Status, response);
         }
 
+        [HttpPost("refresh-token")]
+        public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenRequest request)
+        {
+            var response = await _authService.RefreshTokenAsync(request.Token, request.RefreshToken);
+            if (response == null)
+                return Unauthorized(new { message = "Invalid token or refresh token expired" });
+
+            return Ok(response);
+        }
+
+
 
         [Authorize]
         [HttpGet("me")]

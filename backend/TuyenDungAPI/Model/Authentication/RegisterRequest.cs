@@ -20,6 +20,8 @@ namespace TuyenDungAPI.Model.Authentication
 
         [Required(ErrorMessage = "Mật khẩu không được để trống!")]
         [MinLength(6, ErrorMessage = "Mật khẩu phải có ít nhất 6 ký tự!")]
+        [RegularExpression(@"^(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{6,}$",
+        ErrorMessage = "Mật khẩu phải có ít nhất 6 ký tự, bao gồm ít nhất 1 chữ hoa, 1 số và 1 ký tự đặc biệt!")]
         public string Password { get; set; }
     }
 }

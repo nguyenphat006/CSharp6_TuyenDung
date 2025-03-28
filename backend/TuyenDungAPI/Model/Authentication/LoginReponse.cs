@@ -3,11 +3,13 @@
     public class LoginResponse
     {
         public string Token { get; set; }
+        public string RefreshToken { get; set; }
         public object Data { get; set; }
 
-        public LoginResponse(User user, string token)
+        public LoginResponse(User user, string token, string refreshToken)
         {
             Token = token;
+            RefreshToken = refreshToken;
             Data = new
             {
                 Id = user.Id,
