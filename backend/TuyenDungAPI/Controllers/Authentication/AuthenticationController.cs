@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using TuyenDungAPI.Service;
 using TuyenDungAPI.Model.Authentication;
+using TuyenDungAPI.Model.ModelBase;
 
 namespace TuyenDungAPI.Controllers.Authentication
 {
@@ -20,21 +21,21 @@ namespace TuyenDungAPI.Controllers.Authentication
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterRequest request)
         {
-            var user = await _authService.RegisterAsync(request.Name, request.Email, request.Age, request.Gender, request.Password);
-            if (user == null)
-                return BadRequest(new { message = "Email đã tồn tại!" });
+            if (!ModelState.IsValid)
+            {
+                var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
+                return BadRequest(new ApiResponse<object>(false, 400, null, string.Join(", ", errors)));
+            }
 
-            return Ok(new { message = "Đăng ký thành công!" });
+            var response = await _authService.RegisterAsync(request);
+            return StatusCode(response.Status, response);
         }
 
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginRequest request)
         {
             var response = await _authService.LoginAsync(request.Email, request.Password);
-            if (response == null)
-                return Unauthorized(new { message = "Email hoặc mật khẩu không đúng!" });
-
-            return Ok(response);
+            return StatusCode(response.Status, response);
         }
 
 

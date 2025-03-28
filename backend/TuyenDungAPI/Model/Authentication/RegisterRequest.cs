@@ -1,11 +1,25 @@
-﻿namespace TuyenDungAPI.Model.Authentication
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace TuyenDungAPI.Model.Authentication
 {
     public class RegisterRequest
     {
-        public string Name { get; set; } = string.Empty;
-        public string Email { get; set; } = string.Empty;
+        [Required(ErrorMessage = "Tên không được để trống!")]
+        [MaxLength(100, ErrorMessage = "Tên không được vượt quá 100 ký tự!")]
+        public string Name { get; set; }
+
+        [Required(ErrorMessage = "Email không được để trống!")]
+        [EmailAddress(ErrorMessage = "Email không hợp lệ!")]
+        public string Email { get; set; }
+
+        [Range(1, 120, ErrorMessage = "Tuổi phải nằm trong khoảng 1 - 120!")]
         public int Age { get; set; }
-        public string Gender { get; set; } = "Unknown";
-        public string Password { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Giới tính không được để trống!")]
+        public string Gender { get; set; }
+
+        [Required(ErrorMessage = "Mật khẩu không được để trống!")]
+        [MinLength(6, ErrorMessage = "Mật khẩu phải có ít nhất 6 ký tự!")]
+        public string Password { get; set; }
     }
 }

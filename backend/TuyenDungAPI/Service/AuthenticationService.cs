@@ -6,6 +6,7 @@ using System;
 using TuyenDungAPI.Model.Authentication;
 using TuyenDungAPI.Database;
 using Microsoft.EntityFrameworkCore;
+using TuyenDungAPI.Model.ModelBase;
 
 namespace TuyenDungAPI.Service
 {
@@ -20,36 +21,53 @@ namespace TuyenDungAPI.Service
             _config = config;
         }
 
-        public async Task<User?> RegisterAsync(string name, string email, int age, string gender, string password)
+        public async Task<ApiResponse<RegisterResponse>> RegisterAsync(RegisterRequest request)
         {
-            if (await _dbContext.Users.AnyAsync(u => u.Email == email))
-                return null; // Email đã tồn tại
+            if (await _dbContext.Users.AnyAsync(u => u.Email == request.Email))
+            {
+                return new ApiResponse<RegisterResponse>(false, 400, null, "Email đã tồn tại!");
+            }
 
-            string passwordHash = BCrypt.Net.BCrypt.HashPassword(password);
+            string passwordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
 
             var user = new User
             {
-                Name = name,
-                Email = email,
-                Age = age,
-                Gender = gender,
+                Name = request.Name,
+                Email = request.Email,
+                Age = request.Age,
+                Gender = request.Gender,
                 PasswordHash = passwordHash,
                 CreatedAt = DateTime.UtcNow
             };
 
             _dbContext.Users.Add(user);
             await _dbContext.SaveChangesAsync();
-            return user;
+
+            return new ApiResponse<RegisterResponse>(true, 201, new RegisterResponse("Đăng ký thành công!"));
         }
 
-        public async Task<LoginResponse?> LoginAsync(string email, string password)
+
+        //public async Task<LoginResponse?> LoginAsync(string email, string password)
+        //{
+        //    var user = await _dbContext.Users.FirstOrDefaultAsync(u => u.Email == email);
+        //    if (user == null || !BCrypt.Net.BCrypt.Verify(password, user.PasswordHash))
+        //        return null; // Sai email hoặc mật khẩu
+
+        //    string token = GenerateToken(user);
+        //    return new LoginResponse(user, token);
+        //}
+
+        public async Task<ApiResponse<LoginResponse>> LoginAsync(string email, string password)
         {
             var user = await _dbContext.Users.FirstOrDefaultAsync(u => u.Email == email);
             if (user == null || !BCrypt.Net.BCrypt.Verify(password, user.PasswordHash))
-                return null; // Sai email hoặc mật khẩu
+            {
+                return new ApiResponse<LoginResponse>(false, 401, null, "Email hoặc mật khẩu không đúng!");
+            }
 
             string token = GenerateToken(user);
-            return new LoginResponse(user, token);
+            var loginResponse = new LoginResponse(user, token);
+            return new ApiResponse<LoginResponse>(true, 200, loginResponse);
         }
 
 
