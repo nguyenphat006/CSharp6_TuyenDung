@@ -10,11 +10,21 @@ import {
 
 export const menuItems: MenuSection[] = [
   {
+    sectionTitle: "Tổng Quan",
+    items: [
+      {
+        title: "Dashboard",
+        path: "/admin/dashboard",
+        icon: MdDashboard,
+      },
+    ]
+  },
+  {
     sectionTitle: "Quản lý hệ thống",
     items: [
       {
         title: "Quản lý nhà tuyển dụng",
-        path: "/admin/employers",
+        path: "/admin/employer",
         icon: MdBusinessCenter,
       },
       {
@@ -24,7 +34,7 @@ export const menuItems: MenuSection[] = [
       },
       {
         title: "Quản lý người dùng",
-        path: "/admin/users",
+        path: "/admin/users", 
         icon: MdPeople,
       }
     ]

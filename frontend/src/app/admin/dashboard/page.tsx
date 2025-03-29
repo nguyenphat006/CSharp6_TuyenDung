@@ -10,67 +10,67 @@ export default function DashboardPage() {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       <div className="bg-white p-6 rounded-lg shadow-sm">
-        <h2 className="text-lg font-semibold mb-4">Total Sales</h2>
-        <p className="text-3xl font-bold text-[#4F46E5]">$24,780</p>
-        <p className="text-sm text-green-500 mt-2">+12% from last month</p>
+        <h2 className="text-lg font-semibold mb-4">Tổng số tin tuyển dụng</h2>
+        <p className="text-3xl font-bold text-[#4F46E5]">156</p>
+        <p className="text-sm text-green-500 mt-2">+8 tin mới trong tháng này</p>
       </div>
       
       <div className="bg-white p-6 rounded-lg shadow-sm">
-        <h2 className="text-lg font-semibold mb-4">New Customers</h2>
-        <p className="text-3xl font-bold text-[#4F46E5]">120</p>
-        <p className="text-sm text-green-500 mt-2">+5% from last month</p>
+        <h2 className="text-lg font-semibold mb-4">Ứng viên mới</h2>
+        <p className="text-3xl font-bold text-[#4F46E5]">1,245</p>
+        <p className="text-sm text-green-500 mt-2">+15% so với tháng trước</p>
       </div>
       
       <div className="bg-white p-6 rounded-lg shadow-sm">
-        <h2 className="text-lg font-semibold mb-4">Pending Orders</h2>
-        <p className="text-3xl font-bold text-[#4F46E5]">15</p>
-        <p className="text-sm text-red-500 mt-2">+3 from yesterday</p>
+        <h2 className="text-lg font-semibold mb-4">Tin chờ duyệt</h2>
+        <p className="text-3xl font-bold text-[#4F46E5]">23</p>
+        <p className="text-sm text-red-500 mt-2">+5 tin từ hôm qua</p>
       </div>
       
       <div className="bg-white p-6 rounded-lg shadow-sm md:col-span-2">
-        <h2 className="text-lg font-semibold mb-4">Recent Activity</h2>
+        <h2 className="text-lg font-semibold mb-4">Hoạt động gần đây</h2>
         <div className="space-y-4">
           <div className="flex items-center gap-4 pb-4 border-b border-gray-200">
             <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-              <span className="text-blue-600">📦</span>
+              <span className="text-blue-600">📝</span>
             </div>
             <div>
-              <p className="font-medium">New order #1234</p>
-              <p className="text-sm text-gray-500">2 minutes ago</p>
+              <p className="font-medium">Tin tuyển dụng mới #1234</p>
+              <p className="text-sm text-gray-500">2 phút trước</p>
             </div>
           </div>
           <div className="flex items-center gap-4 pb-4 border-b border-gray-200">
             <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-              <span className="text-green-600">👤</span>
+              <span className="text-green-600">👥</span>
             </div>
             <div>
-              <p className="font-medium">New customer registered</p>
-              <p className="text-sm text-gray-500">15 minutes ago</p>
+              <p className="font-medium">Ứng viên mới đăng ký</p>
+              <p className="text-sm text-gray-500">15 phút trước</p>
             </div>
           </div>
           <div className="flex items-center gap-4">
             <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
-              <span className="text-purple-600">💰</span>
+              <span className="text-purple-600">✅</span>
             </div>
             <div>
-              <p className="font-medium">Payment received #5678</p>
-              <p className="text-sm text-gray-500">1 hour ago</p>
+              <p className="font-medium">Tin tuyển dụng đã được duyệt #5678</p>
+              <p className="text-sm text-gray-500">1 giờ trước</p>
             </div>
           </div>
         </div>
       </div>
       
       <div className="bg-white p-6 rounded-lg shadow-sm">
-        <h2 className="text-lg font-semibold mb-4">Quick Actions</h2>
+        <h2 className="text-lg font-semibold mb-4">Tác vụ nhanh</h2>
         <div className="space-y-3">
           <button className="w-full py-2 px-4 bg-[#4F46E5] text-white rounded-lg hover:bg-[#4338CA] transition-colors">
-            Add New Product
+            Đăng tin tuyển dụng mới
           </button>
           <button className="w-full py-2 px-4 bg-gray-100 text-gray-800 rounded-lg hover:bg-gray-200 transition-colors">
-            View Reports
+            Xem báo cáo thống kê
           </button>
           <button className="w-full py-2 px-4 bg-gray-100 text-gray-800 rounded-lg hover:bg-gray-200 transition-colors">
-            Manage Orders
+            Quản lý tin tuyển dụng
           </button>
         </div>
       </div>
