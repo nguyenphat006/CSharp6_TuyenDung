@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faMapMarkerAlt, faSearch, faChevronDown } from "@fortawesome/free-solid-svg-icons";
+import { motion } from "framer-motion";
 
 const popularTags = [
   "Java",
@@ -55,10 +56,16 @@ const Search = () => {
           {/* Dropdown thành phố */}
           <div className="relative flex-1">
             <div className="absolute left-4 top-1/2 transform -translate-y-1/2 flex items-center gap-2">
-              <FontAwesomeIcon 
-                icon={faMapMarkerAlt} 
-                className="text-gray-400"
-              />
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ duration: 0.2 }}
+              >
+                <FontAwesomeIcon 
+                  icon={faMapMarkerAlt} 
+                  className="text-gray-400 w-4 h-4"
+                />
+              </motion.div>
               <span className="text-gray-400">|</span>
             </div>
             <select
@@ -72,10 +79,16 @@ const Search = () => {
                 </option>
               ))}
             </select>
-            <FontAwesomeIcon 
-              icon={faChevronDown} 
-              className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none"
-            />
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ duration: 0.2, delay: 0.1 }}
+            >
+              <FontAwesomeIcon 
+                icon={faChevronDown} 
+                className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none w-4 h-4"
+              />
+            </motion.div>
           </div>
 
           {/* Ô tìm kiếm */}
@@ -90,26 +103,37 @@ const Search = () => {
           </div>
 
           {/* Nút tìm kiếm */}
-          <button
+          <motion.button
             onClick={handleSearch}
             className="px-8 py-3 bg-[#FF0000] text-white rounded-lg hover:bg-red-600 transition-colors duration-200 flex items-center justify-center gap-2 min-w-[120px]"
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
           >
-            <FontAwesomeIcon icon={faSearch} />
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ duration: 0.2, delay: 0.2 }}
+            >
+              <FontAwesomeIcon icon={faSearch} className="w-4 h-4" />
+            </motion.div>
             <span>Tìm Kiếm</span>
-          </button>
+          </motion.button>
         </div>
 
         {/* Tags tìm kiếm phổ biến */}
         <div className="flex items-center justify-center gap-4">
           <p className="text-gray-400 text-sm whitespace-nowrap">Mọi người đang tìm kiếm:</p>
           <div className="flex flex-wrap gap-3">
-            {popularTags.map((tag) => (
-              <button
+            {popularTags.map((tag, index) => (
+              <motion.button
                 key={tag}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.2, delay: index * 0.05 }}
                 className="px-4 py-2 bg-black/50 border border-white/30 rounded-lg text-white text-sm hover:bg-white/10 transition-colors duration-200"
               >
                 {tag}
-              </button>
+              </motion.button>
             ))}
           </div>
         </div>
