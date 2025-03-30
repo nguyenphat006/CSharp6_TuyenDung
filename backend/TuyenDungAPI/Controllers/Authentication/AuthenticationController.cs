@@ -12,10 +12,12 @@ namespace TuyenDungAPI.Controllers.Authentication
     public class AuthenticationController : ControllerBase
     {
         private readonly AuthService _authService;
+        private readonly EmailService _emailService;
 
-        public AuthenticationController(AuthService authService)
+        public AuthenticationController(AuthService authService, EmailService emailService)
         {
             _authService = authService;
+            _emailService = emailService;
         }
 
         [HttpPost("register")]
@@ -31,22 +33,44 @@ namespace TuyenDungAPI.Controllers.Authentication
             return StatusCode(response.Status, response);
         }
 
-        //[HttpPost("login")]
-        //public async Task<IActionResult> Login([FromBody] LoginRequest request)
-        //{
-        //    var response = await _authService.LoginAsync(request.Email, request.Password);
-        //    return StatusCode(response.Status, response);
-        //}
+        [HttpPost("login")]
+        public async Task<IActionResult> Login([FromBody] LoginRequest request)
+        {
+            var response = await _authService.LoginAsync(request.Email, request.Password);
+            return StatusCode(response.Status, response);
+        }
+
+        [Authorize] // ✅ Yêu cầu token hợp lệ để logout
+        [HttpPost("logout")]
+        public async Task<IActionResult> Logout()
+        {
+            // Lấy email từ token (vì user đã đăng nhập nên sẽ có email trong token)
+            string email = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value!;
+
+            var response = await _authService.LogoutAsync(email);
+            return StatusCode(response.Status, response);
+        }
+
 
         [HttpPost("refresh-token")]
         public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenRequest request)
         {
             var response = await _authService.RefreshTokenAsync(request.Token, request.RefreshToken);
-            if (response == null)
-                return Unauthorized(new { message = "Invalid token or refresh token expired" });
-
-            return Ok(response);
+            return StatusCode(response.Status, response);
         }
+
+        [HttpPost("send-otp")]
+        public async Task<IActionResult> SendOtp([FromBody] SendOTPRequest request)
+        {
+            if (string.IsNullOrEmpty(request.Email))
+            {
+                return BadRequest(new { success = false, message = "Email không được để trống!" });
+            }
+
+            var reponse = await _authService.RequestOtpAsync(request.Email);
+            return StatusCode(reponse.Status, reponse);
+        }
+
 
 
 

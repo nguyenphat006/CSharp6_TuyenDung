@@ -15,8 +15,8 @@ namespace TuyenDungAPI.Model.Authentication
         [Range(1, 120, ErrorMessage = "Tuổi phải nằm trong khoảng 1 - 120!")]
         public int Age { get; set; }
 
-        [Required(ErrorMessage = "Giới tính không được để trống!")]
-        public string Gender { get; set; }
+        //[Required(ErrorMessage = "Giới tính không được để trống!")]
+        //public string Gender { get; set; }
 
         [Required(ErrorMessage = "Mật khẩu không được để trống!")]
         [MinLength(6, ErrorMessage = "Mật khẩu phải có ít nhất 6 ký tự!")]
