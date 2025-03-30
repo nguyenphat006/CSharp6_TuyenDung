@@ -80,18 +80,18 @@ namespace TuyenDungAPI.Service
 
 
         // LOGIN ACCOUNT
-        public async Task<ApiResponse<LoginResponse>> LoginAsync(string email, string password)
-        {
-            var user = await _dbContext.Users.FirstOrDefaultAsync(u => u.Email == email);
-            if (user == null || !BCrypt.Net.BCrypt.Verify(password, user.PasswordHash))
-            {
-                return new ApiResponse<LoginResponse>(false, 401, null, "Email hoặc mật khẩu không đúng!");
-            }
+        //public async Task<ApiResponse<LoginResponse>> LoginAsync(string email, string password)
+        //{
+        //    var user = await _dbContext.Users.FirstOrDefaultAsync(u => u.Email == email);
+        //    if (user == null || !BCrypt.Net.BCrypt.Verify(password, user.PasswordHash))
+        //    {
+        //        return new ApiResponse<LoginResponse>(false, 401, null, "Email hoặc mật khẩu không đúng!");
+        //    }
 
-            string token = GenerateToken(user);
-            var loginResponse = new LoginResponse(user, token, refreshToken);
-            return new ApiResponse<LoginResponse>(true, 200, loginResponse);
-        }
+        //    string token = GenerateToken(user);
+        //    var loginResponse = new LoginResponse(user, token, refreshToken);
+        //    return new ApiResponse<LoginResponse>(true, 200, loginResponse);
+        //}
 
         #region TOKEN
             private string GenerateRefreshToken()

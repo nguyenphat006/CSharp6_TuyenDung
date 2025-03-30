@@ -31,12 +31,12 @@ namespace TuyenDungAPI.Controllers.Authentication
             return StatusCode(response.Status, response);
         }
 
-        [HttpPost("login")]
-        public async Task<IActionResult> Login([FromBody] LoginRequest request)
-        {
-            var response = await _authService.LoginAsync(request.Email, request.Password);
-            return StatusCode(response.Status, response);
-        }
+        //[HttpPost("login")]
+        //public async Task<IActionResult> Login([FromBody] LoginRequest request)
+        //{
+        //    var response = await _authService.LoginAsync(request.Email, request.Password);
+        //    return StatusCode(response.Status, response);
+        //}
 
         [HttpPost("refresh-token")]
         public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenRequest request)
