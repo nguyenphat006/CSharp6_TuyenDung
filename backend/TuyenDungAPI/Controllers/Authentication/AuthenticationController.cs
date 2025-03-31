@@ -60,7 +60,7 @@ namespace TuyenDungAPI.Controllers.Authentication
         }
 
         [HttpPost("send-otp")]
-        public async Task<IActionResult> SendOtp([FromBody] SendOTPRequest request)
+        public async Task<IActionResult> SendOtp([FromBody] SendOtpRequest request)
         {
             if (string.IsNullOrEmpty(request.Email))
             {
@@ -70,19 +70,27 @@ namespace TuyenDungAPI.Controllers.Authentication
             var reponse = await _authService.RequestOtpAsync(request.Email);
             return StatusCode(reponse.Status, reponse);
         }
-
-
-
-
-        [Authorize]
-        [HttpGet("me")]
-        public IActionResult GetCurrentUser()
+        [HttpPost("verify-code")]
+        public async Task<IActionResult> VerifyCode([FromBody] VerificationRequest request)
         {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            var email = User.FindFirstValue(ClaimTypes.Email);
-            var role = User.FindFirstValue(ClaimTypes.Role);
+            if (string.IsNullOrEmpty(request.Otp))
+            {
+                return BadRequest(new { success = false, message = "Mã OTP không được để trống" });
+            }
+            var reponse = await _authService.VerifyOtpAsync(request.Email ,request.Otp);
+            return StatusCode(reponse.Status,reponse);
+        }
 
-            return Ok(new { userId, email, role });
+        [HttpPost("reset-password")]
+        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequest request)
+        {
+            if (string.IsNullOrEmpty(request.Email) || string.IsNullOrEmpty(request.NewPassword))
+            {
+                return BadRequest(new { success = false, message = "Thông tin không đầy đủ!" });
+            }
+
+            var response = await _authService.ResetPasswordAsync(request.Email, request.NewPassword);
+            return StatusCode(response.Status, response);
         }
     }
 }

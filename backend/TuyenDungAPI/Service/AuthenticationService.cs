@@ -165,9 +165,19 @@ namespace TuyenDungAPI.Service
             return new ApiResponse<string>(true, 200, "Xác thực OTP thành công!");
         }
 
+        public async Task<ApiResponse<string>> ResetPasswordAsync(string email, string newPassword)
+        {
+            var user = await _dbContext.Users.FirstOrDefaultAsync(u => u.Email == email);
+            if (user == null)
+                return new ApiResponse<string>(false, 404, null, "Email không tồn tại!");
 
+            // ✅ Cập nhật mật khẩu mới (hash password)
+            user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(newPassword);
 
+            await _dbContext.SaveChangesAsync();
 
+            return new ApiResponse<string>(true, 200, "Mật khẩu đã được đặt lại thành công!");
+        }
 
         #region TOKEN
         private string GenerateRefreshToken()
