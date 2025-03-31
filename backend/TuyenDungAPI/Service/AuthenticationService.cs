@@ -8,6 +8,7 @@ using TuyenDungAPI.Database;
 using Microsoft.EntityFrameworkCore;
 using TuyenDungAPI.Model.ModelBase;
 using System.Security.Cryptography;
+using TuyenDungAPI.Model.User;
 
 namespace TuyenDungAPI.Service
 {

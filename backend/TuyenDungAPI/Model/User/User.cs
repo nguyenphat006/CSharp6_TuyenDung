@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using TuyenDungAPI.Model.ModelBase;
 
-namespace TuyenDungAPI.Model.Authentication
+namespace TuyenDungAPI.Model.User
 {
     public class User : BaseEntity
     {

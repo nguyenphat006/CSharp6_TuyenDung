@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace TuyenDungAPI.Model.Authentication
+namespace TuyenDungAPI.Model.User
 {
     public class UserRole
     {

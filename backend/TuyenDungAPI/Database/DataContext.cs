@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using TuyenDungAPI.Model;
 using TuyenDungAPI.Model.Authentication;
+using TuyenDungAPI.Model.User;
 
 namespace TuyenDungAPI.Database
 {
@@ -10,7 +11,6 @@ namespace TuyenDungAPI.Database
         {
         }
 
-        public DbSet<Product> Products { get; set; }
         public DbSet<User> Users { get; set; }
         public DbSet<Role> Roles { get; set; }
         public DbSet<UserRole> UserRoles { get; set; }

@@ -40,5 +40,27 @@ namespace TuyenDungAPI.Controllers
             var response = await _userService.GetUserByIdAsync(id);
             return StatusCode(response.Status, response);
         }
+        /// <summary>
+        /// Tạo người dùng mới
+        /// </summary>
+        [HttpPost]
+        //[Authorize(Roles = "Admin")]
+        public async Task<IActionResult> CreateUser([FromBody] CreateUserRequest request)
+        {
+            if (!ModelState.IsValid)
+            {
+                var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
+                return BadRequest(new ApiResponse<object>(false, 400, null, string.Join(", ", errors)));
+            }
+
+            var response = await _userService.CreateUserAsync(request);
+            return StatusCode(response.Status, response);
+        }
+
+        [HttpPatch]
+        public async Task<IActionResult> UpdateUser([FromBody] CreateUserRequest request)
+        {
+
+        }
     }
 }

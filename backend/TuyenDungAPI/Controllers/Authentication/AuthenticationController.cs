@@ -20,6 +20,9 @@ namespace TuyenDungAPI.Controllers.Authentication
             _emailService = emailService;
         }
 
+        /// <summary>
+        /// Đăng ký tài khoản người dùng
+        /// </summary>
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterRequest request)
         {
@@ -33,6 +36,9 @@ namespace TuyenDungAPI.Controllers.Authentication
             return StatusCode(response.Status, response);
         }
 
+        /// <summary>
+        /// Đăng nhập tài khoản người dùng
+        /// </summary>
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginRequest request)
         {
@@ -40,6 +46,10 @@ namespace TuyenDungAPI.Controllers.Authentication
             return StatusCode(response.Status, response);
         }
 
+
+        /// <summary>
+        /// Đăng xuất tài khoản người dùng
+        /// </summary>
         [Authorize] // ✅ Yêu cầu token hợp lệ để logout
         [HttpPost("logout")]
         public async Task<IActionResult> Logout()
@@ -52,6 +62,9 @@ namespace TuyenDungAPI.Controllers.Authentication
         }
 
 
+        /// <summary>
+        /// API Refresh-token
+        /// </summary>
         [HttpPost("refresh-token")]
         public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenRequest request)
         {
@@ -59,6 +72,9 @@ namespace TuyenDungAPI.Controllers.Authentication
             return StatusCode(response.Status, response);
         }
 
+        /// <summary>
+        /// API Gửi mã OTP về Email
+        /// </summary>
         [HttpPost("send-otp")]
         public async Task<IActionResult> SendOtp([FromBody] SendOtpRequest request)
         {
@@ -70,6 +86,10 @@ namespace TuyenDungAPI.Controllers.Authentication
             var reponse = await _authService.RequestOtpAsync(request.Email);
             return StatusCode(reponse.Status, reponse);
         }
+
+        /// <summary>
+        /// API Xác thực OTP
+        /// </summary>
         [HttpPost("verify-code")]
         public async Task<IActionResult> VerifyCode([FromBody] VerificationRequest request)
         {
@@ -81,6 +101,9 @@ namespace TuyenDungAPI.Controllers.Authentication
             return StatusCode(reponse.Status,reponse);
         }
 
+        /// <summary>
+        /// API đổi mật khẩu người dùng 
+        /// </summary>
         [HttpPost("reset-password")]
         public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequest request)
         {

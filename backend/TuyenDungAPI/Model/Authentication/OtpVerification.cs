@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
 using System.ComponentModel.DataAnnotations;
+using TuyenDungAPI.Model.User;
 
 namespace TuyenDungAPI.Model.Authentication
 {
@@ -19,6 +20,6 @@ namespace TuyenDungAPI.Model.Authentication
         public Guid UserId { get; set; }
 
         [ForeignKey("UserId")]
-        public User User { get; set; }
+        public User.User User { get; set; }
     }
 }

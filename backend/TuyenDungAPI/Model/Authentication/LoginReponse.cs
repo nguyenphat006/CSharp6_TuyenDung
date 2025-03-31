@@ -1,4 +1,6 @@
-﻿namespace TuyenDungAPI.Model.Authentication
+﻿using TuyenDungAPI.Model.User;
+
+namespace TuyenDungAPI.Model.Authentication
 {
     public class LoginResponse
     {
@@ -6,7 +8,7 @@
         public string RefreshToken { get; set; }
         public object Data { get; set; }
 
-        public LoginResponse(User user, string token, string RefreshToken_)
+        public LoginResponse(User.User user, string token, string RefreshToken_)
         {
             Token = token;
             RefreshToken = RefreshToken_;

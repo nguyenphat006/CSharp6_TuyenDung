@@ -1,8 +1,7 @@
 ﻿using System;
-using TuyenDungAPI.Model.User;
 namespace TuyenDungAPI.Model.User
 {
-    public class GetUserReponse
+    public class UserResponse
     {
         public Guid Id { get; set; }
         public string Name { get; set; } = string.Empty;
@@ -13,12 +12,12 @@ namespace TuyenDungAPI.Model.User
         public DateTime CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
 
-        public GetUserResponse() { }
+        public UserResponse() { }
 
-        public GetUserResponse(Authentication.User user)
+        public UserResponse(User user)
         {
             Id = user.Id;
-            Name = user.Name;
+            Name = user.Name;                                                                                   
             Email = user.Email;
             Age = user.Age;
             Gender = user.Gender;
@@ -27,4 +26,5 @@ namespace TuyenDungAPI.Model.User
             UpdatedAt = user.UpdatedAt;
         }
     }
+
 }
