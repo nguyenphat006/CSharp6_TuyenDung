@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -10,71 +11,90 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Download } from "lucide-react";
-import { DataTableUsers, User } from "./ui/DataTableUsers";
+import { Download, Plus } from "lucide-react";
+import { DataTableUser } from "./ui/DataTableUser";
 import { useSetPageTitle } from "@/lib/hooks/useSetPageTitle";
+import { AddUserForm } from "./ui/AddUserForm";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { toast } from "sonner";
 
-// Mock data
-const mockUsers: User[] = [
+// Dữ liệu mẫu
+const mockUsers = [
   {
-    id: "01458",
+    id: "1",
     name: "Nguyễn Văn A",
-    email: "a@example.com",
+    email: "nguyenvana@example.com",
     phone: "0123456789",
-    role: "user",
-    status: "active",
-    createdAt: new Date(Date.now() - 8 * 24 * 60 * 60 * 1000),
-    lastLogin: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
-    applications: 5,
+    role: "admin" as const,
+    status: "active" as const,
+    createdAt: new Date("2024-01-01"),
+    lastLogin: new Date("2024-03-31"),
     avatar: "https://github.com/shadcn.png",
   },
   {
-    id: "01459",
+    id: "2",
     name: "Trần Thị B",
-    email: "b@example.com",
+    email: "tranthib@example.com",
     phone: "0987654321",
-    role: "user",
-    status: "pending",
-    createdAt: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000),
-    lastLogin: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
-    applications: 3,
-    avatar: "https://github.com/shadcn.png",
-  },
-  {
-    id: "01460",
-    name: "Lê Văn C",
-    email: "c@example.com",
-    phone: "0369852147",
-    role: "user",
-    status: "blocked",
-    createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
-    lastLogin: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
-    applications: 8,
+    role: "user" as const,
+    status: "pending" as const,
+    createdAt: new Date("2024-01-02"),
+    lastLogin: new Date("2024-03-30"),
     avatar: "https://github.com/shadcn.png",
   },
 ];
 
 export default function UsersPage() {
+  const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [dateFilter, setDateFilter] = useState<string>("all");
-  const [users, setUsers] = useState<User[]>(mockUsers);
+  const [users, setUsers] = useState(mockUsers);
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   useSetPageTitle();
 
-  const handleUpdateUser = (
-    userId: string,
-    updatedUser: Omit<User, "id" | "createdAt" | "lastLogin" | "applications">
-  ) => {
-    setUsers(
-      users.map((user) =>
-        user.id === userId
-          ? {
-              ...user,
-              ...updatedUser,
-            }
-          : user
-      )
-    );
+  const handleAddUser = async (data: any) => {
+    try {
+      // TODO: Gọi API thêm user
+      const newUser = {
+        id: String(users.length + 1),
+        ...data,
+        createdAt: new Date(),
+        lastLogin: new Date(),
+        avatar: "https://github.com/shadcn.png",
+      };
+      setUsers([...users, newUser]);
+      setIsAddDialogOpen(false);
+      toast.success("Thêm người dùng thành công");
+    } catch (error) {
+      toast.error("Có lỗi xảy ra khi thêm người dùng");
+    }
+  };
+
+  const handleUpdateUser = async (id: string, data: any) => {
+    try {
+      // TODO: Gọi API cập nhật user
+      setUsers(users.map(user => user.id === id ? { ...user, ...data } : user));
+      toast.success("Cập nhật thông tin thành công");
+    } catch (error) {
+      toast.error("Có lỗi xảy ra khi cập nhật thông tin");
+    }
+  };
+
+  const handleDeleteUser = async (id: string) => {
+    try {
+      // TODO: Gọi API xóa user
+      setUsers(users.filter(user => user.id !== id));
+      toast.success("Xóa người dùng thành công");
+    } catch (error) {
+      toast.error("Có lỗi xảy ra khi xóa người dùng");
+    }
   };
 
   return (
@@ -82,6 +102,20 @@ export default function UsersPage() {
       {/* Header */}
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold">Quản lý người dùng</h1>
+        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+          <DialogTrigger asChild>
+            <Button>
+              <Plus className="w-4 h-4 mr-2" />
+              Thêm người dùng
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Thêm người dùng mới</DialogTitle>
+            </DialogHeader>
+            <AddUserForm onAddUser={handleAddUser} />
+          </DialogContent>
+        </Dialog>
       </div>
 
       {/* Filters */}
@@ -127,7 +161,11 @@ export default function UsersPage() {
       </div>
 
       {/* Table */}
-      <DataTableUsers data={users} onUpdateUser={handleUpdateUser} />
+      <DataTableUser
+        data={users}
+        onUpdateUser={handleUpdateUser}
+        onDeleteUser={handleDeleteUser}
+      />
     </div>
   );
 }

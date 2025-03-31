@@ -22,65 +22,56 @@ import { Plus } from "lucide-react";
 import { Job } from "./DataTableJobs";
 
 interface AddJobFormProps {
-  onAddJob: (job: Omit<Job, "id" | "createdAt" | "applications">) => void;
+  onSubmit: (data: any) => void;
 }
 
-export function AddJobForm({ onAddJob }: AddJobFormProps) {
+export function AddJobForm({ onSubmit }: AddJobFormProps) {
   const [open, setOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
   const [formData, setFormData] = useState({
     title: "",
     company: "",
     location: "",
     type: "full-time",
-    status: "draft",
+    status: "pending",
     salary: {
-      min: 0,
-      max: 0,
+      min: "",
+      max: "",
       currency: "VND",
     },
     deadline: "",
   });
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      // TODO: Add validation
-      await onAddJob({
-        ...formData,
-        deadline: new Date(formData.deadline),
-      });
-      setOpen(false);
-      setFormData({
-        title: "",
-        company: "",
-        location: "",
-        type: "full-time",
-        status: "draft",
-        salary: {
-          min: 0,
-          max: 0,
-          currency: "VND",
-        },
-        deadline: "",
-      });
-    } catch (err) {
-      setError("Có lỗi xảy ra khi thêm việc làm mới");
-    } finally {
-      setIsLoading(false);
-    }
+    onSubmit({
+      ...formData,
+      salary: {
+        min: Number(formData.salary.min),
+        max: Number(formData.salary.max),
+        currency: formData.salary.currency,
+      },
+    });
+    setOpen(false);
+    setFormData({
+      title: "",
+      company: "",
+      location: "",
+      type: "full-time",
+      status: "pending",
+      salary: {
+        min: "",
+        max: "",
+        currency: "VND",
+      },
+      deadline: "",
+    });
   };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button>
-          <Plus className="mr-2 h-4 w-4" />
+          <Plus className="w-4 h-4 mr-2" />
           Thêm việc làm
         </Button>
       </DialogTrigger>
@@ -94,9 +85,7 @@ export function AddJobForm({ onAddJob }: AddJobFormProps) {
             <Input
               id="title"
               value={formData.title}
-              onChange={(e) =>
-                setFormData({ ...formData, title: e.target.value })
-              }
+              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
               required
             />
           </div>
@@ -105,9 +94,7 @@ export function AddJobForm({ onAddJob }: AddJobFormProps) {
             <Input
               id="company"
               value={formData.company}
-              onChange={(e) =>
-                setFormData({ ...formData, company: e.target.value })
-              }
+              onChange={(e) => setFormData({ ...formData, company: e.target.value })}
               required
             />
           </div>
@@ -116,9 +103,7 @@ export function AddJobForm({ onAddJob }: AddJobFormProps) {
             <Input
               id="location"
               value={formData.location}
-              onChange={(e) =>
-                setFormData({ ...formData, location: e.target.value })
-              }
+              onChange={(e) => setFormData({ ...formData, location: e.target.value })}
               required
             />
           </div>
@@ -126,12 +111,10 @@ export function AddJobForm({ onAddJob }: AddJobFormProps) {
             <Label htmlFor="type">Loại hình</Label>
             <Select
               value={formData.type}
-              onValueChange={(value: Job["type"]) =>
-                setFormData({ ...formData, type: value })
-              }
+              onValueChange={(value) => setFormData({ ...formData, type: value })}
             >
               <SelectTrigger>
-                <SelectValue />
+                <SelectValue placeholder="Chọn loại hình" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="full-time">Toàn thời gian</SelectItem>
@@ -145,17 +128,14 @@ export function AddJobForm({ onAddJob }: AddJobFormProps) {
             <Label htmlFor="status">Trạng thái</Label>
             <Select
               value={formData.status}
-              onValueChange={(value: Job["status"]) =>
-                setFormData({ ...formData, status: value })
-              }
+              onValueChange={(value) => setFormData({ ...formData, status: value })}
             >
               <SelectTrigger>
-                <SelectValue />
+                <SelectValue placeholder="Chọn trạng thái" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="draft">Nháp</SelectItem>
-                <SelectItem value="pending">Chờ duyệt</SelectItem>
                 <SelectItem value="active">Đang tuyển</SelectItem>
+                <SelectItem value="pending">Chờ duyệt</SelectItem>
                 <SelectItem value="expired">Hết hạn</SelectItem>
               </SelectContent>
             </Select>
@@ -167,15 +147,10 @@ export function AddJobForm({ onAddJob }: AddJobFormProps) {
                 id="salary-min"
                 type="number"
                 value={formData.salary.min}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    salary: {
-                      ...formData.salary,
-                      min: Number(e.target.value),
-                    },
-                  })
-                }
+                onChange={(e) => setFormData({
+                  ...formData,
+                  salary: { ...formData.salary, min: e.target.value }
+                })}
                 required
               />
             </div>
@@ -185,15 +160,10 @@ export function AddJobForm({ onAddJob }: AddJobFormProps) {
                 id="salary-max"
                 type="number"
                 value={formData.salary.max}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    salary: {
-                      ...formData.salary,
-                      max: Number(e.target.value),
-                    },
-                  })
-                }
+                onChange={(e) => setFormData({
+                  ...formData,
+                  salary: { ...formData.salary, max: e.target.value }
+                })}
                 required
               />
             </div>
@@ -204,24 +174,15 @@ export function AddJobForm({ onAddJob }: AddJobFormProps) {
               id="deadline"
               type="date"
               value={formData.deadline}
-              onChange={(e) =>
-                setFormData({ ...formData, deadline: e.target.value })
-              }
+              onChange={(e) => setFormData({ ...formData, deadline: e.target.value })}
               required
             />
           </div>
-          {error && <p className="text-sm text-red-500">{error}</p>}
           <div className="flex justify-end gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setOpen(false)}
-            >
+            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
               Hủy
             </Button>
-            <Button type="submit" disabled={isLoading}>
-              {isLoading ? "Đang thêm..." : "Thêm"}
-            </Button>
+            <Button type="submit">Thêm</Button>
           </div>
         </form>
       </DialogContent>

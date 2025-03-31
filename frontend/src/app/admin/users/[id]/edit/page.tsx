@@ -1,113 +1,205 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
-import { EditUserForm } from "../../ui/EditUserForm";
-import { User } from "../../ui/DataTableUser";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useSetPageTitle } from "@/lib/hooks/useSetPageTitle";
 
-// Mock data - sau này sẽ được thay thế bằng API call
-const mockUsers: User[] = [
-  {
-    id: "01458",
-    name: "Nguyễn Văn A",
-    email: "a@email.com",
-    role: "candidate",
-    status: "active",
-    createdAt: new Date(Date.now() - 8 * 24 * 60 * 60 * 1000),
-  },
-  {
-    id: "01459",
-    name: "Trần Thị B",
-    email: "b@email.com",
-    role: "employer",
-    status: "pending",
-    createdAt: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000),
-  },
-  {
-    id: "01460",
-    name: "Lê Văn C",
-    email: "c@email.com",
-    role: "admin",
-    status: "blocked",
-    createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
-  },
-];
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  role: "admin" | "user";
+  status: "active" | "blocked";
+  createdAt: Date;
+  lastLogin: Date;
+  avatar: string;
+}
 
-export default function EditUserPage() {
-  const params = useParams();
+export default function EditUserPage({ params }: { params: { id: string } }) {
   const router = useRouter();
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   useSetPageTitle();
 
   useEffect(() => {
-    // Simulate API call
+    // TODO: Thay thế bằng API call thực tế
     const fetchUser = async () => {
       try {
-        setIsLoading(true);
-        // Sau này sẽ thay thế bằng API call thật
-        const foundUser = mockUsers.find((u) => u.id === params.id);
-        if (!foundUser) {
-          throw new Error("Không tìm thấy người dùng");
-        }
-        setUser(foundUser);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Có lỗi xảy ra");
+        // Giả lập API call
+        const mockUser: User = {
+          id: params.id,
+          name: "Nguyễn Văn A",
+          email: "example@email.com",
+          phone: "0123456789",
+          role: "user",
+          status: "active",
+          createdAt: new Date(),
+          lastLogin: new Date(),
+          avatar: "https://github.com/shadcn.png"
+        };
+        setUser(mockUser);
+      } catch (error) {
+        console.error("Error fetching user:", error);
+        toast.error("Không thể tải thông tin người dùng");
       } finally {
-        setIsLoading(false);
+        setLoading(false);
       }
     };
 
     fetchUser();
   }, [params.id]);
 
-  const handleUpdateUser = async (updatedUser: Omit<User, "id" | "createdAt">) => {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user) return;
+
+    setSaving(true);
     try {
-      // Sau này sẽ thay thế bằng API call thật
-      console.log("Updating user:", updatedUser);
-      
-      // Simulate API delay
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      
-      // Sau khi update thành công, quay lại trang danh sách
+      // TODO: Thay thế bằng API call thực tế
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      toast.success("Cập nhật thông tin thành công");
       router.push("/admin/users");
-    } catch (err) {
-      console.error("Error updating user:", err);
-      throw err;
+    } catch (error) {
+      console.error("Error updating user:", error);
+      toast.error("Không thể cập nhật thông tin");
+    } finally {
+      setSaving(false);
     }
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen">
-        <p className="text-red-500 mb-4">{error}</p>
-        <button
-          onClick={() => router.push("/admin/users")}
-          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-        >
-          Quay lại
-        </button>
-      </div>
-    );
+  if (loading) {
+    return <div>Đang tải...</div>;
   }
 
   if (!user) {
-    return null;
+    return <div>Không tìm thấy người dùng</div>;
   }
 
   return (
     <div className="container mx-auto py-6">
-      <EditUserForm user={user} onUpdateUser={handleUpdateUser} />
+      <Card>
+        <CardHeader>
+          <CardTitle>Chỉnh sửa thông tin người dùng</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="flex items-center gap-4">
+              <Avatar className="h-20 w-20">
+                <AvatarImage src={user.avatar} />
+                <AvatarFallback>{user.name[0]}</AvatarFallback>
+              </Avatar>
+              <div>
+                <Label htmlFor="avatar">Ảnh đại diện</Label>
+                <Input
+                  id="avatar"
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    // TODO: Xử lý upload ảnh
+                  }}
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="name">Họ tên</Label>
+                <Input
+                  id="name"
+                  value={user.name}
+                  onChange={(e) => setUser({ ...user, name: e.target.value })}
+                  required
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={user.email}
+                  onChange={(e) => setUser({ ...user, email: e.target.value })}
+                  required
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="phone">Số điện thoại</Label>
+                <Input
+                  id="phone"
+                  value={user.phone}
+                  onChange={(e) => setUser({ ...user, phone: e.target.value })}
+                  required
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="role">Vai trò</Label>
+                <Select
+                  value={user.role}
+                  onValueChange={(value: "admin" | "user") =>
+                    setUser({ ...user, role: value })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="admin">Quản trị viên</SelectItem>
+                    <SelectItem value="user">Người dùng</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label htmlFor="status">Trạng thái</Label>
+                <Select
+                  value={user.status}
+                  onValueChange={(value: "active" | "blocked") =>
+                    setUser({ ...user, status: value })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="active">Hoạt động</SelectItem>
+                    <SelectItem value="blocked">Bị khóa</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-4">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => router.push("/admin/users")}
+              >
+                Hủy
+              </Button>
+              <Button type="submit" disabled={saving}>
+                {saving ? "Đang lưu..." : "Lưu thay đổi"}
+              </Button>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
     </div>
   );
 }

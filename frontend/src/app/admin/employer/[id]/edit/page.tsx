@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
-import { Employer } from "../../ui/DataTableEmployer";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -12,93 +13,80 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Label } from "@/components/ui/label";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
-// Mock function to fetch employer data
-const fetchEmployer = async (id: string): Promise<Employer> => {
-  // TODO: Replace with actual API call
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve({
-        id,
-        name: "Nguyễn Văn A",
-        email: "a@company.com",
-        phone: "0123456789",
-        company: "Công ty A",
-        position: "HR Manager",
-        status: "active",
-        createdAt: new Date(Date.now() - 8 * 24 * 60 * 60 * 1000),
-        lastLogin: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
-        jobsPosted: 12,
-        avatar: "https://github.com/shadcn.png",
-      });
-    }, 1000);
-  });
-};
+interface Employer {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  company: string;
+  position: string;
+  status: "active" | "pending" | "blocked";
+  createdAt: Date;
+  lastLogin: Date;
+  jobsPosted: number;
+  avatar: string;
+}
 
-export default function EditEmployerPage() {
-  const params = useParams();
+export default function EditEmployerPage({ params }: { params: { id: string } }) {
   const router = useRouter();
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [employer, setEmployer] = useState<Employer | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    phone: "",
-    company: "",
-    position: "",
-    status: "active" as Employer["status"],
-    avatar: "",
-  });
 
   useEffect(() => {
-    const loadEmployer = async () => {
+    // TODO: Thay thế bằng API call thực tế
+    const fetchEmployer = async () => {
       try {
-        const employerData = await fetchEmployer(params.id as string);
-        setEmployer(employerData);
-        setFormData({
-          name: employerData.name,
-          email: employerData.email,
-          phone: employerData.phone,
-          company: employerData.company,
-          position: employerData.position,
-          status: employerData.status,
-          avatar: employerData.avatar || "",
-        });
-      } catch (err) {
-        setError("Không thể tải thông tin nhà tuyển dụng");
+        // Giả lập API call
+        const mockEmployer: Employer = {
+          id: params.id,
+          name: "Nguyễn Văn A",
+          email: "example@email.com",
+          phone: "0123456789",
+          company: "Công ty ABC",
+          position: "Giám đốc",
+          status: "active",
+          createdAt: new Date(),
+          lastLogin: new Date(),
+          jobsPosted: 5,
+          avatar: "https://github.com/shadcn.png"
+        };
+        setEmployer(mockEmployer);
+      } catch (error) {
+        console.error("Error fetching employer:", error);
+        toast.error("Không thể tải thông tin nhà tuyển dụng");
       } finally {
-        setIsLoading(false);
+        setLoading(false);
       }
     };
 
-    loadEmployer();
+    fetchEmployer();
   }, [params.id]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!employer) return;
+
+    setSaving(true);
     try {
-      // TODO: Replace with actual API call
-      console.log("Updating employer:", params.id, formData);
+      // TODO: Thay thế bằng API call thực tế
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      toast.success("Cập nhật thông tin thành công");
       router.push("/admin/employer");
-    } catch (err) {
-      setError("Có lỗi xảy ra khi cập nhật thông tin nhà tuyển dụng");
+    } catch (error) {
+      console.error("Error updating employer:", error);
+      toast.error("Không thể cập nhật thông tin");
+    } finally {
+      setSaving(false);
     }
   };
 
-  if (isLoading) {
+  if (loading) {
     return <div>Đang tải...</div>;
-  }
-
-  if (error) {
-    return <div className="text-red-500">{error}</div>;
   }
 
   if (!employer) {
@@ -107,113 +95,103 @@ export default function EditEmployerPage() {
 
   return (
     <div className="container mx-auto py-6">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Chỉnh sửa thông tin nhà tuyển dụng</h1>
-        <Button variant="outline" onClick={() => router.push("/admin/employer")}>
-          Quay lại
-        </Button>
-      </div>
-
-      <Dialog open={true} onOpenChange={() => router.push("/admin/employer")}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>Chỉnh sửa thông tin nhà tuyển dụng</DialogTitle>
-          </DialogHeader>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">Họ và tên</Label>
-              <Input
-                id="name"
-                value={formData.name}
-                onChange={(e) =>
-                  setFormData({ ...formData, name: e.target.value })
-                }
-                required
-              />
+      <Card>
+        <CardHeader>
+          <CardTitle>Chỉnh sửa thông tin nhà tuyển dụng</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="flex items-center gap-4">
+              <Avatar className="h-20 w-20">
+                <AvatarImage src={employer.avatar} />
+                <AvatarFallback>{employer.name[0]}</AvatarFallback>
+              </Avatar>
+              <div>
+                <Label htmlFor="avatar">Ảnh đại diện</Label>
+                <Input
+                  id="avatar"
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    // TODO: Xử lý upload ảnh
+                  }}
+                />
+              </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                value={formData.email}
-                onChange={(e) =>
-                  setFormData({ ...formData, email: e.target.value })
-                }
-                required
-              />
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="name">Họ tên</Label>
+                <Input
+                  id="name"
+                  value={employer.name}
+                  onChange={(e) => setEmployer({ ...employer, name: e.target.value })}
+                  required
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={employer.email}
+                  onChange={(e) => setEmployer({ ...employer, email: e.target.value })}
+                  required
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="phone">Số điện thoại</Label>
+                <Input
+                  id="phone"
+                  value={employer.phone}
+                  onChange={(e) => setEmployer({ ...employer, phone: e.target.value })}
+                  required
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="company">Công ty</Label>
+                <Input
+                  id="company"
+                  value={employer.company}
+                  onChange={(e) => setEmployer({ ...employer, company: e.target.value })}
+                  required
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="position">Chức vụ</Label>
+                <Input
+                  id="position"
+                  value={employer.position}
+                  onChange={(e) => setEmployer({ ...employer, position: e.target.value })}
+                  required
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="status">Trạng thái</Label>
+                <Select
+                  value={employer.status}
+                  onValueChange={(value: "active" | "pending" | "blocked") =>
+                    setEmployer({ ...employer, status: value })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="active">Hoạt động</SelectItem>
+                    <SelectItem value="pending">Chờ xác minh</SelectItem>
+                    <SelectItem value="blocked">Bị khóa</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="phone">Số điện thoại</Label>
-              <Input
-                id="phone"
-                value={formData.phone}
-                onChange={(e) =>
-                  setFormData({ ...formData, phone: e.target.value })
-                }
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="company">Công ty</Label>
-              <Input
-                id="company"
-                value={formData.company}
-                onChange={(e) =>
-                  setFormData({ ...formData, company: e.target.value })
-                }
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="position">Vị trí</Label>
-              <Input
-                id="position"
-                value={formData.position}
-                onChange={(e) =>
-                  setFormData({ ...formData, position: e.target.value })
-                }
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="status">Trạng thái</Label>
-              <Select
-                value={formData.status}
-                onValueChange={(value: Employer["status"]) =>
-                  setFormData({ ...formData, status: value })
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="active">Hoạt động</SelectItem>
-                  <SelectItem value="pending">Chờ xác minh</SelectItem>
-                  <SelectItem value="blocked">Bị khóa</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="avatar">URL ảnh đại diện</Label>
-              <Input
-                id="avatar"
-                value={formData.avatar}
-                onChange={(e) =>
-                  setFormData({ ...formData, avatar: e.target.value })
-                }
-              />
-            </div>
-
-            {error && <p className="text-sm text-red-500">{error}</p>}
-
-            <div className="flex justify-end gap-2">
+            <div className="flex justify-end gap-4">
               <Button
                 type="button"
                 variant="outline"
@@ -221,11 +199,13 @@ export default function EditEmployerPage() {
               >
                 Hủy
               </Button>
-              <Button type="submit">Cập nhật</Button>
+              <Button type="submit" disabled={saving}>
+                {saving ? "Đang lưu..." : "Lưu thay đổi"}
+              </Button>
             </div>
           </form>
-        </DialogContent>
-      </Dialog>
+        </CardContent>
+      </Card>
     </div>
   );
 } 
