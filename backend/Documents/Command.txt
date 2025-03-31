@@ -3,3 +3,12 @@ Lệnh khởi tạo Migration:
 1. add-Migration Initial
 2. Update-Database
 - VS CODE:
+
+
+ConnectionStrings Local: Server=ERICSS;Database=TuyenDungAPI;Trusted_Connection=true;TrustServerCertificate=true;
+ConnectionStrings: Server=s103-d186.interdata.vn;Database=ericssid_;User Id=ericss;Password=kakapro123@;TrustServerCertificate=True;
+
+DATABASE INFO:
+Database server: s103-d186.interdata.vn
+Username: ericss
+Password: kakapro123@

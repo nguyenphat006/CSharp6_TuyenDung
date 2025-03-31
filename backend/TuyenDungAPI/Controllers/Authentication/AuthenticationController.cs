@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using TuyenDungAPI.Service;
 using TuyenDungAPI.Model.Authentication;
+using TuyenDungAPI.Model.ModelBase;
 
 namespace TuyenDungAPI.Controllers.Authentication
 {
@@ -11,41 +12,85 @@ namespace TuyenDungAPI.Controllers.Authentication
     public class AuthenticationController : ControllerBase
     {
         private readonly AuthService _authService;
+        private readonly EmailService _emailService;
 
-        public AuthenticationController(AuthService authService)
+        public AuthenticationController(AuthService authService, EmailService emailService)
         {
             _authService = authService;
+            _emailService = emailService;
         }
 
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterRequest request)
         {
-            var user = await _authService.RegisterAsync(request.Name, request.Email, request.Age, request.Gender, request.Password);
-            if (user == null)
-                return BadRequest(new { message = "Email đã tồn tại!" });
+            if (!ModelState.IsValid)
+            {
+                var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
+                return BadRequest(new ApiResponse<object>(false, 400, null, string.Join(", ", errors)));
+            }
 
-            return Ok(new { message = "Đăng ký thành công!" });
+            var response = await _authService.RegisterAsync(request);
+            return StatusCode(response.Status, response);
         }
 
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginRequest request)
         {
-            var token = await _authService.LoginAsync(request.Email, request.Password);
-            if (token == null)
-                return Unauthorized(new { message = "Email hoặc mật khẩu không đúng!" });
-
-            return Ok(new { token });
+            var response = await _authService.LoginAsync(request.Email, request.Password);
+            return StatusCode(response.Status, response);
         }
 
-        [Authorize]
-        [HttpGet("me")]
-        public IActionResult GetCurrentUser()
+        [Authorize] // ✅ Yêu cầu token hợp lệ để logout
+        [HttpPost("logout")]
+        public async Task<IActionResult> Logout()
         {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            var email = User.FindFirstValue(ClaimTypes.Email);
-            var role = User.FindFirstValue(ClaimTypes.Role);
+            // Lấy email từ token (vì user đã đăng nhập nên sẽ có email trong token)
+            string email = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value!;
 
-            return Ok(new { userId, email, role });
+            var response = await _authService.LogoutAsync(email);
+            return StatusCode(response.Status, response);
+        }
+
+
+        [HttpPost("refresh-token")]
+        public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenRequest request)
+        {
+            var response = await _authService.RefreshTokenAsync(request.Token, request.RefreshToken);
+            return StatusCode(response.Status, response);
+        }
+
+        [HttpPost("send-otp")]
+        public async Task<IActionResult> SendOtp([FromBody] SendOtpRequest request)
+        {
+            if (string.IsNullOrEmpty(request.Email))
+            {
+                return BadRequest(new { success = false, message = "Email không được để trống!" });
+            }
+
+            var reponse = await _authService.RequestOtpAsync(request.Email);
+            return StatusCode(reponse.Status, reponse);
+        }
+        [HttpPost("verify-code")]
+        public async Task<IActionResult> VerifyCode([FromBody] VerificationRequest request)
+        {
+            if (string.IsNullOrEmpty(request.Otp))
+            {
+                return BadRequest(new { success = false, message = "Mã OTP không được để trống" });
+            }
+            var reponse = await _authService.VerifyOtpAsync(request.Email ,request.Otp);
+            return StatusCode(reponse.Status,reponse);
+        }
+
+        [HttpPost("reset-password")]
+        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequest request)
+        {
+            if (string.IsNullOrEmpty(request.Email) || string.IsNullOrEmpty(request.NewPassword))
+            {
+                return BadRequest(new { success = false, message = "Thông tin không đầy đủ!" });
+            }
+
+            var response = await _authService.ResetPasswordAsync(request.Email, request.NewPassword);
+            return StatusCode(response.Status, response);
         }
     }
 }
