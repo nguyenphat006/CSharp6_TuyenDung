@@ -8,16 +8,27 @@ using TuyenDungAPI.Service;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+// 📌 Thêm dịch vụ CORS
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAllOrigins", builder =>
+    {
+        builder.AllowAnyOrigin()
+               .AllowAnyMethod()
+               .AllowAnyHeader();
+    });
+});
+
+// 📌 Thêm dịch vụ Controller & API Explorer
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 
-// 🛠️ Thêm Swagger và cấu hình xác thực JWT
+// 🛠️ Cấu hình Swagger & JWT Authentication trong Swagger UI
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "TuyenDungAPI", Version = "v1" });
 
-    // 🔥 Thêm cấu hình xác thực JWT vào Swagger
+    // 🔥 Thêm xác thực JWT vào Swagger UI
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Name = "Authorization",
@@ -75,7 +86,10 @@ builder.Services.AddScoped<EmailService>();
 
 var app = builder.Build();
 
+// 🔥 Kích hoạt CORS
+app.UseCors("AllowAllOrigins");
 
+// 🛑 Middleware xử lý lỗi 401 & 403
 app.Use(async (context, next) =>
 {
     await next();

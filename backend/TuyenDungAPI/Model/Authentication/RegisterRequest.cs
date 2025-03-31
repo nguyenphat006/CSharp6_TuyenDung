@@ -12,9 +12,6 @@ namespace TuyenDungAPI.Model.Authentication
         [EmailAddress(ErrorMessage = "Email không hợp lệ!")]
         public string Email { get; set; }
 
-        [Range(1, 120, ErrorMessage = "Tuổi phải nằm trong khoảng 1 - 120!")]
-        public int Age { get; set; }
-
         //[Required(ErrorMessage = "Giới tính không được để trống!")]
         //public string Gender { get; set; }
 

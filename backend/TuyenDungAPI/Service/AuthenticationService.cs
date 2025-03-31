@@ -60,7 +60,6 @@ namespace TuyenDungAPI.Service
             {
                 Name = request.Name,
                 Email = request.Email,
-                Age = request.Age,
                 PasswordHash = passwordHash,
                 RefreshToken = refreshToken, // 🔥 Lưu Refresh Token vào DB
                 RefreshTokenExpiry = DateTime.UtcNow.AddDays(7), // 🔥 Hạn sử dụng 7 ngày

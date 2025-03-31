@@ -1,39 +1,38 @@
 // API Base URLs
-export const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
-export const API_BASE_LOCAL_URL = process.env.NEXT_PUBLIC_API_BASE_LOCAL_URL;
+export const API_BASE_URL = 'https://localhost:7152/api';
 
 // API Endpoints
 export const API_ENDPOINTS = {
   auth: {
-    login: `${process.env.NEXT_PUBLIC_API_AUTH_ENDPOINT}/login`,
-    register: `${process.env.NEXT_PUBLIC_API_AUTH_ENDPOINT}/register`,
-    refreshToken: `${process.env.NEXT_PUBLIC_API_AUTH_ENDPOINT}/refresh-token`,
-    logout: `${process.env.NEXT_PUBLIC_API_AUTH_ENDPOINT}/logout`,
-    forgotPassword: `${process.env.NEXT_PUBLIC_API_AUTH_ENDPOINT}/forgot-password`,
-    resetPassword: `${process.env.NEXT_PUBLIC_API_AUTH_ENDPOINT}/reset-password`,
-    verifyEmail: `${process.env.NEXT_PUBLIC_API_AUTH_ENDPOINT}/verify-email`,
-    resendVerification: `${process.env.NEXT_PUBLIC_API_AUTH_ENDPOINT}/resend-verification`,
+    login: '/auth/login',
+    register: '/auth/register',
+    refreshToken: '/auth/refresh-token',
+    logout: '/auth/logout',
+    forgotPassword: '/auth/forgot-password',
+    resetPassword: '/auth/reset-password',
+    verifyEmail: '/auth/verify-email',
+    resendVerification: '/auth/resend-verification',
   },
   users: {
-    profile: `${process.env.NEXT_PUBLIC_API_USERS_ENDPOINT}/profile`,
-    updateProfile: `${process.env.NEXT_PUBLIC_API_USERS_ENDPOINT}/profile`,
-    changePassword: `${process.env.NEXT_PUBLIC_API_USERS_ENDPOINT}/change-password`,
-    uploadAvatar: `${process.env.NEXT_PUBLIC_API_USERS_ENDPOINT}/avatar`,
+    profile: '/users/profile',
+    updateProfile: '/users/profile',
+    changePassword: '/users/change-password',
+    uploadAvatar: '/users/avatar',
   },
   jobs: {
-    list: `${process.env.NEXT_PUBLIC_API_JOBS_ENDPOINT}`,
-    detail: (id: string) => `${process.env.NEXT_PUBLIC_API_JOBS_ENDPOINT}/${id}`,
-    create: `${process.env.NEXT_PUBLIC_API_JOBS_ENDPOINT}`,
-    update: (id: string) => `${process.env.NEXT_PUBLIC_API_JOBS_ENDPOINT}/${id}`,
-    delete: (id: string) => `${process.env.NEXT_PUBLIC_API_JOBS_ENDPOINT}/${id}`,
-    apply: (id: string) => `${process.env.NEXT_PUBLIC_API_JOBS_ENDPOINT}/${id}/apply`,
+    list: '/jobs',
+    detail: (id: string) => `/jobs/${id}`,
+    create: '/jobs',
+    update: (id: string) => `/jobs/${id}`,
+    delete: (id: string) => `/jobs/${id}`,
+    apply: (id: string) => `/jobs/${id}/apply`,
   },
   employers: {
-    list: `${process.env.NEXT_PUBLIC_API_EMPLOYERS_ENDPOINT}`,
-    detail: (id: string) => `${process.env.NEXT_PUBLIC_API_EMPLOYERS_ENDPOINT}/${id}`,
-    create: `${process.env.NEXT_PUBLIC_API_EMPLOYERS_ENDPOINT}`,
-    update: (id: string) => `${process.env.NEXT_PUBLIC_API_EMPLOYERS_ENDPOINT}/${id}`,
-    delete: (id: string) => `${process.env.NEXT_PUBLIC_API_EMPLOYERS_ENDPOINT}/${id}`,
+    list: '/employers',
+    detail: (id: string) => `/employers/${id}`,
+    create: '/employers',
+    update: (id: string) => `/employers/${id}`,
+    delete: (id: string) => `/employers/${id}`,
   },
 };
 
@@ -64,7 +63,8 @@ export class ApiError extends Error {
 
 // API Response Type
 export interface ApiResponse<T = any> {
-  data: T;
-  message?: string;
+  result: boolean;
   status: number;
+  data: T;
+  message: string;
 } 
