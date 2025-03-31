@@ -40,14 +40,23 @@ export function ResetForm({ className, ...props }: React.ComponentPropsWithoutRe
 
   const { loading, onSubmit } = useReset()
 
-  const handleSubmit = async (data: z.infer<typeof resetPasswordSchema>) => {
-    console.log('Form data:', data) // Để debug
-    await onSubmit(data)
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    console.log('Form submitted')
+    
+    const formData = form.getValues()
+    console.log('Form data:', formData)
+    
+    if (formData.password && formData.confirmPassword) {
+      await onSubmit(formData)
+    } else {
+      console.log('Form validation failed')
+    }
   }
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className={cn('flex flex-col gap-6', className)} {...props}>
+      <form onSubmit={handleSubmit} className={cn('flex flex-col gap-6', className)} {...props}>
         {/* Tiêu đề */}
         <div className="flex flex-col items-center gap-2 text-center">
           <h1 className="text-4xl font-bold">Đặt lại mật khẩu</h1>
@@ -89,7 +98,15 @@ export function ResetForm({ className, ...props }: React.ComponentPropsWithoutRe
           />
 
           {/* Button Submit */}
-          <Button type="submit" className="w-full bg-[#6366f1] hover:bg-[#5044ee]" disabled={loading}>
+          <Button 
+            type="submit" 
+            className="w-full bg-[#6366f1] hover:bg-[#5044ee]" 
+            disabled={loading}
+            onClick={() => {
+              console.log('Button clicked')
+              handleSubmit(new Event('submit') as any)
+            }}
+          >
             {loading ? 'Đang xử lý...' : 'Đặt lại mật khẩu'}
           </Button>
         </div>

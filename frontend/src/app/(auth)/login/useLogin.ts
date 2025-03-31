@@ -18,10 +18,12 @@ export function useLogin() {
         toast.success(response.message)
         router.push('/admin/dashboard')
       } else {
-        toast.error(response.message || 'Đăng nhập thất bại')
+        toast.error('Email hoặc mật khẩu không tồn tại')
       }
-    } catch (error) {
-      toast.error('Có lỗi xảy ra, vui lòng thử lại sau')
+    } catch (error: any) {
+      console.error('Error:', error)
+      const errorMessage = error?.response?.data?.message || 'Email hoặc mật khẩu không tồn tại'
+      toast.error(errorMessage)
     } finally {
       setLoading(false)
     }

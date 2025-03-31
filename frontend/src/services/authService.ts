@@ -85,12 +85,14 @@ interface ResetPasswordParams {
 }
 
 interface ResetPasswordResponse {
-  result: boolean;
-  status: number;
   data: {
-    message: string;
+    data: string;
+    message: string | null;
+    result: boolean;
+    status: number;
   };
   message: string | null;
+  status: number;
 }
 
 export const login = async (credentials: LoginParams): Promise<LoginResponse> => {

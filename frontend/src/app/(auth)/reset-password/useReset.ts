@@ -25,8 +25,9 @@ export function useReset() {
       
       console.log('Response:', response) // Để debug
 
-      if (response.result === true) {
-        toast.success(response.data.message || 'Đặt lại mật khẩu thành công!')
+      // Kiểm tra response.data.result === true
+      if (response.data.result === true) {
+        toast.success(response.data.data || 'Đặt lại mật khẩu thành công!')
         // Xóa email khỏi localStorage
         localStorage.removeItem('resetEmail')
         setTimeout(() => {
@@ -34,8 +35,8 @@ export function useReset() {
         }, 1500)
       } else {
         // Nếu có message từ API, hiển thị message đó
-        if (response.message) {
-          toast.error(response.message)
+        if (response.data.message) {
+          toast.error(response.data.message)
         } else {
           toast.error('Đặt lại mật khẩu thất bại')
         }
