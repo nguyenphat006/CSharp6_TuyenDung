@@ -76,7 +76,7 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
           />
 
           {/* Button Submit */}
-          <Button size="xl" type="submit" className="w-full bg-[#6366f1] hover:bg-[#5044ee]" disabled={loading}>
+          <Button type="submit" className="w-full h-12 bg-[#6366f1] hover:bg-[#5044ee]" disabled={loading}>
             {loading ? 'Đang đăng nhập...' : 'Đăng nhập'}
           </Button>
 
