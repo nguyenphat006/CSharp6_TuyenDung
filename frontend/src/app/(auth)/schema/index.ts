@@ -44,13 +44,14 @@ export const otpSchema = z.object({
 
 // Schema validation với Zod
 export const resetPasswordSchema = z.object({
-    password: 
-    z.string()
-    .min(6, { message: 'Mật khẩu phải có ít nhất 6 ký tự' })
-    .regex(/[A-Z]/, { message: 'Mật khẩu phải chứa ít nhất một chữ cái viết hoa' })
-    .regex(/\d/, { message: 'Mật khẩu phải chứa ít nhất một số' }),
-    confirmPassword: z.string().min(6, { message: 'Mật khẩu phải có ít nhất 6 ký tự' })
-  }).refine((data) => data.password === data.confirmPassword, {
-    message: 'Mật khẩu không khớp',
-    path: ['confirmPassword']
-  })
+  email: z.string().email('Email không hợp lệ'),
+  password: z.string().min(6, 'Mật khẩu phải có ít nhất 6 ký tự'),
+  confirmPassword: z.string()
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Mật khẩu xác nhận không khớp",
+  path: ["confirmPassword"],
+})
+
+export const VerifySchema = z.object({
+  otp: z.string().min(6, 'Mã OTP phải có 6 ký tự').max(6, 'Mã OTP phải có 6 ký tự')
+})

@@ -44,6 +44,55 @@ interface RegisterResponse {
   status: number;
 }
 
+interface SendOtpParams {
+  email: string;
+}
+
+interface SendOtpResponse {
+  data: {
+    result: boolean;
+    status: number;
+    data: {
+      message: string;
+    };
+    message: string | null;
+  };
+  message: string | null;
+  status: number;
+}
+
+interface VerifyOtpParams {
+  email: string;
+  otp: string;
+}
+
+interface VerifyOtpResponse {
+  data: {
+    result: boolean;
+    status: number;
+    data: {
+      message: string;
+    };
+    message: string | null;
+  };
+  message: string | null;
+  status: number;
+}
+
+interface ResetPasswordParams {
+  email: string;
+  newPassword: string;
+}
+
+interface ResetPasswordResponse {
+  result: boolean;
+  status: number;
+  data: {
+    message: string;
+  };
+  message: string | null;
+}
+
 export const login = async (credentials: LoginParams): Promise<LoginResponse> => {
   const response = await fetcher("/auth/login", {
     method: "POST",
@@ -69,11 +118,11 @@ export const signUp = async (credentials: RegisterParams): Promise<RegisterRespo
   return response;
 };
 
-export const resetPassword = async (credentials: any) => {  // chưa có resetPassword
-  const response = await fetcher("/users/", {
+export const resetPassword = async (email: string, newPassword: string): Promise<ResetPasswordResponse> => {
+  const response = await fetcher("/auth/reset-password", {
     method: "POST",
-    body: JSON.stringify(credentials),
-  }, true);
+    body: JSON.stringify({ email, newPassword }),
+  });
 
   return response;
 };
@@ -119,6 +168,24 @@ export const resendVerificationCode = async (credentials: any) => { // chưa có
     method: "POST",
     body: JSON.stringify(credentials),
   }, true);
+
+  return response;
+};
+
+export const sendOtp = async (email: string): Promise<SendOtpResponse> => {
+  const response = await fetcher("/auth/send-otp", {
+    method: "POST",
+    body: JSON.stringify({ email }),
+  });
+
+  return response;
+};
+
+export const verifyOtp = async (email: string, otp: string): Promise<VerifyOtpResponse> => {
+  const response = await fetcher("/auth/verify-code", {
+    method: "POST",
+    body: JSON.stringify({ email, otp }),
+  });
 
   return response;
 };
