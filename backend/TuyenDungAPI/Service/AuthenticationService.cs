@@ -252,27 +252,65 @@ namespace TuyenDungAPI.Service
 
 
         private string GenerateToken(User user)
-            {
-                var jwtSettings = _config.GetSection("JwtSettings");
-                var secretKey = Encoding.UTF8.GetBytes(jwtSettings["SecretKey"]);
+        {
+            var jwtSettings = _config.GetSection("JwtSettings");
+            var secretKey = Encoding.UTF8.GetBytes(jwtSettings["SecretKey"]);
 
-                var claims = new List<Claim>
+            var claims = new List<Claim>
                 {
                     new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
                     new Claim(JwtRegisteredClaimNames.Email, user.Email),
                     new Claim(ClaimTypes.Role, "User") // Default role
                 };
 
-                var token = new JwtSecurityToken(
-                    issuer: jwtSettings["Issuer"],
-                    audience: jwtSettings["Audience"],
-                    claims: claims,
-                    expires: DateTime.UtcNow.AddMinutes(Convert.ToDouble(jwtSettings["ExpireMinutes"])),
-                    signingCredentials: new SigningCredentials(new SymmetricSecurityKey(secretKey), SecurityAlgorithms.HmacSha256)
-                );
+            var token = new JwtSecurityToken(
+                issuer: jwtSettings["Issuer"],
+                audience: jwtSettings["Audience"],
+                claims: claims,
+                expires: DateTime.UtcNow.AddMinutes(Convert.ToDouble(jwtSettings["ExpireMinutes"])),
+                signingCredentials: new SigningCredentials(new SymmetricSecurityKey(secretKey), SecurityAlgorithms.HmacSha256)
+            );
 
-                return new JwtSecurityTokenHandler().WriteToken(token);
+            return new JwtSecurityTokenHandler().WriteToken(token);
+        }
+
+        // Giả sử bạn có một AuthService hoặc tương tự
+        public async Task<string> GenerateJwtToken(User user)
+        {
+            // Lấy danh sách roles của user từ bảng UserRoles
+            var userRoles = await _dbContext.UserRoles
+                .Where(ur => ur.UserId == user.Id)
+                .Include(ur => ur.Role)
+                .Select(ur => ur.Role.Name)
+                .ToListAsync();
+
+            var claims = new List<Claim>
+    {
+        new Claim(ClaimTypes.Name, user.Name),
+        new Claim(ClaimTypes.Email, user.Email),
+        new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
+        // Thêm các claims khác nếu cần
+    };
+
+            // Thêm role claims
+            foreach (var role in userRoles)
+            {
+                claims.Add(new Claim(ClaimTypes.Role, role));
             }
+
+            // Tiếp tục tạo token như bình thường
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]));
+            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+            var token = new JwtSecurityToken(
+                _config["Jwt:Issuer"],
+                _config["Jwt:Audience"],
+                claims,
+                expires: DateTime.Now.AddHours(3),
+                signingCredentials: creds);
+
+            return new JwtSecurityTokenHandler().WriteToken(token);
+        }
         #endregion
 
     }

@@ -4,7 +4,6 @@
     {
         public Guid Id { get; set; }
         public string Name { get; set; } = string.Empty;
-        public string? Description { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
 
@@ -17,5 +16,10 @@
             CreatedAt = role.CreatedAt;
             UpdatedAt = role.UpdatedAt;
         }
+    }
+    public class DeleteRolesResponse
+    {
+        public int DeletedCount { get; set; }
+        public List<string> DeletedRoleNames { get; set; } = new List<string>();
     }
 }

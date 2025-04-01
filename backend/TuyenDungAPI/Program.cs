@@ -5,6 +5,7 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using TuyenDungAPI.Database;
 using TuyenDungAPI.Service;
+using System.Security.Claims;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -76,7 +77,8 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateIssuerSigningKey = true,
             ValidIssuer = jwtSettings["Issuer"],
             ValidAudience = jwtSettings["Audience"],
-            IssuerSigningKey = new SymmetricSecurityKey(secretKey)
+            IssuerSigningKey = new SymmetricSecurityKey(secretKey),
+            RoleClaimType = ClaimTypes.Role // Đảm bảo ASP.NET Core sử dụng claim role chính xác
         };
     });
 

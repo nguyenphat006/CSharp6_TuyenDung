@@ -45,5 +45,39 @@ namespace TuyenDungAPI.Controllers.System
             var response = await _roleService.CreateRoleAsync(request);
             return StatusCode(response.Status, response);
         }
+
+        /// <summary>
+        /// Cập nhật vai trò
+        /// </summary>
+        [HttpPut("{id}")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> UpdateRole(Guid id, [FromBody] UpdateRoleRequest request)
+        {
+            if (!ModelState.IsValid)
+            {
+                var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
+                return BadRequest(new ApiResponse<object>(false, 400, null, string.Join(", ", errors)));
+            }
+
+            var response = await _roleService.UpdateRoleAsync(id, request);
+            return StatusCode(response.Status, response);
+        }
+
+        /// <summary>
+        /// Xóa một hoặc nhiều vai trò
+        /// </summary>
+        [HttpDelete]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> DeleteRoles([FromBody] DeleteRolesRequest request)
+        {
+            if (!ModelState.IsValid)
+            {
+                var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
+                return BadRequest(new ApiResponse<object>(false, 400, null, string.Join(", ", errors)));
+            }
+
+            var response = await _roleService.DeleteRolesAsync(request);
+            return StatusCode(response.Status, response);
+        }
     }
 }

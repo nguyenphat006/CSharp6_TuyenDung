@@ -12,7 +12,7 @@ namespace TuyenDungAPI.Controllers
 {
     [Route("api/users")]
     [ApiController]
-    [Authorize] // 🔐 Yêu cầu xác thực token
+    [Authorize(Roles = "Admin")]
     public class UserController : ControllerBase
     {
         private readonly UserService _userService;
