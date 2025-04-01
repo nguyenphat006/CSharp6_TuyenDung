@@ -84,7 +84,8 @@ builder.Services.AddAuthorization(); // Để sử dụng [Authorize]
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<EmailService>();
 builder.Services.AddScoped<UserService>();
-
+builder.Services.AddScoped<RoleService>();  
+                                                
 var app = builder.Build();
 
 // 🔥 Kích hoạt CORS

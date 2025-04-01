@@ -7,7 +7,8 @@ namespace TuyenDungAPI.Model.User
     {
         [Key]
         public Guid Id { get; set; } = Guid.NewGuid();
-        public string Name { get; set; } = string.Empty;
+        [Required, MaxLength(50)]
+        public string Name { get; set; } = string.Empty;                
         public ICollection<UserRole> UserRoles { get; set; } = new List<UserRole>();
     }
 }

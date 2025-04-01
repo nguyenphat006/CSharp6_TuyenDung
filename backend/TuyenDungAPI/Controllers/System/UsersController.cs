@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using TuyenDungAPI.Model.ModelBase;
 using TuyenDungAPI.Model.User;
@@ -44,7 +45,7 @@ namespace TuyenDungAPI.Controllers
         /// Tạo người dùng mới
         /// </summary>
         [HttpPost]
-        //[Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> CreateUser([FromBody] CreateUserRequest request)
         {
             if (!ModelState.IsValid)
@@ -57,10 +58,59 @@ namespace TuyenDungAPI.Controllers
             return StatusCode(response.Status, response);
         }
 
+        /// <summary>
+        /// Cập nhật thông tin người dùng
+        /// </summary>
         [HttpPatch]
-        public async Task<IActionResult> UpdateUser([FromBody] CreateUserRequest request)
-        {
+        [Authorize]
+        public async Task<IActionResult> UpdateUser([FromBody] UpdateUserRequest request)
+        {                                                                   
+            if (!ModelState.IsValid)
+            {
+                var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
+                return BadRequest(new ApiResponse<object>(false, 400, null, string.Join(", ", errors)));
+            }
 
+            // Kiểm tra quyền: chỉ Admin hoặc chính người dùng đó mới được cập nhật
+            var currentUserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var userRole = User.FindFirst(ClaimTypes.Role)?.Value;                                                              
+
+            if (userRole != "Admin" && currentUserId != request.Id.ToString())
+            {                   
+                return Forbid();
+            }
+
+            var response = await _userService.UpdateUserAsync(request);
+            return StatusCode(response.Status, response);
+        }
+
+
+        /// <summary>
+        /// Xóa một hoặc nhiều người dùng
+        /// </summary>
+        [HttpDelete]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> DeleteUsers([FromBody] DeleteUserRequest request)
+        {
+            if (!ModelState.IsValid)
+            {
+                var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
+                return BadRequest(new ApiResponse<object>(false, 400, null, string.Join(", ", errors)));
+            }
+
+            var response = await _userService.DeleteUsersAsync(request.UserIds);
+            return StatusCode(response.Status, response);
+        }
+
+        /// <summary>
+        /// Xóa một người dùng theo ID
+        /// </summary>
+        [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> DeleteUser(Guid id)
+        {
+            var response = await _userService.DeleteUsersAsync(new List<Guid> { id });
+            return StatusCode(response.Status, response);
         }
     }
 }

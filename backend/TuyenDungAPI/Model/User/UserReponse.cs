@@ -27,4 +27,22 @@ namespace TuyenDungAPI.Model.User
         }
     }
 
+    // Thêm vào Model/User/UserResponse.cs
+    public class DeleteUserResult
+    {
+        public Guid UserId { get; set; }
+        public bool Success { get; set; }
+        public string Message { get; set; } = string.Empty;
+        public string? UserName { get; set; }
+        public string? UserEmail { get; set; }
+    }
+
+    public class DeleteUsersResponse
+    {
+        public int TotalRequested { get; set; }
+        public int DeletedCount { get; set; }
+        public int NotFoundCount { get; set; }
+        public List<DeleteUserResult> DeleteResults { get; set; } = new List<DeleteUserResult>();
+    }
+
 }
