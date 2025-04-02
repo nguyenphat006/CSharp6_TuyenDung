@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { DataTableRole } from "./ui/DataTableRole";
 import { AddRoleForm } from "./ui/AddRoleForm";
@@ -23,6 +23,7 @@ export default function RolesPage() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedRole, setSelectedRole] = useState<Role | null>(null);
+  const [selectedRoles, setSelectedRoles] = useState<string[]>([]);
 
   const fetchRoles = async () => {
     try {
@@ -98,6 +99,34 @@ export default function RolesPage() {
     }
   };
 
+  const handleDeleteMultipleRoles = async (roleIds: string[]) => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch("https://localhost:7152/api/Roles", {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ roleIds }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Lỗi khi xóa vai trò");
+      }
+
+      const data = await response.json();
+      toast.success(`Đã xóa ${data.data.deletedCount} vai trò thành công`);
+      setSelectedRoles([]); // Reset selected roles
+      // Refresh data
+      const updatedRoles = roles.filter(role => !roleIds.includes(role.id));
+      setRoles(updatedRoles);
+    } catch (error) {
+      console.error("Lỗi khi xóa vai trò:", error);
+      toast.error("Có lỗi xảy ra khi xóa vai trò");
+    }
+  };
+
   const handleEditRole = (role: Role) => {
     setSelectedRole(role);
     setIsEditDialogOpen(true);
@@ -110,19 +139,33 @@ export default function RolesPage() {
   }
 
   return (
-    <div className="container mx-auto py-6">
-      <div className="flex justify-between items-center mb-6">
+    <div className="container mx-auto py-10">
+      <div className="flex justify-between items-center mb-4">
         <h1 className="text-2xl font-bold">Quản lý vai trò</h1>
-        <Button onClick={() => setIsAddDialogOpen(true)}>
-          <Plus className="mr-2 h-4 w-4" />
-          Thêm vai trò
-        </Button>
+        <div className="flex gap-2">
+          {selectedRoles.length > 0 && (
+            <Button
+              variant="destructive"
+              onClick={() => handleDeleteMultipleRoles(selectedRoles)}
+              className="flex items-center gap-2"
+            >
+              <Trash2 className="h-4 w-4" />
+              Xóa {selectedRoles.length} vai trò
+            </Button>
+          )}
+          <Button onClick={() => setIsAddDialogOpen(true)} className="flex items-center gap-2">
+            <Plus className="h-4 w-4" />
+            Thêm vai trò
+          </Button>
+        </div>
       </div>
 
       <DataTableRole
-        roles={roles}
-        onDeleteRole={handleDeleteRole}
+        data={roles}
+        onDelete={handleDeleteRole}
         onEditRole={handleEditRole}
+        selectedRoles={selectedRoles}
+        setSelectedRoles={setSelectedRoles}
       />
 
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
