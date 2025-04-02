@@ -85,10 +85,10 @@ export default function RolesPage() {
 
   const handleDeleteRole = async (id: string) => {
     try {
-      const response = await deleteRole(id);
+      const response = await deleteRole([id]);
       if (response.result) {
         await fetchRoles();
-        toast.success(response.message || "Xóa vai trò thành công");
+        toast.success(response.message || `Đã xóa ${response.data.deletedCount} vai trò thành công`);
       } else {
         toast.error(response.message || "Có lỗi xảy ra khi xóa vai trò");
       }
