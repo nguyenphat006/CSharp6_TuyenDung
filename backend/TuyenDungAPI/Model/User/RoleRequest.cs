@@ -1,14 +1,15 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using TuyenDungAPI.Model.ModelBase;
 
 namespace TuyenDungAPI.Model.User
 {
-    public class CreateRoleRequest
+    public class CreateRoleRequest: BaseRequestEntity
     {
         [Required(ErrorMessage = "Tên vai trò là bắt buộc")]
         [MaxLength(50, ErrorMessage = "Tên vai trò không được vượt quá 50 ký tự")]
         public string Name { get; set; } = string.Empty;
     }
-    public class UpdateRoleRequest
+    public class UpdateRoleRequest : BaseRequestEntity
     {
         [Required(ErrorMessage = "Tên vai trò là bắt buộc")]
         [MaxLength(100, ErrorMessage = "Tên vai trò không được vượt quá 100 ký tự")]

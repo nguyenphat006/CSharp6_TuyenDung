@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System.Security.Claims;
+using Microsoft.EntityFrameworkCore;
 using TuyenDungAPI.Database;
 using TuyenDungAPI.Model.ModelBase;
 using TuyenDungAPI.Model.User;
@@ -17,9 +18,11 @@ namespace TuyenDungAPI.Service
         // RoleService.cs - Thêm phương thức GetAllRolesAsync
         public async Task<ApiResponse<List<RoleResponse>>> GetAllRolesAsync()
         {
-            var roles = await _dbContext.Roles.ToListAsync();
+            var roles = await _dbContext.Roles
+                .Where(r => !r.IsDeleted) // Chỉ lấy các vai trò có IsDeleted = false
+                .ToListAsync();
 
-            if (roles == null || !roles.Any())
+            if (!roles.Any())
             {
                 return new ApiResponse<List<RoleResponse>>(true, 200, new List<RoleResponse>(), "Không có vai trò nào trong hệ thống!");
             }
@@ -27,9 +30,9 @@ namespace TuyenDungAPI.Service
             var responseList = roles.Select(r => new RoleResponse(r)).ToList();
             return new ApiResponse<List<RoleResponse>>(true, 200, responseList, "Lấy danh sách vai trò thành công!");
         }
-
-        public async Task<ApiResponse<RoleResponse>> CreateRoleAsync(CreateRoleRequest request)
+        public async Task<ApiResponse<RoleResponse>> CreateRoleAsync(CreateRoleRequest request, ClaimsPrincipal currentUser)
         {
+            string createdBy = currentUser?.Identity?.Name ?? "System";
             // Kiểm tra tên vai trò đã tồn tại chưa
             if (await _dbContext.Roles.AnyAsync(r => r.Name.ToLower() == request.Name.ToLower()))
             {
@@ -40,7 +43,9 @@ namespace TuyenDungAPI.Service
             var role = new Role
             {
                 Name = request.Name,
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.UtcNow,
+                IsActive = request.IsActive,
+                CreatedBy = createdBy
             };
 
             _dbContext.Roles.Add(role);
@@ -50,9 +55,9 @@ namespace TuyenDungAPI.Service
             var response = new RoleResponse(role);
             return new ApiResponse<RoleResponse>(true, 201, response, "Tạo vai trò thành công!");
         }
-
-        public async Task<ApiResponse<RoleResponse>> UpdateRoleAsync(Guid id, UpdateRoleRequest request)
+        public async Task<ApiResponse<RoleResponse>> UpdateRoleAsync(Guid id, UpdateRoleRequest request, ClaimsPrincipal currentUser)
         {
+            string updatedBy = currentUser?.Identity?.Name ?? "System";
             // Tìm vai trò cần cập nhật
             var role = await _dbContext.Roles.FindAsync(id);
             if (role == null)
@@ -69,7 +74,8 @@ namespace TuyenDungAPI.Service
             // Cập nhật thông tin vai trò
             role.Name = request.Name;
             role.UpdatedAt = DateTime.UtcNow;
-
+            role.IsActive = request.IsActive;
+            role.UpdatedBy = updatedBy;
             // Lưu thay đổi
             _dbContext.Roles.Update(role);
             await _dbContext.SaveChangesAsync();
@@ -78,23 +84,23 @@ namespace TuyenDungAPI.Service
             var response = new RoleResponse(role);
             return new ApiResponse<RoleResponse>(true, 200, response, "Cập nhật vai trò thành công!");
         }
-
-        public async Task<ApiResponse<DeleteRolesResponse>> DeleteRolesAsync(DeleteRolesRequest request)
+        public async Task<ApiResponse<DeleteRolesResponse>> DeleteRolesAsync(DeleteRolesRequest request, ClaimsPrincipal currentUser)
         {
+            var deletedBy = currentUser?.Identity?.Name ?? "System";
             // Kiểm tra nếu danh sách rỗng
             if (request.RoleIds == null || !request.RoleIds.Any())
             {
                 return new ApiResponse<DeleteRolesResponse>(false, 400, null, "Không có vai trò nào được chỉ định để xóa!");
             }
 
-            // Tìm các vai trò cần xóa
+            // Tìm các vai trò cần cập nhật IsDeleted
             var rolesToDelete = await _dbContext.Roles
-                .Where(r => request.RoleIds.Contains(r.Id))
+                .Where(r => request.RoleIds.Contains(r.Id) && !r.IsDeleted) // Chỉ lấy vai trò chưa bị xóa
                 .ToListAsync();
 
             if (!rolesToDelete.Any())
             {
-                return new ApiResponse<DeleteRolesResponse>(false, 404, null, "Không tìm thấy vai trò nào với ID đã cung cấp!");
+                return new ApiResponse<DeleteRolesResponse>(false, 404, null, "Không tìm thấy vai trò nào hợp lệ để xóa!");
             }
 
             // Kiểm tra nếu có vai trò đang được sử dụng bởi người dùng
@@ -116,9 +122,14 @@ namespace TuyenDungAPI.Service
                     $"Không thể xóa vai trò đang được sử dụng: {string.Join(", ", roleNamesInUse)}");
             }
 
-            // Xóa các vai trò
-            _dbContext.Roles.RemoveRange(rolesToDelete);
-            await _dbContext.SaveChangesAsync();
+            // Cập nhật IsDeleted = true thay vì xóa khỏi DB
+            foreach (var role in rolesToDelete)
+            {
+                role.IsDeleted = true;
+                role.DeletedBy = deletedBy;
+            }
+
+            await _dbContext.SaveChangesAsync(); // Lưu thay đổi
 
             // Tạo response
             var deletedRoleNames = rolesToDelete.Select(r => r.Name).ToList();
@@ -129,10 +140,11 @@ namespace TuyenDungAPI.Service
             };
 
             var message = rolesToDelete.Count == 1
-                ? $"Đã xóa vai trò '{deletedRoleNames[0]}' thành công!"
-                : $"Đã xóa {rolesToDelete.Count} vai trò thành công!";
+                ? $"Xóa vai trò '{deletedRoleNames[0]}' thành công!"
+                : $"Xóa {rolesToDelete.Count} vai trò thành công!";
 
             return new ApiResponse<DeleteRolesResponse>(true, 200, response, message);
         }
+
     }
 }
