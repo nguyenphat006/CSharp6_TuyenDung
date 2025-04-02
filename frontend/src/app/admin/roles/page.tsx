@@ -24,15 +24,13 @@ export default function RolesPage() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedRole, setSelectedRole] = useState<Role | null>(null);
 
-  useEffect(() => {
-    fetchRoles();
-  }, []);
-
   const fetchRoles = async () => {
     try {
       const response = await getRoles();
+      console.log('API Response:', response); // Debug log
       if (response.result) {
         setRoles(response.data);
+        console.log('Roles set:', response.data); // Debug log
       } else {
         toast.error(response.message || "Có lỗi xảy ra khi tải danh sách vai trò");
       }
@@ -43,6 +41,10 @@ export default function RolesPage() {
       setIsLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchRoles();
+  }, []);
 
   const handleAddRole = async (data: { name: string; isActive: boolean }) => {
     try {
@@ -100,6 +102,8 @@ export default function RolesPage() {
     setSelectedRole(role);
     setIsEditDialogOpen(true);
   };
+
+  console.log('Current roles state:', roles); // Debug log
 
   if (isLoading) {
     return <div>Đang tải...</div>;

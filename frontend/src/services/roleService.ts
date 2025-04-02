@@ -24,16 +24,32 @@ interface SingleRoleResponse {
 }
 
 export const getRoles = async (): Promise<RoleResponse> => {
-  const token = localStorage.getItem('token');
-  
-  const response = await fetcher("/Roles", {
-    method: "GET",
-    headers: {
-      "Authorization": `Bearer ${token}`
-    }
-  });
+  try {
+    const token = localStorage.getItem('token');
+    console.log('Using token:', token); // Debug log
 
-  return response;
+    const response = await fetch('https://localhost:7152/api/Roles', {
+      method: "GET",
+      headers: {
+        "Authorization": `Bearer ${token}`,
+        "Content-Type": "application/json"
+      }
+    });
+
+    console.log('Raw response:', response); // Debug log
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    console.log('Parsed response data:', data); // Debug log
+
+    return data;
+  } catch (error) {
+    console.error('Error in getRoles:', error);
+    throw error;
+  }
 };
 
 export const createRole = async (data: { name: string; isActive: boolean }): Promise<SingleRoleResponse> => {
