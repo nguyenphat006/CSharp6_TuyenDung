@@ -54,42 +54,67 @@ namespace TuyenDungAPI.Service
                 return new ApiResponse<RegisterResponse>(false, 400, null, "Email đã tồn tại!");
             }
 
+            // Tạo user mới
             string passwordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
             string refreshToken = GenerateRefreshToken();
-
             var user = new User
             {
                 Name = request.Name,
                 Email = request.Email,
                 PasswordHash = passwordHash,
-                RefreshToken = refreshToken, // 🔥 Lưu Refresh Token vào DB
-                RefreshTokenExpiry = DateTime.UtcNow.AddDays(7), // 🔥 Hạn sử dụng 7 ngày
+                RefreshToken = refreshToken,
+                RefreshTokenExpiry = DateTime.UtcNow.AddDays(7),
                 CreatedAt = DateTime.UtcNow
             };
 
+            // Tìm kiếm Role "User" trong DB
+            var userRole = await _dbContext.Roles.FirstOrDefaultAsync(r => r.Name == "User");
+
+            // Nếu không tồn tại, tạo role mới
+            if (userRole == null)
+            {
+                userRole = new Role
+                {
+                    Name = "User",
+                };
+                _dbContext.Roles.Add(userRole);
+                await _dbContext.SaveChangesAsync();
+            }
+
+            // Thêm user vào DB
             _dbContext.Users.Add(user);
+            await _dbContext.SaveChangesAsync();
+
+            // Tạo UserRole để liên kết User với Role
+            var userRoleAssignment = new UserRole
+            {
+                UserId = user.Id,
+                RoleId = userRole.Id
+            };
+
+            _dbContext.UserRoles.Add(userRoleAssignment);
             await _dbContext.SaveChangesAsync();
 
             return new ApiResponse<RegisterResponse>(true, 201, new RegisterResponse("Đăng ký thành công!"));
         }
-
-
         // LOGIN ACCOUNT
         public async Task<ApiResponse<LoginResponse>> LoginAsync(string email, string password)
         {
             var user = await _dbContext.Users.FirstOrDefaultAsync(u => u.Email == email);
+
             if (user == null || !BCrypt.Net.BCrypt.Verify(password, user.PasswordHash))
             {
                 return new ApiResponse<LoginResponse>(false, 401, null, "Email hoặc mật khẩu không đúng!");
             }
 
+            // Sử dụng hàm GenerateJwtToken mới với đầy đủ role từ bảng UserRoles
+            string token = await GenerateJwtToken(user);
             string refreshToken = GenerateRefreshToken();
-            string token = GenerateToken(user);
 
-            // ✅ Cập nhật Refresh Token & hạn sử dụng vào database
+            // Cập nhật Refresh Token & hạn sử dụng vào database
             user.RefreshToken = refreshToken;
             user.RefreshTokenExpiry = DateTime.UtcNow.AddDays(7);
-            await _dbContext.SaveChangesAsync(); // 🔥 Lưu thay đổi vào DB ngay
+            await _dbContext.SaveChangesAsync();
 
             var loginResponse = new LoginResponse(user, token, refreshToken);
             return new ApiResponse<LoginResponse>(true, 200, loginResponse, "Đăng nhập thành công!");
@@ -180,7 +205,7 @@ namespace TuyenDungAPI.Service
         }
 
         #region TOKEN
-        private string GenerateRefreshToken()
+            private string GenerateRefreshToken()
             {
                 var randomNumber = new byte[32];
                 using (var rng = RandomNumberGenerator.Create())
@@ -221,22 +246,27 @@ namespace TuyenDungAPI.Service
             if (principal == null)
                 return new ApiResponse<RefreshTokenResponse>(false, 401, null, "Token không hợp lệ!");
 
-            string email = principal.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value!;
-            var user = await _dbContext.Users.FirstOrDefaultAsync(u => u.Email == email);
+            string userIdStr = principal.Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.Sub)?.Value!;
+
+            if (!Guid.TryParse(userIdStr, out Guid userId))
+                return new ApiResponse<RefreshTokenResponse>(false, 401, null, "Token không hợp lệ!");
+
+            var user = await _dbContext.Users
+                .FirstOrDefaultAsync(u => u.Id == userId);
 
             if (user == null || user.RefreshToken != refreshToken || user.RefreshTokenExpiry < DateTime.UtcNow)
             {
                 return new ApiResponse<RefreshTokenResponse>(false, 401, null, "Refresh Token không hợp lệ hoặc đã hết hạn!");
             }
 
-            // ✅ Tạo Token mới
-            string newToken = GenerateToken(user);
+            // Sử dụng hàm GenerateJwtToken mới để tạo token với đầy đủ roles
+            string newToken = await GenerateJwtToken(user);
             string newRefreshToken = GenerateRefreshToken();
 
-            // ✅ Cập nhật Refresh Token và hạn sử dụng
+            // Cập nhật Refresh Token và hạn sử dụng
             user.RefreshToken = newRefreshToken;
             user.RefreshTokenExpiry = DateTime.UtcNow.AddDays(7);
-            await _dbContext.SaveChangesAsync(); // 🔥 Lưu thay đổi vào database
+            await _dbContext.SaveChangesAsync();
 
             var refreshTokenResponse = new RefreshTokenResponse
             {
@@ -251,30 +281,29 @@ namespace TuyenDungAPI.Service
 
 
 
-        private string GenerateToken(User user)
-        {
-            var jwtSettings = _config.GetSection("JwtSettings");
-            var secretKey = Encoding.UTF8.GetBytes(jwtSettings["SecretKey"]);
+        //private string GenerateToken(User user)
+        //{
+        //    var jwtSettings = _config.GetSection("JwtSettings");
+        //    var secretKey = Encoding.UTF8.GetBytes(jwtSettings["SecretKey"]);
 
-            var claims = new List<Claim>
-                {
-                    new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
-                    new Claim(JwtRegisteredClaimNames.Email, user.Email),
-                    new Claim(ClaimTypes.Role, "User") // Default role
-                };
+        //    var claims = new List<Claim>
+        //        {
+        //            new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
+        //            new Claim(JwtRegisteredClaimNames.Email, user.Email),
+        //            new Claim(ClaimTypes.Role, "User") // Default role
+        //        };
 
-            var token = new JwtSecurityToken(
-                issuer: jwtSettings["Issuer"],
-                audience: jwtSettings["Audience"],
-                claims: claims,
-                expires: DateTime.UtcNow.AddMinutes(Convert.ToDouble(jwtSettings["ExpireMinutes"])),
-                signingCredentials: new SigningCredentials(new SymmetricSecurityKey(secretKey), SecurityAlgorithms.HmacSha256)
-            );
+        //    var token = new JwtSecurityToken(
+        //        issuer: jwtSettings["Issuer"],
+        //        audience: jwtSettings["Audience"],
+        //        claims: claims,
+        //        expires: DateTime.UtcNow.AddMinutes(Convert.ToDouble(jwtSettings["ExpireMinutes"])),
+        //        signingCredentials: new SigningCredentials(new SymmetricSecurityKey(secretKey), SecurityAlgorithms.HmacSha256)
+        //    );
 
-            return new JwtSecurityTokenHandler().WriteToken(token);
-        }
+        //    return new JwtSecurityTokenHandler().WriteToken(token);
+        //}
 
-        // Giả sử bạn có một AuthService hoặc tương tự
         public async Task<string> GenerateJwtToken(User user)
         {
             // Lấy danh sách roles của user từ bảng UserRoles
@@ -299,12 +328,12 @@ namespace TuyenDungAPI.Service
             }
 
             // Tiếp tục tạo token như bình thường
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]));
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["JwtSettings:SecretKey"]));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
             var token = new JwtSecurityToken(
-                _config["Jwt:Issuer"],
-                _config["Jwt:Audience"],
+                _config["JwtSettings:Issuer"],
+                _config["JwtSettings:Audience"],
                 claims,
                 expires: DateTime.Now.AddHours(3),
                 signingCredentials: creds);

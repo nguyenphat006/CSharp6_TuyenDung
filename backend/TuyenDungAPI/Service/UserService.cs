@@ -15,12 +15,20 @@ namespace TuyenDungAPI.Service
 
         public async Task<ApiResponse<List<UserResponse>>> GetAllUsersAsync()
         {
-            var users = await _dbContext.Users.ToListAsync();
+            var users = await _dbContext.Users
+                .Where(u => !u.IsDeleted) // Lọc chỉ lấy người dùng chưa bị xóa
+                .ToListAsync();
+
+            if (!users.Any())
+            {
+                return new ApiResponse<List<UserResponse>>(true, 200, new List<UserResponse>(), "Không có người dùng nào trong hệ thống!");
+            }
 
             var response = users.Select(u => new UserResponse(u)).ToList();
 
             return new ApiResponse<List<UserResponse>>(true, 200, response, "Lấy danh sách người dùng thành công");
         }
+
 
         public async Task<ApiResponse<UserResponse>> GetUserByIdAsync(Guid id)
         {
@@ -52,18 +60,40 @@ namespace TuyenDungAPI.Service
                 Age = request.Age,
                 Gender = request.Gender,
                 PasswordHash = passwordHash,
-                Role = request.Role,
+                IsActive = request.IsActive, // Mặc định là active nếu không truyền vào
                 CreatedAt = DateTime.UtcNow
             };
 
+            // Thêm user vào DB
             _dbContext.Users.Add(user);
             await _dbContext.SaveChangesAsync();
 
-            // Sử dụng UserResponse để tạo response
-            var response = new UserResponse(user);
+            // Tìm kiếm Role trong DB dựa trên role được yêu cầu
+            var role = await _dbContext.Roles.FirstOrDefaultAsync(r => r.Name == request.Role);
 
+            // Nếu không tồn tại, tạo role mới
+            if (role == null)
+            {
+                role = new Role { Name = request.Role };
+                _dbContext.Roles.Add(role);
+                await _dbContext.SaveChangesAsync();
+            }
+
+            // Tạo UserRole để liên kết User với Role
+            var userRoleAssignment = new UserRole
+            {
+                UserId = user.Id,
+                RoleId = role.Id
+            };
+
+            _dbContext.UserRoles.Add(userRoleAssignment);
+            await _dbContext.SaveChangesAsync();
+
+            // Tạo response
+            var response = new UserResponse(user);
             return new ApiResponse<UserResponse>(true, 201, response, "Tạo người dùng thành công!");
         }
+
 
         public async Task<ApiResponse<UserResponse>> UpdateUserAsync(UpdateUserRequest request)
         {
@@ -94,22 +124,52 @@ namespace TuyenDungAPI.Service
             if (!string.IsNullOrEmpty(request.Gender))
                 user.Gender = request.Gender;
 
-            if (!string.IsNullOrEmpty(request.Role))
-                user.Role = request.Role;
+            if (request.IsActive)
+                user.IsActive = request.IsActive;
 
             // Cập nhật mật khẩu nếu có
             if (!string.IsNullOrEmpty(request.Password))
                 user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
 
-            // Cập nhật thời gian
+            // Kiểm tra role nếu có thay đổi
+            if (!string.IsNullOrEmpty(request.Role))
+            {
+                // Lấy role mới
+                var role = await _dbContext.Roles.FirstOrDefaultAsync(r => r.Name == request.Role);
+
+                // Nếu không tồn tại, tạo mới
+                if (role == null)
+                {
+                    role = new Role { Name = request.Role };
+                    _dbContext.Roles.Add(role);
+                    await _dbContext.SaveChangesAsync();
+                }
+
+                // Xóa các vai trò cũ của user
+                var existingRoles = await _dbContext.UserRoles.Where(ur => ur.UserId == user.Id).ToListAsync();
+                _dbContext.UserRoles.RemoveRange(existingRoles);
+
+                // Thêm role mới cho user
+                var userRoleAssignment = new UserRole
+                {
+                    UserId = user.Id,
+                    RoleId = role.Id
+                };
+
+                _dbContext.UserRoles.Add(userRoleAssignment);
+            }
+
+            // Cập nhật thời gian sửa đổi
             user.UpdatedAt = DateTime.UtcNow;
 
+            // Lưu thay đổi vào database
             await _dbContext.SaveChangesAsync();
 
             // Tạo response
             var response = new UserResponse(user);
             return new ApiResponse<UserResponse>(true, 200, response, "Cập nhật thông tin người dùng thành công!");
         }
+
 
 
         public async Task<ApiResponse<DeleteUsersResponse>> DeleteUsersAsync(List<Guid> userIds)
@@ -123,9 +183,15 @@ namespace TuyenDungAPI.Service
             var notFoundIds = new List<Guid>();
             var deleteResults = new List<DeleteUserResult>();
 
+            // Lấy danh sách người dùng hợp lệ (chưa bị xóa trước đó)
+            var usersToDelete = await _dbContext.Users
+                .Where(u => userIds.Contains(u.Id) && !u.IsDeleted)
+                .ToListAsync();
+
+            // Duyệt qua từng ID được yêu cầu
             foreach (var id in userIds)
             {
-                var user = await _dbContext.Users.FindAsync(id);
+                var user = usersToDelete.FirstOrDefault(u => u.Id == id);
                 if (user == null)
                 {
                     notFoundIds.Add(id);
@@ -133,23 +199,25 @@ namespace TuyenDungAPI.Service
                     {
                         UserId = id,
                         Success = false,
-                        Message = "Không tìm thấy người dùng"
+                        Message = "Không tìm thấy người dùng hoặc đã bị xóa"
                     });
                     continue;
                 }
 
-                _dbContext.Users.Remove(user);
+                // Cập nhật trạng thái IsDeleted thay vì xóa khỏi DB
+                user.IsDeleted = true;
                 deletedCount++;
                 deleteResults.Add(new DeleteUserResult
                 {
                     UserId = id,
                     Success = true,
-                    Message = "Xóa thành công",
+                    Message = "Đã vô hiệu hóa thành công",
                     UserName = user.Name,
                     UserEmail = user.Email
                 });
             }
 
+            // Lưu thay đổi vào database
             await _dbContext.SaveChangesAsync();
 
             var response = new DeleteUsersResponse
@@ -160,7 +228,7 @@ namespace TuyenDungAPI.Service
                 DeleteResults = deleteResults
             };
 
-            string message = $"Đã xóa {deletedCount}/{userIds.Count} người dùng";
+            string message = $"Đã vô hiệu hóa {deletedCount}/{userIds.Count} người dùng";
             if (notFoundIds.Any())
             {
                 message += $", không tìm thấy {notFoundIds.Count} người dùng";
@@ -172,6 +240,7 @@ namespace TuyenDungAPI.Service
                 response,
                 message);
         }
+
     }
 }
 

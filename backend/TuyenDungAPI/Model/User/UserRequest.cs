@@ -1,12 +1,13 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using TuyenDungAPI.Model.ModelBase;
 
 namespace TuyenDungAPI.Model.User
 {
-    public class UserRequest
+    public class UserRequest: BaseEntity
     {
         public Guid Id { get; set; }
     }
-    public class CreateUserRequest
+    public class CreateUserRequest : BaseEntity
     {
         [Required(ErrorMessage = "Tên là bắt buộc")]
         [MaxLength(100, ErrorMessage = "Tên không được vượt quá 100 ký tự")]
@@ -30,7 +31,7 @@ namespace TuyenDungAPI.Model.User
         public string Role { get; set; } = "User";
     }
 
-    public class UpdateUserRequest
+    public class UpdateUserRequest : BaseEntity
     {
         [Required(ErrorMessage = "ID người dùng là bắt buộc")]
         public Guid Id { get; set; }
@@ -50,10 +51,11 @@ namespace TuyenDungAPI.Model.User
         public int? Age { get; set; }
         public string? Gender { get; set; }
         public string? Role { get; set; }
+
     }
 
     // Thêm vào Model/User/UserRequest.cs
-    public class DeleteUserRequest
+    public class DeleteUserRequest : BaseEntity
     {
         [Required(ErrorMessage = "Cần phải có ít nhất một ID người dùng")]
         public List<Guid> UserIds { get; set; } = new List<Guid>();

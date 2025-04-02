@@ -45,7 +45,6 @@ namespace TuyenDungAPI.Controllers
         /// Tạo người dùng mới
         /// </summary>
         [HttpPost]
-        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> CreateUser([FromBody] CreateUserRequest request)
         {
             if (!ModelState.IsValid)
@@ -62,7 +61,6 @@ namespace TuyenDungAPI.Controllers
         /// Cập nhật thông tin người dùng
         /// </summary>
         [HttpPatch]
-        [Authorize]
         public async Task<IActionResult> UpdateUser([FromBody] UpdateUserRequest request)
         {                                                                   
             if (!ModelState.IsValid)
@@ -89,7 +87,6 @@ namespace TuyenDungAPI.Controllers
         /// Xóa một hoặc nhiều người dùng
         /// </summary>
         [HttpDelete]
-        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteUsers([FromBody] DeleteUserRequest request)
         {
             if (!ModelState.IsValid)
@@ -106,7 +103,6 @@ namespace TuyenDungAPI.Controllers
         /// Xóa một người dùng theo ID
         /// </summary>
         [HttpDelete("{id}")]
-        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteUser(Guid id)
         {
             var response = await _userService.DeleteUsersAsync(new List<Guid> { id });

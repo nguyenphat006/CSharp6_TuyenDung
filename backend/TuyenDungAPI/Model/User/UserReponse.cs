@@ -1,7 +1,8 @@
 ﻿using System;
+using TuyenDungAPI.Model.ModelBase;
 namespace TuyenDungAPI.Model.User
 {
-    public class UserResponse
+    public class UserResponse: BaseEntity
     {
         public Guid Id { get; set; }
         public string Name { get; set; } = string.Empty;
@@ -9,8 +10,8 @@ namespace TuyenDungAPI.Model.User
         public int Age { get; set; }
         public string Gender { get; set; } = string.Empty;
         public string Role { get; set; } = string.Empty;
-        public DateTime CreatedAt { get; set; }
-        public DateTime? UpdatedAt { get; set; }
+        //public DateTime CreatedAt { get; set; }
+        //public DateTime? UpdatedAt { get; set; }
 
         public UserResponse() { }
 
@@ -28,7 +29,7 @@ namespace TuyenDungAPI.Model.User
     }
 
     // Thêm vào Model/User/UserResponse.cs
-    public class DeleteUserResult
+    public class DeleteUserResult : BaseEntity
     {
         public Guid UserId { get; set; }
         public bool Success { get; set; }
@@ -37,7 +38,7 @@ namespace TuyenDungAPI.Model.User
         public string? UserEmail { get; set; }
     }
 
-    public class DeleteUsersResponse
+    public class DeleteUsersResponse : BaseEntity
     {
         public int TotalRequested { get; set; }
         public int DeletedCount { get; set; }
