@@ -18,6 +18,11 @@ export type MenuItem = {
   isOpen?: boolean;
 };
 
+export type MenuSection = {
+  sectionTitle: string;
+  items: MenuItem[];
+};
+
 export type SidebarContextType = {
   isExpanded: boolean;
   isMobileOpen: boolean;

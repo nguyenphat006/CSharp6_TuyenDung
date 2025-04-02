@@ -5,7 +5,8 @@ import {
   MdSettings,
   MdBusinessCenter,
   MdWork,
-  MdPeople
+  MdPeople,
+  MdSecurity
 } from "react-icons/md";
 
 export const menuItems: MenuSection[] = [
@@ -36,6 +37,11 @@ export const menuItems: MenuSection[] = [
         title: "Quản lý người dùng",
         path: "/admin/users", 
         icon: MdPeople,
+      },
+      {
+        title: "Quản lý vai trò",
+        path: "/admin/roles",
+        icon: MdSecurity,
       }
     ]
   },
