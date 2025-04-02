@@ -133,6 +133,9 @@ export const forgotPassword = async (credentials: any) => { // chưa có forgotP
   const response = await fetcher("/users/", {
     method: "POST",
     body: JSON.stringify(credentials),
+    headers: {
+      "Content-Type": "application/json",
+    },
   }, true);
 
   return response;

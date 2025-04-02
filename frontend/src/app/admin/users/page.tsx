@@ -128,7 +128,7 @@ export default function UsersPage() {
             className="max-w-sm"
           />
         </div>
-        <div className="flex gap-4">
+        <div className="flex gap-4">                    
           <Select value={statusFilter} onValueChange={setStatusFilter}>
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Trạng thái" />

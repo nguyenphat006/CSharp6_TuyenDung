@@ -1,19 +1,9 @@
 "use client";
 
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -21,108 +11,109 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-
-const formSchema = z.object({
-  name: z.string().min(2, "Tên vai trò phải có ít nhất 2 ký tự"),
-  description: z.string().min(10, "Mô tả phải có ít nhất 10 ký tự"),
-  permissions: z.array(z.string()).min(1, "Vui lòng chọn ít nhất một quyền hạn"),
-});
-
-interface Role {
-  id: string;
-  name: string;
-  description: string;
-  permissions: string[];
-  createdAt: Date;
-  updatedAt: Date;
-}
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Role } from "./DataTableRole";
+import { toast } from "sonner";
 
 interface EditRoleFormProps {
-  role: Role;
-  onSubmit: (data: any) => void;
+  role: Role | null;
+  onUpdateRole: (data: { name: string; isActive: boolean }) => void;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
 }
 
-export function EditRoleForm({ role, onSubmit }: EditRoleFormProps) {
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      name: role.name,
-      description: role.description,
-      permissions: role.permissions,
-    },
+export function EditRoleForm({
+  role,
+  onUpdateRole,
+  open,
+  onOpenChange,
+}: EditRoleFormProps) {
+  const [loading, setLoading] = useState(false);
+  const [formData, setFormData] = useState({
+    name: "",
+    isActive: true,
   });
 
-  function handleSubmit(values: z.infer<typeof formSchema>) {
-    onSubmit(values);
-  }
+  useEffect(() => {
+    if (role) {
+      setFormData({
+        name: role.name,
+        isActive: role.isActive,
+      });
+    }
+  }, [role]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      await onUpdateRole(formData);
+      toast.success("Cập nhật thông tin vai trò thành công");
+      onOpenChange(false);
+    } catch (error) {
+      console.error("Error updating role:", error);
+      toast.error("Có lỗi xảy ra khi cập nhật thông tin");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-        <FormField
-          control={form.control}
-          name="name"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Tên vai trò</FormLabel>
-              <FormControl>
-                <Input placeholder="Nhập tên vai trò" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Chỉnh sửa vai trò</DialogTitle>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="name">Tên vai trò</Label>
+            <Input
+              id="name"
+              value={formData.name}
+              onChange={(e) =>
+                setFormData({ ...formData, name: e.target.value })
+              }
+              required
+            />
+          </div>
 
-        <FormField
-          control={form.control}
-          name="description"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Mô tả</FormLabel>
-              <FormControl>
-                <Textarea
-                  placeholder="Nhập mô tả vai trò"
-                  className="resize-none"
-                  {...field}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+          <div className="space-y-2">
+            <Label htmlFor="status">Trạng thái</Label>
+            <Select
+              value={formData.isActive ? "active" : "inactive"}
+              onValueChange={(value) =>
+                setFormData({ ...formData, isActive: value === "active" })
+              }
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Chọn trạng thái" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="active">Hoạt động</SelectItem>
+                <SelectItem value="inactive">Không hoạt động</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
 
-        <FormField
-          control={form.control}
-          name="permissions"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Quyền hạn</FormLabel>
-              <Select
-                onValueChange={(value) =>
-                  field.onChange([...field.value, value])
-                }
-              >
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Chọn quyền hạn" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  <SelectItem value="all">Tất cả</SelectItem>
-                  <SelectItem value="read">Đọc</SelectItem>
-                  <SelectItem value="write">Ghi</SelectItem>
-                  <SelectItem value="delete">Xóa</SelectItem>
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <Button type="submit" className="w-full">
-          Cập nhật vai trò
-        </Button>
-      </form>
-    </Form>
+          <div className="flex justify-end gap-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+            >
+              Hủy
+            </Button>
+            <Button type="submit" disabled={loading}>
+              {loading ? "Đang lưu..." : "Lưu thay đổi"}
+            </Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 } 

@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 import {
   Table,
   TableBody,
@@ -12,6 +11,8 @@ import {
 } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { format } from 'date-fns'
+import { vi } from 'date-fns/locale'
 import {
   Select,
   SelectContent,
@@ -34,27 +35,34 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { format } from 'date-fns'
-import { vi } from 'date-fns/locale'
-import type { Role } from "@/services/roleService"
+import { Role } from '@/services/roleService'
 
 interface DataTableRoleProps {
-  data: Role[]
-  onUpdateRole: (id: string, data: Partial<Role>) => void
+  roles: Role[]
   onDeleteRole: (id: string) => void
+  onEditRole: (role: Role) => void
 }
 
-export function DataTableRole({ data, onUpdateRole, onDeleteRole }: DataTableRoleProps) {
-  const router = useRouter()
+const formatDate = (dateString: string | null | undefined) => {
+  if (!dateString) return 'N/A';
+  try {
+    return format(new Date(dateString), 'dd/MM/yyyy', { locale: vi });
+  } catch (error) {
+    console.error('Error formatting date:', error);
+    return 'N/A';
+  }
+};
+
+export function DataTableRole({ roles, onDeleteRole, onEditRole }: DataTableRoleProps) {
   const [currentPage, setCurrentPage] = useState(1)
   const [rowsPerPage, setRowsPerPage] = useState(10)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [roleToDelete, setRoleToDelete] = useState<string | null>(null)
 
-  const totalPages = Math.ceil(data.length / rowsPerPage)
+  const totalPages = Math.ceil(roles.length / rowsPerPage)
   const startIndex = (currentPage - 1) * rowsPerPage
   const endIndex = startIndex + rowsPerPage
-  const currentData = data.slice(startIndex, endIndex)
+  const currentData = roles.slice(startIndex, endIndex)
 
   const handleDelete = (id: string) => {
     setRoleToDelete(id)
@@ -69,20 +77,17 @@ export function DataTableRole({ data, onUpdateRole, onDeleteRole }: DataTableRol
     }
   }
 
-  const handleEdit = (roleId: string) => {
-    router.push(`/admin/roles/${roleId}/edit`)
-  }
-
   return (
     <div className="space-y-4">
       <div className="rounded-md border">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-[50px]">STT</TableHead>
+              <TableHead>STT</TableHead>
               <TableHead>Tên vai trò</TableHead>
-              <TableHead>Ngày tạo</TableHead>
               <TableHead>Trạng thái</TableHead>
+              <TableHead>Người tạo</TableHead>
+              <TableHead>Thời gian tạo</TableHead>
               <TableHead className="w-[100px]">Thao tác</TableHead>
             </TableRow>
           </TableHeader>
@@ -92,12 +97,13 @@ export function DataTableRole({ data, onUpdateRole, onDeleteRole }: DataTableRol
                 <TableCell className="font-medium">{startIndex + index + 1}</TableCell>
                 <TableCell>{role.name}</TableCell>
                 <TableCell>
-                  {format(new Date(role.createdAt), 'dd/MM/yyyy', { locale: vi })}
-                </TableCell>
-                <TableCell>
-                  <Badge variant={role.isActive ? "success" : "destructive"}>
-                    {role.isActive ? "Hoạt động" : "Không hoạt động"}
+                  <Badge className={role.isActive ? 'bg-green-500' : 'bg-red-500'}>
+                    {role.isActive ? 'Hoạt động' : 'Không hoạt động'}
                   </Badge>
+                </TableCell>
+                <TableCell>{role.createdBy || 'N/A'}</TableCell>
+                <TableCell>
+                  {formatDate(role.createdAt)}
                 </TableCell>
                 <TableCell>
                   <DropdownMenu>
@@ -107,7 +113,7 @@ export function DataTableRole({ data, onUpdateRole, onDeleteRole }: DataTableRol
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => handleEdit(role.id)}>
+                      <DropdownMenuItem onClick={() => onEditRole(role)}>
                         <Pencil className="mr-2 h-4 w-4" />
                         Chỉnh sửa
                       </DropdownMenuItem>
