@@ -16,24 +16,52 @@ import { Button } from '@/components/ui/button'
 import { resetPasswordSchema } from '../schema/index'
 import Link from 'next/link'
 import { useReset } from './useReset'
+import { useSearchParams } from 'next/navigation'
+import { useEffect, useState } from 'react'
 
 export function ResetForm({ className, ...props }: React.ComponentPropsWithoutRef<'form'>) {
+  const searchParams = useSearchParams()
+  const [email, setEmail] = useState<string | null>(null)
+
+  useEffect(() => {
+    // Chỉ lấy email từ localStorage khi component được mount ở client
+    const emailFromStorage = localStorage.getItem('resetEmail')
+    setEmail(searchParams.get('email') || emailFromStorage)
+  }, [searchParams])
+
   // React Hook Form + Zod
   const form = useForm<z.infer<typeof resetPasswordSchema>>({
     resolver: zodResolver(resetPasswordSchema),
-    defaultValues: { password: '', confirmPassword: '' }
+    defaultValues: { 
+      password: '', 
+      confirmPassword: '' 
+    }
   })
 
   const { loading, onSubmit } = useReset()
 
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    console.log('Form submitted')
+    
+    const formData = form.getValues()
+    console.log('Form data:', formData)
+    
+    if (formData.password && formData.confirmPassword) {
+      await onSubmit(formData)
+    } else {
+      console.log('Form validation failed')
+    }
+  }
+
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className={cn('flex flex-col gap-6', className)} {...props}>
+      <form onSubmit={handleSubmit} className={cn('flex flex-col gap-6', className)} {...props}>
         {/* Tiêu đề */}
         <div className="flex flex-col items-center gap-2 text-center">
           <h1 className="text-4xl font-bold">Đặt lại mật khẩu</h1>
           <p className="text-balance text-md text-muted-foreground">
-            Nhập mật khẩu mới của bạn bên dưới.
+            {email ? `Vui lòng nhập mật khẩu mới cho tài khoản ${email}` : 'Vui lòng nhập mật khẩu mới'}
           </p>
         </div>
 
@@ -49,7 +77,7 @@ export function ResetForm({ className, ...props }: React.ComponentPropsWithoutRe
                 <FormControl>
                   <Input {...field} type="password" placeholder="******" />
                 </FormControl>
-                <FormMessage /> {/* Hiển thị lỗi nếu có */}
+                <FormMessage />
               </FormItem>
             )}
           />
@@ -64,13 +92,21 @@ export function ResetForm({ className, ...props }: React.ComponentPropsWithoutRe
                 <FormControl>
                   <Input {...field} type="password" placeholder="******" />
                 </FormControl>
-                <FormMessage /> {/* Hiển thị lỗi nếu có */}
+                <FormMessage />
               </FormItem>
             )}
           />
 
           {/* Button Submit */}
-          <Button size="xl" type="submit" className="w-full bg-[#6366f1] hover:bg-[#5044ee]" disabled={loading}>
+          <Button 
+            type="submit" 
+            className="w-full bg-[#6366f1] hover:bg-[#5044ee]" 
+            disabled={loading}
+            onClick={() => {
+              console.log('Button clicked')
+              handleSubmit(new Event('submit') as any)
+            }}
+          >
             {loading ? 'Đang xử lý...' : 'Đặt lại mật khẩu'}
           </Button>
         </div>

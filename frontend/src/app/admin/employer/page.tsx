@@ -13,6 +13,7 @@ import {
 import { Download } from "lucide-react";
 import { DataTableEmployer, Employer } from "./ui/DataTableEmployer";
 import { useSetPageTitle } from "@/lib/hooks/useSetPageTitle";
+import { AddEmployerForm } from "./ui/AddEmployerForm";
 
 // Mock data
 const mockEmployers: Employer[] = [
@@ -80,11 +81,28 @@ export default function EmployerPage() {
     );
   };
 
+  const handleDeleteEmployer = (employerId: string) => {
+    setEmployers(employers.filter((employer) => employer.id !== employerId));
+  };
+
+  const handleAddEmployer = (newEmployer: Omit<Employer, "id" | "createdAt" | "lastLogin" | "jobsPosted" | "avatar">) => {
+    const employer: Employer = {
+      ...newEmployer,
+      id: String(Date.now()),
+      createdAt: new Date(),
+      lastLogin: new Date(),
+      jobsPosted: 0,
+      avatar: "https://github.com/shadcn.png",
+    };
+    setEmployers([...employers, employer]);
+  };
+
   return (
     <div className="container mx-auto py-6 space-y-6">
       {/* Header */}
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold">Quản lý nhà tuyển dụng</h1>
+        <AddEmployerForm onSubmit={handleAddEmployer} />
       </div>
 
       {/* Filters */}
@@ -130,7 +148,11 @@ export default function EmployerPage() {
       </div>
 
       {/* Table */}
-      <DataTableEmployer data={employers} onUpdateEmployer={handleUpdateEmployer} />
+      <DataTableEmployer 
+        data={employers} 
+        onUpdateEmployer={handleUpdateEmployer}
+        onDeleteEmployer={handleDeleteEmployer}
+      />
     </div>
   );
 }

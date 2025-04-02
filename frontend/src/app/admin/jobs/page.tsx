@@ -13,6 +13,7 @@ import {
 import { Download } from "lucide-react";
 import { DataTableJobs, Job } from "./ui/DataTableJobs";
 import { useSetPageTitle } from "@/lib/hooks/useSetPageTitle";
+import { AddJobForm } from "./ui/AddJobForm";
 
 // Mock data
 const mockJobs: Job[] = [
@@ -89,11 +90,26 @@ export default function JobsPage() {
     );
   };
 
+  const handleDeleteJob = (jobId: string) => {
+    setJobs(jobs.filter((job) => job.id !== jobId));
+  };
+
+  const handleAddJob = (newJob: Omit<Job, "id" | "createdAt" | "applications">) => {
+    const job: Job = {
+      ...newJob,
+      id: String(Date.now()),
+      createdAt: new Date().toISOString(),
+      applications: 0,
+    };
+    setJobs([...jobs, job]);
+  };
+
   return (
     <div className="container mx-auto py-6 space-y-6">
       {/* Header */}
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold">Quản lý việc làm</h1>
+        <AddJobForm onSubmit={handleAddJob} />
       </div>
 
       {/* Filters */}
@@ -139,7 +155,11 @@ export default function JobsPage() {
       </div>
 
       {/* Table */}
-      <DataTableJobs data={jobs} onUpdateJob={handleUpdateJob} />
+      <DataTableJobs 
+        data={jobs} 
+        onUpdateJob={handleUpdateJob}
+        onDeleteJob={handleDeleteJob}
+      />
     </div>
   );
 }

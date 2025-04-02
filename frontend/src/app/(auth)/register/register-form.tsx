@@ -101,8 +101,8 @@ export function RegisterForm({ className, ...props }: React.ComponentPropsWithou
           />
 
           {/* Button Submit */}
-          <Button size="xl" type="submit" className="w-full bg-[#6366f1] hover:bg-[#5044ee]" disabled={loading}>
-            {loading ? 'Đang xử lý...' : 'Đăng ký'}
+          <Button type="submit" className="w-full h-12 bg-[#6366f1] hover:bg-[#5044ee]" disabled={loading}>
+            {loading ? 'Đang đăng ký...' : 'Đăng ký'}
           </Button>
 
           {/* Hoặc login bằng Google */}

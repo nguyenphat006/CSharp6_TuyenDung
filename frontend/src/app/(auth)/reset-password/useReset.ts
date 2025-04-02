@@ -1,21 +1,53 @@
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { z } from 'zod'
 import { resetPasswordSchema } from '../schema/index'
+import { resetPassword } from '@/services/authService'
+import { toast } from 'react-toastify'
 
 export function useReset() {
   const [loading, setLoading] = useState(false)
   const router = useRouter()
+  const searchParams = useSearchParams()
 
   const onSubmit = async (data: z.infer<typeof resetPasswordSchema>) => {
-    setLoading(true)
-    console.log(data)
-    // Simulate successful password reset
-    setTimeout(() => {
+    try {
+      setLoading(true)
+      // Lấy email từ URL hoặc localStorage
+      const email = searchParams.get('email') || localStorage.getItem('resetEmail')
+      
+      if (!email) {
+        toast.error('Không tìm thấy email, vui lòng thử lại')
+        return
+      }
+
+      const response = await resetPassword(email, data.password)
+      
+      console.log('Response:', response) // Để debug
+
+      // Kiểm tra response.data.result === true
+      if (response.data.result === true) {
+        toast.success(response.data.data || 'Đặt lại mật khẩu thành công!')
+        // Xóa email khỏi localStorage
+        localStorage.removeItem('resetEmail')
+        setTimeout(() => {
+          router.push('/login')
+        }, 1500)
+      } else {
+        // Nếu có message từ API, hiển thị message đó
+        if (response.data.message) {
+          toast.error(response.data.message)
+        } else {
+          toast.error('Đặt lại mật khẩu thất bại')
+        }
+      }
+    } catch (error: any) {
+      console.error('Error:', error)
+      const errorMessage = error?.response?.data?.message || error?.message || 'Có lỗi xảy ra, vui lòng thử lại sau'
+      toast.error(errorMessage)
+    } finally {
       setLoading(false)
-      alert('Password has been reset successfully!')
-      router.push('/admin/login') // Redirect after password reset
-    }, 2000)
+    }
   }
 
   return { loading, onSubmit }

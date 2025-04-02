@@ -1,6 +1,6 @@
 'use client'
-import { useForm } from 'react-hook-form'
 import * as z from 'zod'
+import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { cn } from '@/lib/utils'
 import { 
@@ -13,17 +13,22 @@ import {
 } from '@/components/ui/form'
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp'
 import { Button } from '@/components/ui/button'
-import { otpSchema } from '../schema/index'
+import { VerifySchema } from '../schema/index'
+import Link from 'next/link'
 import { useVerify } from './useVerify'
+import { useSearchParams } from 'next/navigation'
 
 export function VerifyForm({ className, ...props }: React.ComponentPropsWithoutRef<'form'>) {
-  const { loading, onSubmit } = useVerify()
+  const searchParams = useSearchParams()
+  const email = searchParams.get('email') || localStorage.getItem('resetEmail')
 
   // React Hook Form + Zod
-  const form = useForm<z.infer<typeof otpSchema>>({
-    resolver: zodResolver(otpSchema),
+  const form = useForm<z.infer<typeof VerifySchema>>({
+    resolver: zodResolver(VerifySchema),
     defaultValues: { otp: '' }
   })
+
+  const { loading, onSubmit } = useVerify()
 
   return (
     <Form {...form}>
@@ -32,7 +37,7 @@ export function VerifyForm({ className, ...props }: React.ComponentPropsWithoutR
         <div className="flex flex-col items-center gap-2 text-center">
           <h1 className="text-4xl font-bold">Nhập mã xác minh</h1>
           <p className="text-balance text-md text-muted-foreground">
-            Chúng tôi đã gửi mã OTP gồm 6 chữ số đến email của bạn. Vui lòng nhập mã bên dưới.
+            Chúng tôi đã gửi mã OTP gồm 6 chữ số đến email {email}. Vui lòng nhập mã bên dưới.
           </p>
         </div>
 
@@ -52,13 +57,13 @@ export function VerifyForm({ className, ...props }: React.ComponentPropsWithoutR
                   </InputOTPGroup>
                 </InputOTP>
               </FormControl>
-              <FormMessage /> {/* Hiển thị lỗi nếu có */}
+              <FormMessage />
             </FormItem>
           )}
         />
 
         {/* Button Submit */}
-        <Button size="xl" type="submit" className="w-full bg-[#6366f1] hover:bg-[#5044ee]" disabled={loading}>
+        <Button type="submit" className="w-full bg-[#6366f1] hover:bg-[#5044ee]" disabled={loading}>
           {loading ? 'Đang xác minh...' : 'Xác minh OTP'}
         </Button>
 
@@ -68,6 +73,13 @@ export function VerifyForm({ className, ...props }: React.ComponentPropsWithoutR
           <button type="button" className="underline underline-offset-4 text-blue-500 hover:text-blue-700">
             Gửi lại OTP
           </button>
+        </div>
+
+        {/* Link quay về đăng nhập */}
+        <div className="text-center text-sm">
+          <Link href="/login" className="underline underline-offset-4 text-blue-500 hover:text-blue-700">
+            Quay về đăng nhập
+          </Link>
         </div>
       </form>
     </Form>
