@@ -41,7 +41,8 @@ namespace TuyenDungAPI.Controllers.System
                 return BadRequest(new ApiResponse<object>(false, 400, null, string.Join(", ", errors)));
             }
 
-            var response = await _roleService.CreateRoleAsync(request);
+            var currentUser = HttpContext.User;
+            var response = await _roleService.CreateRoleAsync(request, currentUser);
             return StatusCode(response.Status, response);
         }
 
@@ -56,8 +57,8 @@ namespace TuyenDungAPI.Controllers.System
                 var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
                 return BadRequest(new ApiResponse<object>(false, 400, null, string.Join(", ", errors)));
             }
-
-            var response = await _roleService.UpdateRoleAsync(id, request);
+            var currentUser = HttpContext.User;
+            var response = await _roleService.UpdateRoleAsync(id, request, currentUser);
             return StatusCode(response.Status, response);
         }
 
@@ -72,8 +73,8 @@ namespace TuyenDungAPI.Controllers.System
                 var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
                 return BadRequest(new ApiResponse<object>(false, 400, null, string.Join(", ", errors)));
             }
-
-            var response = await _roleService.DeleteRolesAsync(request);
+            var currentUser = HttpContext.User;
+            var response = await _roleService.DeleteRolesAsync(request, currentUser);
             return StatusCode(response.Status, response);
         }
     }

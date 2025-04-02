@@ -2,6 +2,7 @@
 using TuyenDungAPI.Model.ModelBase;
 using Microsoft.EntityFrameworkCore;
 using TuyenDungAPI.Model.User;
+using System.Security.Claims;
 namespace TuyenDungAPI.Service
 {
     public class UserService
@@ -32,7 +33,9 @@ namespace TuyenDungAPI.Service
 
         public async Task<ApiResponse<UserResponse>> GetUserByIdAsync(Guid id)
         {
-            var user = await _dbContext.Users.FindAsync(id);
+            var user = await _dbContext.Users
+                .Where(u => !u.IsDeleted && u.Id == id)
+                .FirstOrDefaultAsync(); // Dùng FirstOrDefaultAsync thay vì FindAsync
 
             if (user == null)
                 return new ApiResponse<UserResponse>(false, 404, null, "Không tìm thấy người dùng");
@@ -41,10 +44,12 @@ namespace TuyenDungAPI.Service
             return new ApiResponse<UserResponse>(true, 200, response, "Lấy thông tin người dùng thành công");
         }
 
-        public async Task<ApiResponse<UserResponse>> CreateUserAsync(CreateUserRequest request)
+
+        public async Task<ApiResponse<UserResponse>> CreateUserAsync(CreateUserRequest request, ClaimsPrincipal currentUser)
         {
+            string createdBy = currentUser?.Identity?.Name ?? "System";
             // Kiểm tra email đã tồn tại chưa
-            if (await _dbContext.Users.AnyAsync(u => u.Email == request.Email))
+            if (await _dbContext.Users.AnyAsync(u => u.Email == request.Email && u.IsDeleted == false))
             {
                 return new ApiResponse<UserResponse>(false, 400, null, "Email đã tồn tại trong hệ thống!");
             }
@@ -59,9 +64,11 @@ namespace TuyenDungAPI.Service
                 Email = request.Email,
                 Age = request.Age,
                 Gender = request.Gender,
+                Role = request.Role,
                 PasswordHash = passwordHash,
                 IsActive = request.IsActive, // Mặc định là active nếu không truyền vào
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.UtcNow,
+                CreatedBy = createdBy
             };
 
             // Thêm user vào DB
@@ -95,8 +102,9 @@ namespace TuyenDungAPI.Service
         }
 
 
-        public async Task<ApiResponse<UserResponse>> UpdateUserAsync(UpdateUserRequest request)
+        public async Task<ApiResponse<UserResponse>> UpdateUserAsync(UpdateUserRequest request, ClaimsPrincipal currentUser)
         {
+            string updatedBy = currentUser?.Identity?.Name ?? "System";
             // Tìm user theo ID
             var user = await _dbContext.Users.FindAsync(request.Id);
             if (user == null)
@@ -107,7 +115,7 @@ namespace TuyenDungAPI.Service
             // Kiểm tra email đã tồn tại chưa (nếu email thay đổi)
             if (!string.IsNullOrEmpty(request.Email) && request.Email != user.Email)
             {
-                if (await _dbContext.Users.AnyAsync(u => u.Email == request.Email))
+                if (await _dbContext.Users.AnyAsync(u => u.Email == request.Email && u.IsDeleted == false))
                 {
                     return new ApiResponse<UserResponse>(false, 400, null, "Email đã tồn tại trong hệ thống!");
                 }
@@ -126,10 +134,6 @@ namespace TuyenDungAPI.Service
 
             if (request.IsActive)
                 user.IsActive = request.IsActive;
-
-            // Cập nhật mật khẩu nếu có
-            if (!string.IsNullOrEmpty(request.Password))
-                user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
 
             // Kiểm tra role nếu có thay đổi
             if (!string.IsNullOrEmpty(request.Role))
@@ -161,6 +165,7 @@ namespace TuyenDungAPI.Service
 
             // Cập nhật thời gian sửa đổi
             user.UpdatedAt = DateTime.UtcNow;
+            user.UpdatedBy = updatedBy;
 
             // Lưu thay đổi vào database
             await _dbContext.SaveChangesAsync();
@@ -172,8 +177,9 @@ namespace TuyenDungAPI.Service
 
 
 
-        public async Task<ApiResponse<DeleteUsersResponse>> DeleteUsersAsync(List<Guid> userIds)
+        public async Task<ApiResponse<DeleteUsersResponse>> DeleteUsersAsync(List<Guid> userIds, ClaimsPrincipal currentUser)
         {
+            string deletedBy = currentUser?.Identity?.Name ?? "System";
             if (userIds == null || !userIds.Any())
             {
                 return new ApiResponse<DeleteUsersResponse>(false, 400, null, "Danh sách ID người dùng không được để trống!");
@@ -206,12 +212,13 @@ namespace TuyenDungAPI.Service
 
                 // Cập nhật trạng thái IsDeleted thay vì xóa khỏi DB
                 user.IsDeleted = true;
+                user.DeletedBy = deletedBy;
                 deletedCount++;
                 deleteResults.Add(new DeleteUserResult
                 {
                     UserId = id,
                     Success = true,
-                    Message = "Đã vô hiệu hóa thành công",
+                    Message = "Xóa người dùng thành công",
                     UserName = user.Name,
                     UserEmail = user.Email
                 });
@@ -228,7 +235,7 @@ namespace TuyenDungAPI.Service
                 DeleteResults = deleteResults
             };
 
-            string message = $"Đã vô hiệu hóa {deletedCount}/{userIds.Count} người dùng";
+            string message = $"Đã xóa {deletedCount}/{userIds.Count} người dùng";
             if (notFoundIds.Any())
             {
                 message += $", không tìm thấy {notFoundIds.Count} người dùng";

@@ -10,7 +10,11 @@
 
         public bool IsActive { get; set; } = true;
 
-        public Guid? DeletedBy { get; set; }
+        public string? DeletedBy { get; set; }
         public bool IsDeleted { get; set; } = false;
+    }
+    public abstract class BaseRequestEntity
+    {
+        public bool IsActive { get; set; } = true;
     }
 }

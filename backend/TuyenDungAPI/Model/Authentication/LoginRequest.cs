@@ -9,7 +9,7 @@ namespace TuyenDungAPI.Model.Authentication
         [DefaultValue("nguyendangphat1312@gmail.com")]
         public string Email { get; set; } = string.Empty;
         [Required]
-        [DefaultValue("Phatpro123@")]
+        [DefaultValue("Kakapro123@")]
         public string Password { get; set; } = string.Empty;
     }
 }
