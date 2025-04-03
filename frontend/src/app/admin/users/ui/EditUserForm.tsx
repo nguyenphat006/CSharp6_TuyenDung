@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -10,40 +10,81 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { User } from "./DataTableUser";
+import { User } from "@/types/user";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+
+const formSchema = z.object({
+  name: z.string().min(1, "Vui lòng nhập tên"),
+  email: z.string().email("Email không hợp lệ"),
+  age: z.number().min(0, "Tuổi không hợp lệ"),
+  gender: z.string().min(1, "Vui lòng chọn giới tính"),
+  role: z.string().min(1, "Vui lòng chọn vai trò"),
+  isActive: z.boolean(),
+});
+
+type FormData = z.infer<typeof formSchema>;
 
 interface EditUserFormProps {
-  user: User;
-  onUpdateUser: (updatedUser: Omit<User, "id" | "createdAt">) => Promise<void>;
+  user: User | null;
+  onUpdateUser: (data: FormData) => Promise<void>;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
-export function EditUserForm({ user, onUpdateUser, open, onOpenChange }: EditUserFormProps) {
-  const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState({
-    name: user.name,
-    email: user.email,
-    phone: user.phone,
-    role: user.role,
-    status: user.status,
-    avatar: user.avatar,
+export function EditUserForm({
+  user,
+  onUpdateUser,
+  open,
+  onOpenChange,
+}: EditUserFormProps) {
+  const [isLoading, setIsLoading] = useState(false);
+  const form = useForm<FormData>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      name: "",
+      email: "",
+      age: 0,
+      gender: "",
+      role: "",
+      isActive: true,
+    },
   });
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  useEffect(() => {
+    if (user) {
+      form.reset({
+        name: user.name,
+        email: user.email,
+        age: user.age,
+        gender: user.gender,
+        role: user.role,
+        isActive: user.isActive,
+      });
+    }
+  }, [user, form]);
+
+  const handleSubmit = async (data: FormData) => {
+    if (!user) return;
+
     try {
-      setLoading(true);
-      await onUpdateUser(formData);
-      toast.success("Cập nhật thông tin người dùng thành công");
-      onOpenChange(false);
+      setIsLoading(true);
+      await onUpdateUser(data);
     } catch (error) {
-      console.error("Error updating user:", error);
-      toast.error("Có lỗi xảy ra khi cập nhật thông tin");
+      toast.error("Có lỗi xảy ra khi cập nhật người dùng");
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
@@ -51,102 +92,141 @@ export function EditUserForm({ user, onUpdateUser, open, onOpenChange }: EditUse
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Chỉnh sửa thông tin người dùng</DialogTitle>
+          <DialogTitle>Chỉnh sửa người dùng</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <label htmlFor="name" className="text-sm font-medium">
-              Họ và tên
-            </label>
-            <Input
-              id="name"
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              required
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Tên</FormLabel>
+                  <FormControl>
+                    <Input {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </div>
-          <div className="space-y-2">
-            <label htmlFor="email" className="text-sm font-medium">
-              Email
-            </label>
-            <Input
-              id="email"
-              type="email"
-              value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              required
+
+            <FormField
+              control={form.control}
+              name="email"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Email</FormLabel>
+                  <FormControl>
+                    <Input {...field} type="email" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </div>
-          <div className="space-y-2">
-            <label htmlFor="phone" className="text-sm font-medium">
-              Số điện thoại
-            </label>
-            <Input
-              id="phone"
-              value={formData.phone}
-              onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-              required
+
+            <FormField
+              control={form.control}
+              name="age"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Tuổi</FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      type="number"
+                      onChange={(e) => field.onChange(parseInt(e.target.value))}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </div>
-          <div className="space-y-2">
-            <label htmlFor="role" className="text-sm font-medium">
-              Vai trò
-            </label>
-            <Select
-              value={formData.role}
-              onValueChange={(value) => setFormData({ ...formData, role: value as User['role'] })}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Chọn vai trò" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="admin">Admin</SelectItem>
-                <SelectItem value="user">User</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <label htmlFor="status" className="text-sm font-medium">
-              Trạng thái
-            </label>
-            <Select
-              value={formData.status}
-              onValueChange={(value) => setFormData({ ...formData, status: value as User['status'] })}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Chọn trạng thái" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="active">Hoạt động</SelectItem>
-                <SelectItem value="pending">Chờ duyệt</SelectItem>
-                <SelectItem value="blocked">Bị khóa</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <label htmlFor="avatar" className="text-sm font-medium">
-              URL ảnh đại diện
-            </label>
-            <Input
-              id="avatar"
-              value={formData.avatar}
-              onChange={(e) => setFormData({ ...formData, avatar: e.target.value })}
+
+            <FormField
+              control={form.control}
+              name="gender"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Giới tính</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Chọn giới tính" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="Nam">Nam</SelectItem>
+                      <SelectItem value="Nữ">Nữ</SelectItem>
+                      <SelectItem value="Khác">Khác</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </div>
-          <div className="flex justify-end space-x-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-              disabled={loading}
-            >
-              Hủy
-            </Button>
-            <Button type="submit" disabled={loading}>
-              {loading ? "Đang cập nhật..." : "Cập nhật"}
-            </Button>
-          </div>
-        </form>
+
+            <FormField
+              control={form.control}
+              name="role"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Vai trò</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Chọn vai trò" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="Admin">Quản trị viên</SelectItem>
+                      <SelectItem value="User">Người dùng</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="isActive"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Trạng thái</FormLabel>
+                  <Select
+                    onValueChange={(value) => field.onChange(value === "true")}
+                    value={field.value ? "true" : "false"}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Chọn trạng thái" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="true">Hoạt động</SelectItem>
+                      <SelectItem value="false">Không hoạt động</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <div className="flex justify-end gap-4">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => onOpenChange(false)}
+                disabled={isLoading}
+              >
+                Hủy
+              </Button>
+              <Button type="submit" disabled={isLoading}>
+                {isLoading ? "Đang cập nhật..." : "Lưu"}
+              </Button>
+            </div>
+          </form>
+        </Form>
       </DialogContent>
     </Dialog>
   );

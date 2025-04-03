@@ -37,26 +37,24 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-
-export interface User {
-  id: string
-  name: string
-  email: string
-  phone: string
-  role: 'admin' | 'user'
-  status: 'active' | 'blocked'
-  createdAt: Date
-  lastLogin: Date
-  avatar: string
-}
+import { User } from "@/types/user";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface DataTableUserProps {
-  data: User[]
-  onUpdateUser: (id: string, data: Omit<User, 'id' | 'createdAt' | 'lastLogin'>) => void
-  onDeleteUser: (id: string) => void
+  data: User[];
+  onDelete: (id: string) => void;
+  onEditUser: (user: User) => void;
+  selectedUsers: string[];
+  setSelectedUsers: (users: string[]) => void;
 }
 
-export function DataTableUser({ data, onUpdateUser, onDeleteUser }: DataTableUserProps) {
+export function DataTableUser({
+  data,
+  onDelete,
+  onEditUser,
+  selectedUsers,
+  setSelectedUsers,
+}: DataTableUserProps) {
   const router = useRouter()
   const [currentPage, setCurrentPage] = useState(1)
   const [rowsPerPage, setRowsPerPage] = useState(10)
@@ -68,6 +66,22 @@ export function DataTableUser({ data, onUpdateUser, onDeleteUser }: DataTableUse
   const endIndex = startIndex + rowsPerPage
   const currentData = data.slice(startIndex, endIndex)
 
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedUsers(data.map(user => user.id));
+    } else {
+      setSelectedUsers([]);
+    }
+  };
+
+  const handleSelectUser = (checked: boolean, userId: string) => {
+    if (checked) {
+      setSelectedUsers([...selectedUsers, userId]);
+    } else {
+      setSelectedUsers(selectedUsers.filter(id => id !== userId));
+    }
+  };
+
   const handleDelete = (id: string) => {
     setUserToDelete(id)
     setDeleteDialogOpen(true)
@@ -75,7 +89,7 @@ export function DataTableUser({ data, onUpdateUser, onDeleteUser }: DataTableUse
 
   const confirmDelete = () => {
     if (userToDelete) {
-      onDeleteUser(userToDelete)
+      onDelete(userToDelete)
       setDeleteDialogOpen(false)
       setUserToDelete(null)
     }
@@ -85,38 +99,9 @@ export function DataTableUser({ data, onUpdateUser, onDeleteUser }: DataTableUse
     router.push(`/admin/users/${userId}/edit`)
   }
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'active':
-        return 'bg-green-500'
-      case 'blocked':
-        return 'bg-red-500'
-      default:
-        return 'bg-gray-500'
-    }
-  }
-
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case 'active':
-        return 'Hoạt động'
-      case 'blocked':
-        return 'Bị khóa'
-      default:
-        return status
-    }
-  }
-
-  const getRoleText = (role: string) => {
-    switch (role) {
-      case 'admin':
-        return 'Quản trị viên'
-      case 'user':
-        return 'Người dùng'
-      default:
-        return role
-    }
-  }
+  const formatDate = (date: string) => {
+    return format(new Date(date), "dd/MM/yyyy HH:mm", { locale: vi });
+  };
 
   return (
     <div className="space-y-4">
@@ -124,46 +109,47 @@ export function DataTableUser({ data, onUpdateUser, onDeleteUser }: DataTableUse
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>ID</TableHead>
-              <TableHead>Thông tin</TableHead>
-              <TableHead>Liên hệ</TableHead>
+              <TableHead className="w-[40px]">
+                <Checkbox
+                  checked={data.length > 0 && selectedUsers.length === data.length}
+                  onCheckedChange={handleSelectAll}
+                />
+              </TableHead>
+              <TableHead>STT</TableHead>
+              <TableHead>Tên</TableHead>
+              <TableHead>Email</TableHead>
+              <TableHead>Tuổi</TableHead>
+              <TableHead>Giới tính</TableHead>
               <TableHead>Vai trò</TableHead>
               <TableHead>Trạng thái</TableHead>
-              <TableHead>Ngày tạo</TableHead>
-              <TableHead>Đăng nhập cuối</TableHead>
-              <TableHead className="w-[100px]">Thao tác</TableHead>
+              <TableHead>Người tạo</TableHead>
+              <TableHead>Thời gian tạo</TableHead>
+              <TableHead className="text-right">Thao tác</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {currentData.map((user) => (
+            {data.map((user, index) => (
               <TableRow key={user.id}>
-                <TableCell className="font-medium">{user.id}</TableCell>
-                <TableCell className="flex items-center gap-3">
-                  <Avatar>
-                    <AvatarImage src={user.avatar} />
-                    <AvatarFallback>{user.name[0]}</AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <div className="font-medium">{user.name}</div>
-                  </div>
-                </TableCell>
                 <TableCell>
-                  <div>{user.email}</div>
-                  <div className="text-sm text-muted-foreground">{user.phone}</div>
+                  <Checkbox
+                    checked={selectedUsers.includes(user.id)}
+                    onCheckedChange={(checked) => handleSelectUser(checked as boolean, user.id)}
+                  />
                 </TableCell>
-                <TableCell>{getRoleText(user.role)}</TableCell>
+                <TableCell>{index + 1}</TableCell>
+                <TableCell>{user.name}</TableCell>
+                <TableCell>{user.email}</TableCell>
+                <TableCell>{user.age}</TableCell>
+                <TableCell>{user.gender}</TableCell>
+                <TableCell>{user.role}</TableCell>
                 <TableCell>
-                  <Badge className={getStatusColor(user.status)}>
-                    {getStatusText(user.status)}
+                  <Badge className={user.isActive ? 'bg-green-500' : 'bg-red-500'}>
+                    {user.isActive ? 'Hoạt động' : 'Không hoạt động'}
                   </Badge>
                 </TableCell>
-                <TableCell>
-                  {format(user.createdAt, 'dd/MM/yyyy', { locale: vi })}
-                </TableCell>
-                <TableCell>
-                  {format(user.lastLogin, 'dd/MM/yyyy', { locale: vi })}
-                </TableCell>
-                <TableCell>
+                <TableCell>{user.createdBy || 'N/A'}</TableCell>
+                <TableCell>{formatDate(user.createdAt)}</TableCell>
+                <TableCell className="text-right">
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button variant="ghost" className="h-8 w-8 p-0">
@@ -171,11 +157,14 @@ export function DataTableUser({ data, onUpdateUser, onDeleteUser }: DataTableUse
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => handleEdit(user.id)}>
+                      <DropdownMenuItem onClick={() => onEditUser(user)}>
                         <Pencil className="mr-2 h-4 w-4" />
                         Chỉnh sửa
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleDelete(user.id)} className="text-red-600">
+                      <DropdownMenuItem
+                        onClick={() => onDelete(user.id)}
+                        className="text-red-600"
+                      >
                         <Trash2 className="mr-2 h-4 w-4" />
                         Xóa
                       </DropdownMenuItem>

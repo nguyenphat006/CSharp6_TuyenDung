@@ -49,18 +49,32 @@ export default function RolesPage() {
 
   const handleAddRole = async (data: { name: string; isActive: boolean }) => {
     try {
-      const response = await createRole(data);
-      if (response.result) {
-        await fetchRoles();
+      const token = localStorage.getItem("token");
+      const response = await fetch("https://localhost:7152/api/Roles", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        throw new Error("Lỗi khi thêm vai trò");
+      }
+
+      const result = await response.json();
+      if (result.result) {
+        // Thêm vai trò mới vào state
+        setRoles(prevRoles => [...prevRoles, result.data]);
         setIsAddDialogOpen(false);
-        toast.success(response.message || "Thêm vai trò thành công");
+        toast.success(result.message || "Thêm vai trò thành công");
       } else {
-        toast.error(response.message || "Có lỗi xảy ra khi thêm vai trò");
+        toast.error(result.message || "Có lỗi xảy ra khi thêm vai trò");
       }
     } catch (error) {
-      console.error("Error adding role:", error);
+      console.error("Lỗi khi thêm vai trò:", error);
       toast.error("Không thể thêm vai trò");
-      throw error;
     }
   };
 
