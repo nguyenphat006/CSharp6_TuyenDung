@@ -20,205 +20,75 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { EditUserForm } from "./ui/EditUserForm";
-
-interface User {
-  id: string;
-  name: string;
-  email: string;
-  age: number;
-  gender: string;
-  role: string;
-  createdBy: string | null;
-  createdAt: string;
-  updatedBy: string | null;
-  updatedAt: string | null;
-  isActive: boolean;
-  deletedBy: string | null;
-  isDeleted: boolean;
-}
+import { useAppDispatch, useAppSelector } from "@/redux/hooks";
+import { 
+  fetchUsers, 
+  addUser, 
+  updateUser, 
+  deleteUsers,
+  setSelectedUsers 
+} from "@/redux/features/userSlice";
+import { User } from "@/types/user";
 
 export default function UsersPage() {
   const router = useRouter();
+  const dispatch = useAppDispatch();
+  const { users, loading, selectedUsers } = useAppSelector((state) => state.users);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [dateFilter, setDateFilter] = useState<string>("all");
-  const [users, setUsers] = useState<User[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
-  const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   useSetPageTitle();
 
-  const fetchUsers = async () => {
-    try {
-      const token = localStorage.getItem("token");
-      const response = await fetch("https://localhost:7152/api/users", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error("Lỗi khi tải danh sách người dùng");
-      }
-
-      const result = await response.json();
-      if (result.result) {
-        setUsers(result.data);
-        console.log('Users set:', result.data); // Debug log
-      } else {
-        toast.error(result.message || "Có lỗi xảy ra khi tải danh sách người dùng");
-      }
-    } catch (error) {
-      console.error("Lỗi khi tải danh sách người dùng:", error);
-      toast.error("Không thể tải danh sách người dùng");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   useEffect(() => {
-    fetchUsers();
-  }, []);
+    dispatch(fetchUsers());
+  }, [dispatch]);
 
   const handleAddUser = async (data: any) => {
     try {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        throw new Error("No token found");
-      }
-
-      const requestBody = {
-        name: data.name,
-        email: data.email,
-        password: data.password,
-        age: data.age,
-        gender: data.gender,
-        role: data.role,
-        isActive: data.isActive
-      };
-
-      console.log('Request body:', requestBody);
-
-      const response = await fetch("https://localhost:7152/api/users", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(requestBody),
-      });
-
-      const result = await response.json();
-      console.log('API response:', result);
-
-      if (!response.ok) {
-        // Nếu API trả về thông báo lỗi cụ thể, sử dụng nó
-        if (result.message) {
-          throw new Error(result.message);
-        }
-        throw new Error("Có lỗi xảy ra khi thêm người dùng");
-      }
-
-      if (result.result) {
-        setUsers((prevUsers) => [...prevUsers, result.data]);
-        toast.success("Thêm người dùng thành công");
-        setIsAddDialogOpen(false);
-      } else {
-        throw new Error(result.message || "Có lỗi xảy ra khi thêm người dùng");
-      }
+      await dispatch(addUser(data)).unwrap();
+      toast.success("Thêm người dùng thành công");
+      setIsAddDialogOpen(false);
     } catch (error: any) {
-      console.error("Error adding user:", error);
-      // Ném lại lỗi với message từ API
-      throw new Error(error.message || "Có lỗi xảy ra khi thêm người dùng");
+      toast.error(error.message || "Có lỗi xảy ra khi thêm người dùng");
+      throw error;
     }
   };
 
-  const handleUpdateUser = async (data: {
-    name: string;
-    email: string;
-    age: number;
-    gender: string;
-    role: string;
-    isActive: boolean;
-  }) => {
+  const handleUpdateUser = async (data: any) => {
     if (!selectedUser) return;
 
     try {
-      const token = localStorage.getItem("token");
-      const response = await fetch("https://localhost:7152/api/users", {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          ...data,
-          id: selectedUser.id,
-        }),
-      });
+      await dispatch(updateUser({ ...data, id: selectedUser.id })).unwrap();
+      toast.success("Cập nhật người dùng thành công");
+      setIsEditDialogOpen(false);
+      setSelectedUser(null);
+    } catch (error: any) {
+      toast.error(error.message || "Có lỗi xảy ra khi cập nhật người dùng");
+    }
+  };
 
-      if (!response.ok) {
-        throw new Error("Lỗi khi cập nhật người dùng");
-      }
-
-      const result = await response.json();
-      if (result.result) {
-        setUsers(prevUsers => 
-          prevUsers.map(user => 
-            user.id === selectedUser.id ? result.data : user
-          )
-        );
-        setIsEditDialogOpen(false);
-        setSelectedUser(null);
-        toast.success(result.message || "Cập nhật người dùng thành công");
-      } else {
-        toast.error(result.message || "Có lỗi xảy ra khi cập nhật người dùng");
-      }
-    } catch (error) {
-      console.error("Lỗi khi cập nhật người dùng:", error);
-      toast.error("Không thể cập nhật người dùng");
+  const handleDeleteUser = async (id: string) => {
+    try {
+      await dispatch(deleteUsers([id])).unwrap();
+      toast.success("Xóa người dùng thành công");
+    } catch (error: any) {
+      toast.error(error.message || "Có lỗi xảy ra khi xóa người dùng");
     }
   };
 
   const handleDeleteMultipleUsers = async (userIds: string[]) => {
     try {
-      const token = localStorage.getItem("token");
-      const response = await fetch("https://localhost:7152/api/users", {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ userIds }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Lỗi khi xóa người dùng");
-      }
-
-      const result = await response.json();
-      if (result.result) {
-        const updatedUsers = users.filter(user => !userIds.includes(user.id));
-        setUsers(updatedUsers);
-        setSelectedUsers([]);
-        toast.success(`Đã xóa ${result.data.deletedCount}/${result.data.totalRequested} người dùng`);
-      } else {
-        toast.error(result.message || "Có lỗi xảy ra khi xóa người dùng");
-      }
-    } catch (error) {
-      console.error("Lỗi khi xóa người dùng:", error);
-      toast.error("Không thể xóa người dùng");
+      const result = await dispatch(deleteUsers(userIds)).unwrap();
+      toast.success(`Đã xóa ${result.result.deletedCount}/${result.result.totalRequested} người dùng`);
+    } catch (error: any) {
+      toast.error(error.message || "Có lỗi xảy ra khi xóa người dùng");
     }
-  };
-
-  const handleDeleteUser = async (id: string) => {
-    await handleDeleteMultipleUsers([id]);
   };
 
   const handleEditUser = (user: User) => {
@@ -226,7 +96,7 @@ export default function UsersPage() {
     setIsEditDialogOpen(true);
   };
 
-  if (isLoading) {
+  if (loading) {
     return <div>Đang tải...</div>;
   }
 
@@ -257,7 +127,7 @@ export default function UsersPage() {
         onDelete={handleDeleteUser}
         onEditUser={handleEditUser}
         selectedUsers={selectedUsers}
-        setSelectedUsers={setSelectedUsers}
+        setSelectedUsers={(users) => dispatch(setSelectedUsers(users))}
       />
 
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>

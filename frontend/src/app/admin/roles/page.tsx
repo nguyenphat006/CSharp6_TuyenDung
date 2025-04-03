@@ -1,80 +1,53 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Plus, Trash2 } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { DataTableRole } from "./ui/DataTableRole";
+import { useSetPageTitle } from "@/lib/hooks/useSetPageTitle";
 import { AddRoleForm } from "./ui/AddRoleForm";
-import { EditRoleForm } from "./ui/EditRoleForm";
-import { Role, getRoles, createRole, updateRole, deleteRole } from "@/services/roleService";
-import { toast } from "sonner";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { toast } from "sonner";
+import { EditRoleForm } from "./ui/EditRoleForm";
+import { useAppDispatch, useAppSelector } from "@/redux/hooks";
+import { 
+  fetchRoles, 
+  addRole, 
+  updateRole, 
+  deleteRoles,
+  setSelectedRoles 
+} from "@/redux/features/roleSlice";
+import { Role } from "@/types/role";
+import { RootState } from "@/redux/store";
 
 export default function RolesPage() {
   const router = useRouter();
-  const [roles, setRoles] = useState<Role[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const dispatch = useAppDispatch();
+  const { roles, loading, selectedRoles } = useAppSelector((state: RootState) => state.roles);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedRole, setSelectedRole] = useState<Role | null>(null);
-  const [selectedRoles, setSelectedRoles] = useState<string[]>([]);
-
-  const fetchRoles = async () => {
-    try {
-      const response = await getRoles();
-      console.log('API Response:', response); // Debug log
-      if (response.result) {
-        setRoles(response.data);
-        console.log('Roles set:', response.data); // Debug log
-      } else {
-        toast.error(response.message || "Có lỗi xảy ra khi tải danh sách vai trò");
-      }
-    } catch (error) {
-      console.error("Error fetching roles:", error);
-      toast.error("Không thể tải danh sách vai trò");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  useSetPageTitle();
 
   useEffect(() => {
-    fetchRoles();
-  }, []);
+    dispatch(fetchRoles());
+  }, [dispatch]);
 
   const handleAddRole = async (data: { name: string; isActive: boolean }) => {
     try {
-      const token = localStorage.getItem("token");
-      const response = await fetch("https://localhost:7152/api/Roles", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(data),
-      });
-
-      if (!response.ok) {
-        throw new Error("Lỗi khi thêm vai trò");
-      }
-
-      const result = await response.json();
-      if (result.result) {
-        // Thêm vai trò mới vào state
-        setRoles(prevRoles => [...prevRoles, result.data]);
-        setIsAddDialogOpen(false);
-        toast.success(result.message || "Thêm vai trò thành công");
-      } else {
-        toast.error(result.message || "Có lỗi xảy ra khi thêm vai trò");
-      }
-    } catch (error) {
-      console.error("Lỗi khi thêm vai trò:", error);
-      toast.error("Không thể thêm vai trò");
+      await dispatch(addRole(data)).unwrap();
+      toast.success("Thêm vai trò thành công");
+      setIsAddDialogOpen(false);
+    } catch (error: any) {
+      toast.error(error.message || "Có lỗi xảy ra khi thêm vai trò");
+      throw error;
     }
   };
 
@@ -82,62 +55,30 @@ export default function RolesPage() {
     if (!selectedRole) return;
 
     try {
-      const response = await updateRole(selectedRole.id, data);
-      if (response.result) {
-        await fetchRoles();
-        setIsEditDialogOpen(false);
-        setSelectedRole(null);
-        toast.success(response.message || "Cập nhật vai trò thành công");
-      } else {
-        toast.error(response.message || "Có lỗi xảy ra khi cập nhật vai trò");
-      }
-    } catch (error) {
-      console.error("Error updating role:", error);
-      toast.error("Không thể cập nhật vai trò");
-      throw error;
+      await dispatch(updateRole({ ...data, id: selectedRole.id })).unwrap();
+      toast.success("Cập nhật vai trò thành công");
+      setIsEditDialogOpen(false);
+      setSelectedRole(null);
+    } catch (error: any) {
+      toast.error(error.message || "Có lỗi xảy ra khi cập nhật vai trò");
     }
   };
 
   const handleDeleteRole = async (id: string) => {
     try {
-      const response = await deleteRole([id]);
-      if (response.result) {
-        await fetchRoles();
-        toast.success(response.message || `Đã xóa ${response.data.deletedCount} vai trò thành công`);
-      } else {
-        toast.error(response.message || "Có lỗi xảy ra khi xóa vai trò");
-      }
-    } catch (error) {
-      console.error("Error deleting role:", error);
-      toast.error("Không thể xóa vai trò");
+      await dispatch(deleteRoles([id])).unwrap();
+      toast.success("Xóa vai trò thành công");
+    } catch (error: any) {
+      toast.error(error.message || "Có lỗi xảy ra khi xóa vai trò");
     }
   };
 
   const handleDeleteMultipleRoles = async (roleIds: string[]) => {
     try {
-      const token = localStorage.getItem("token");
-      const response = await fetch("https://localhost:7152/api/Roles", {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ roleIds }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Lỗi khi xóa vai trò");
-      }
-
-      const data = await response.json();
-      toast.success(`Đã xóa ${data.data.deletedCount} vai trò thành công`);
-      setSelectedRoles([]); // Reset selected roles
-      // Refresh data
-      const updatedRoles = roles.filter(role => !roleIds.includes(role.id));
-      setRoles(updatedRoles);
-    } catch (error) {
-      console.error("Lỗi khi xóa vai trò:", error);
-      toast.error("Có lỗi xảy ra khi xóa vai trò");
+      const result = await dispatch(deleteRoles(roleIds)).unwrap();
+      toast.success(`Đã xóa ${result.result.deletedCount}/${result.result.totalRequested} vai trò`);
+    } catch (error: any) {
+      toast.error(error.message || "Có lỗi xảy ra khi xóa vai trò");
     }
   };
 
@@ -146,9 +87,7 @@ export default function RolesPage() {
     setIsEditDialogOpen(true);
   };
 
-  console.log('Current roles state:', roles); // Debug log
-
-  if (isLoading) {
+  if (loading) {
     return <div>Đang tải...</div>;
   }
 
@@ -179,7 +118,7 @@ export default function RolesPage() {
         onDelete={handleDeleteRole}
         onEditRole={handleEditRole}
         selectedRoles={selectedRoles}
-        setSelectedRoles={setSelectedRoles}
+        setSelectedRoles={(roles) => dispatch(setSelectedRoles(roles))}
       />
 
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
