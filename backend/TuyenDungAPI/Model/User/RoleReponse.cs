@@ -3,15 +3,10 @@ using TuyenDungAPI.Model.ModelBase;
 
 namespace TuyenDungAPI.Model.User
 {
-    public class RoleResponse: BaseEntity
+    public class RoleResponse: BaseReponseEntity
     {
         public Guid Id { get; set; }
         public string Name { get; set; } = string.Empty;
-        //public DateTime CreatedAt { get; set; }
-        //public string CreatedBy { get; set; }
-        //public DateTime? UpdatedAt { get; set; }
-
-        //public bool IsActive { get; set; }
         public RoleResponse() { }
 
         public RoleResponse(Role role)
@@ -21,6 +16,9 @@ namespace TuyenDungAPI.Model.User
             CreatedAt = role.CreatedAt;
             CreatedBy = role.CreatedBy;
             UpdatedAt = role.UpdatedAt;
+            UpdatedBy = role.UpdatedBy;
+            IsDeleted = role.IsDeleted;
+            DeletedBy = role.DeletedBy;
             IsActive = role.IsActive;
         }
     }
