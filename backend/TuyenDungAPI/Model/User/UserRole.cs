@@ -3,7 +3,7 @@ using TuyenDungAPI.Model.ModelBase;
 
 namespace TuyenDungAPI.Model.User
 {
-    public class UserRole : BaseEntity
+    public class UserRole
     {
         public Guid UserId { get; set; }
         public User User { get; set; }
