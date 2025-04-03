@@ -2,7 +2,7 @@
 using TuyenDungAPI.Model.ModelBase;
 namespace TuyenDungAPI.Model.User
 {
-    public class UserResponse: BaseEntity
+    public class UserResponse: BaseReponseEntity
     {
         public Guid Id { get; set; }
         public string Name { get; set; } = string.Empty;
@@ -10,8 +10,6 @@ namespace TuyenDungAPI.Model.User
         public int Age { get; set; }
         public string Gender { get; set; } = string.Empty;
         public string Role { get; set; } = string.Empty;
-        //public DateTime CreatedAt { get; set; }
-        //public DateTime? UpdatedAt { get; set; }
 
         public UserResponse() { }
 
@@ -24,7 +22,12 @@ namespace TuyenDungAPI.Model.User
             Gender = user.Gender;
             Role = user.Role;
             CreatedAt = user.CreatedAt;
+            CreatedBy = user.CreatedBy;
             UpdatedAt = user.UpdatedAt;
+            UpdatedBy = user.UpdatedBy;
+            IsDeleted = user.IsDeleted;
+            DeletedBy = user.DeletedBy;
+            IsActive = user.IsActive;
         }
     }
 
