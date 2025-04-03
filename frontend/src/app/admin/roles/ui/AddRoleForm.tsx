@@ -48,8 +48,8 @@ export function AddRoleForm({ onSubmit, onCancel }: AddRoleFormProps) {
     try {
       setIsLoading(true);
       await onSubmit(values);
-      toast.success("Thêm vai trò thành công");
     } catch (error) {
+      console.error("Error adding role:", error);
       toast.error("Có lỗi xảy ra khi thêm vai trò");
     } finally {
       setIsLoading(false);

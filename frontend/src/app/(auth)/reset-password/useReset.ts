@@ -1,54 +1,53 @@
+'use client';
+
 import { useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { z } from 'zod'
 import { resetPasswordSchema } from '../schema/index'
 import { resetPassword } from '@/services/authService'
-import { toast } from 'react-toastify'
+import { toast } from 'sonner'
 
-export function useReset() {
-  const [loading, setLoading] = useState(false)
+export const useReset = () => {
+  const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
   const searchParams = useSearchParams()
 
-  const onSubmit = async (data: z.infer<typeof resetPasswordSchema>) => {
+  const resetPassword = async (data: {
+    email: string;
+    newPassword: string;
+    confirmPassword: string;
+  }) => {
     try {
-      setLoading(true)
-      // Lấy email từ URL hoặc localStorage
-      const email = searchParams.get('email') || localStorage.getItem('resetEmail')
-      
-      if (!email) {
-        toast.error('Không tìm thấy email, vui lòng thử lại')
-        return
+      setIsLoading(true)
+      const response = await fetch('https://localhost:7152/api/auth/reset-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      })
+
+      const result = await response.json()
+
+      if (!result.result) {
+        throw new Error(result.message || 'Không thể đặt lại mật khẩu')
       }
 
-      const response = await resetPassword(email, data.password)
+      // Hiển thị thông báo thành công từ API
+      toast.success(result.message || 'Đặt lại mật khẩu thành công! Đang chuyển hướng đến trang đăng nhập...')
       
-      console.log('Response:', response) // Để debug
+      // Chuyển hướng sau 5 giây
+      setTimeout(() => {
+        router.push('/login')
+      }, 5000)
 
-      // Kiểm tra response.data.result === true
-      if (response.data.result === true) {
-        toast.success(response.data.data || 'Đặt lại mật khẩu thành công!')
-        // Xóa email khỏi localStorage
-        localStorage.removeItem('resetEmail')
-        setTimeout(() => {
-          router.push('/login')
-        }, 1500)
-      } else {
-        // Nếu có message từ API, hiển thị message đó
-        if (response.data.message) {
-          toast.error(response.data.message)
-        } else {
-          toast.error('Đặt lại mật khẩu thất bại')
-        }
-      }
     } catch (error: any) {
       console.error('Error:', error)
-      const errorMessage = error?.response?.data?.message || error?.message || 'Có lỗi xảy ra, vui lòng thử lại sau'
-      toast.error(errorMessage)
+      toast.error(error.message || 'Có lỗi xảy ra, vui lòng thử lại sau')
     } finally {
-      setLoading(false)
+      setIsLoading(false)
     }
   }
 
-  return { loading, onSubmit }
+  return { resetPassword, isLoading }
 }

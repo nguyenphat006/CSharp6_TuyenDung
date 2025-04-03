@@ -45,12 +45,12 @@ export const otpSchema = z.object({
 // Schema validation với Zod
 export const resetPasswordSchema = z.object({
   email: z.string().email('Email không hợp lệ'),
-  password: z.string().min(6, 'Mật khẩu phải có ít nhất 6 ký tự'),
-  confirmPassword: z.string()
-}).refine((data) => data.password === data.confirmPassword, {
+  newPassword: z.string().min(6, 'Mật khẩu phải có ít nhất 6 ký tự'),
+  confirmPassword: z.string().min(6, 'Mật khẩu phải có ít nhất 6 ký tự'),
+}).refine((data) => data.newPassword === data.confirmPassword, {
   message: "Mật khẩu xác nhận không khớp",
   path: ["confirmPassword"],
-})
+});
 
 export const VerifySchema = z.object({
   otp: z.string().min(6, 'Mã OTP phải có 6 ký tự').max(6, 'Mã OTP phải có 6 ký tự')

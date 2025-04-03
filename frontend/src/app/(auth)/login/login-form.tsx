@@ -19,13 +19,17 @@ import { LoginSchema } from '../schema/index'
 import { useLogin } from './useLogin'
 
 export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRef<'form'>) {
-  const { onSubmit, loading } = useLogin()
+  const { login, isLoading } = useLogin()
 
   // React Hook Form + Zod
   const form = useForm<z.infer<typeof LoginSchema>>({
     resolver: zodResolver(LoginSchema),
     defaultValues: { email: '', password: '' }
   })
+
+  const onSubmit = async (data: z.infer<typeof LoginSchema>) => {
+    await login(data.email, data.password);
+  };
 
   return (
     <Form {...form}>
@@ -76,8 +80,8 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
           />
 
           {/* Button Submit */}
-          <Button type="submit" className="w-full h-12 bg-[#6366f1] hover:bg-[#5044ee]" disabled={loading}>
-            {loading ? 'Đang đăng nhập...' : 'Đăng nhập'}
+          <Button type="submit" className="w-full h-12 bg-[#6366f1] hover:bg-[#5044ee]" disabled={isLoading}>
+            {isLoading ? 'Đang đăng nhập...' : 'Đăng nhập'}
           </Button>
 
           {/* Hoặc login bằng Google */}

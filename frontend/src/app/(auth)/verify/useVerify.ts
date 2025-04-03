@@ -1,9 +1,11 @@
+'use client';
+
 import { useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import * as z from 'zod'
 import { VerifySchema } from '../schema/index'
 import { verifyOtp } from '@/services/authService'
-import { toast } from 'react-toastify'
+import { toast } from 'sonner'
 
 export function useVerify() {
   const [loading, setLoading] = useState(false)
@@ -26,17 +28,16 @@ export function useVerify() {
       console.log('Response:', response) // Để debug
 
       if (response.data?.result === true) {
-        toast.success('Xác thực OTP thành công!')
-        // Chuyển hướng đến trang reset password với email trong URL
+        toast.success(response.data.message || 'Xác thực OTP thành công! Đang chuyển hướng...')
         setTimeout(() => {
           router.push(`/reset-password?email=${encodeURIComponent(email)}`)
-        }, 1500)
+        }, 5000)
       } else {
         // Nếu có message từ API, hiển thị message đó
         if (response.data?.message) {
           toast.error(response.data.message)
         } else {
-          toast.error('Mã OTP không chính xác')
+          toast.error('Mã OTP không hợp lệ')
         }
       }
     } catch (error: any) {

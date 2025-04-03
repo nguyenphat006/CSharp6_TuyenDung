@@ -55,21 +55,41 @@ export const addRole = createAsyncThunk(
 
 export const updateRole = createAsyncThunk(
   'roles/updateRole',
-  async (roleData: Pick<Role, 'id' | 'name' | 'isActive'>) => {
-    const token = localStorage.getItem("token");
-    const response = await fetch("https://localhost:7152/api/roles", {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify(roleData),
-    });
-    const data = await response.json();
-    if (!data.result) {
-      throw new Error(data.message || "Có lỗi xảy ra khi cập nhật vai trò");
+  async (data: { id: string; name: string; isActive: boolean }, { rejectWithValue }) => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('No access token found');
+      }
+
+      console.log('Sending update request with data:', data);
+
+      const response = await fetch(`https://localhost:7152/api/Roles/${data.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          name: data.name,
+          isActive: data.isActive
+        }),
+      });
+
+      console.log('Response status:', response.status);
+      
+      const result = await response.json();
+      console.log('Response data:', result);
+
+      if (!result.result) {
+        return rejectWithValue(result.message || 'Có lỗi xảy ra khi cập nhật vai trò');
+      }
+
+      return result.data;
+    } catch (error: any) {
+      console.error('Update role error:', error);
+      return rejectWithValue(error.message || 'Có lỗi xảy ra khi cập nhật vai trò');
     }
-    return data.data;
   }
 );
 
@@ -124,11 +144,25 @@ const roleSlice = createSlice({
         state.roles.push(action.payload);
       })
       // Update role
+      .addCase(updateRole.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
       .addCase(updateRole.fulfilled, (state, action: PayloadAction<Role>) => {
-        const index = state.roles.findIndex((role: Role) => role.id === action.payload.id);
+        state.loading = false;
+        const index = state.roles.findIndex(role => role.id === action.payload.id);
         if (index !== -1) {
           state.roles[index] = action.payload;
         }
+        console.log('Updated state:', {
+          roles: state.roles,
+          updatedRole: action.payload,
+          index
+        });
+      })
+      .addCase(updateRole.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.error.message || "Có lỗi xảy ra khi cập nhật vai trò";
       })
       // Delete roles
       .addCase(deleteRoles.fulfilled, (state, action) => {

@@ -39,6 +39,17 @@ import {
 } from '@/components/ui/dialog'
 import { User } from "@/types/user";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { toast } from "react-hot-toast";
 
 interface DataTableUserProps {
   data: User[];
@@ -60,6 +71,7 @@ export function DataTableUser({
   const [rowsPerPage, setRowsPerPage] = useState(10)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [userToDelete, setUserToDelete] = useState<string | null>(null)
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   const totalPages = Math.ceil(data.length / rowsPerPage)
   const startIndex = (currentPage - 1) * rowsPerPage
@@ -82,18 +94,25 @@ export function DataTableUser({
     }
   };
 
-  const handleDelete = (id: string) => {
-    setUserToDelete(id)
-    setDeleteDialogOpen(true)
-  }
+  const handleDelete = async (userId: string) => {
+    setUserToDelete(userId);
+    setIsDeleteDialogOpen(true);
+  };
 
-  const confirmDelete = () => {
-    if (userToDelete) {
-      onDelete(userToDelete)
-      setDeleteDialogOpen(false)
-      setUserToDelete(null)
+  const confirmDelete = async () => {
+    if (!userToDelete) return;
+    
+    try {
+      await onDelete(userToDelete);
+      toast.success("Xóa người dùng thành công");
+    } catch (error) {
+      console.error("Error deleting user:", error);
+      toast.error("Có lỗi xảy ra khi xóa người dùng");
+    } finally {
+      setIsDeleteDialogOpen(false);
+      setUserToDelete(null);
     }
-  }
+  };
 
   const handleEdit = (userId: string) => {
     router.push(`/admin/users/${userId}/edit`)
@@ -162,7 +181,7 @@ export function DataTableUser({
                         Chỉnh sửa
                       </DropdownMenuItem>
                       <DropdownMenuItem
-                        onClick={() => onDelete(user.id)}
+                        onClick={() => handleDelete(user.id)}
                         className="text-red-600"
                       >
                         <Trash2 className="mr-2 h-4 w-4" />
@@ -219,25 +238,22 @@ export function DataTableUser({
         </div>
       </div>
 
-      {/* Dialog xác nhận xóa */}
-      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Xác nhận xóa</DialogTitle>
-            <DialogDescription>
-              Bạn có chắc chắn muốn xóa người dùng này? Hành động này không thể hoàn tác.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
-              Hủy
-            </Button>
-            <Button variant="destructive" onClick={confirmDelete}>
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Bạn có chắc chắn muốn xóa?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Hành động này không thể hoàn tác. Người dùng sẽ bị xóa vĩnh viễn khỏi hệ thống.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Hủy</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-red-600 hover:bg-red-700">
               Xóa
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

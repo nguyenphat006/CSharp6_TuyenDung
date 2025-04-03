@@ -1,33 +1,49 @@
+'use client';
+
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { z } from 'zod'
 import { LoginSchema } from '../schema/index'
-import { login } from '@/services/authService'
-import { toast } from 'react-toastify'
+import { toast } from 'sonner'
 
-export function useLogin() {
-  const [loading, setLoading] = useState(false)
+export const useLogin = () => {
+  const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
 
-  const onSubmit = async (data: z.infer<typeof LoginSchema>) => {
+  const login = async (email: string, password: string) => {
     try {
-      setLoading(true)
-      const response = await login(data)
-      
-      if (response.status === 200) {
-        toast.success(response.message)
-        router.push('/admin/dashboard')
-      } else {
-        toast.error('Email hoặc mật khẩu không tồn tại')
+      setIsLoading(true)
+      const response = await fetch("https://localhost:7152/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, password }),
+      })
+
+      const data = await response.json()
+
+      if (!data.result) {
+        throw new Error(data.message || "Đăng nhập thất bại")
       }
+
+      localStorage.setItem("token", data.data.token)
+      localStorage.setItem("refreshToken", data.data.refreshToken)
+      
+      // Hiển thị thông báo thành công
+      toast.success("Đăng nhập thành công! Đang chuyển hướng...")
+      
+      // Chuyển hướng sau 5 giây
+      setTimeout(() => {
+        router.push("/admin/users")
+      }, 5000)
+
     } catch (error: any) {
-      console.error('Error:', error)
-      const errorMessage = error?.response?.data?.message || 'Email hoặc mật khẩu không tồn tại'
-      toast.error(errorMessage)
+      toast.error(error.message || "Đăng nhập thất bại")
     } finally {
-      setLoading(false)
+      setIsLoading(false)
     }
   }
 
-  return { onSubmit, loading }
+  return { login, isLoading }
 }

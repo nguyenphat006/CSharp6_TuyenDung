@@ -34,7 +34,7 @@ type FormData = z.infer<typeof formSchema>;
 
 interface EditRoleFormProps {
   role: Role | null;
-  onUpdateRole: (data: FormData) => Promise<void>;
+  onUpdateRole: (data: FormData & { id: string }) => Promise<void>;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
@@ -69,10 +69,16 @@ export function EditRoleForm({
     try {
       setIsLoading(true);
       console.log("Submitting data:", {
-        ...data,
-        id: role.id
+        id: role.id,
+        ...data
       });
-      await onUpdateRole(data);
+      
+      await onUpdateRole({
+        id: role.id,
+        ...data
+      });
+      
+      onOpenChange(false);
     } catch (error) {
       console.error("Error updating role:", error);
       toast.error("Có lỗi xảy ra khi cập nhật vai trò");

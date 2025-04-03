@@ -51,16 +51,22 @@ export default function RolesPage() {
     }
   };
 
-  const handleUpdateRole = async (data: { name: string; isActive: boolean }) => {
-    if (!selectedRole) return;
-
+  const handleUpdateRole = async (data: { name: string; isActive: boolean; id: string }) => {
     try {
-      await dispatch(updateRole({ ...data, id: selectedRole.id })).unwrap();
+      console.log('Updating role with data:', data);
+      const result = await dispatch(updateRole(data)).unwrap();
+      console.log('Update result:', result);
+      
       toast.success("Cập nhật vai trò thành công");
       setIsEditDialogOpen(false);
       setSelectedRole(null);
+      
+      // Refresh the roles list
+      dispatch(fetchRoles());
     } catch (error: any) {
+      console.error('Error updating role:', error);
       toast.error(error.message || "Có lỗi xảy ra khi cập nhật vai trò");
+      throw error;
     }
   };
 
