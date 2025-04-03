@@ -143,7 +143,7 @@ export function DataTableUser({
                 <TableCell>{user.gender}</TableCell>
                 <TableCell>{user.role}</TableCell>
                 <TableCell>
-                  <Badge className={user.isActive ? 'bg-green-500' : 'bg-red-500'}>
+                  <Badge variant={user.isActive ? "default" : "secondary"} className={user.isActive ? 'bg-green-500' : 'bg-red-500'}>
                     {user.isActive ? 'Hoạt động' : 'Không hoạt động'}
                   </Badge>
                 </TableCell>
