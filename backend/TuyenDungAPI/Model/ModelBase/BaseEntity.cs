@@ -15,7 +15,7 @@
     }
     public abstract class BaseRequestEntity
     {
-        public bool IsActive { get; set; } = true;
+        public bool IsActive { get; set; }
     }
     public abstract class BaseReponseEntity
     {

@@ -131,8 +131,6 @@ namespace TuyenDungAPI.Service
 
             if (!string.IsNullOrEmpty(request.Gender))
                 user.Gender = request.Gender;
-
-            if (request.IsActive)
                 user.IsActive = request.IsActive;
 
             // Kiểm tra role nếu có thay đổi
@@ -166,6 +164,7 @@ namespace TuyenDungAPI.Service
             // Cập nhật thời gian sửa đổi
             user.UpdatedAt = DateTime.UtcNow;
             user.UpdatedBy = updatedBy;
+            user.Role = request.Role;
 
             // Lưu thay đổi vào database
             await _dbContext.SaveChangesAsync();
