@@ -52,4 +52,15 @@ namespace TuyenDungAPI.Model.User
         [Required(ErrorMessage = "Cần phải có ít nhất một ID người dùng")]
         public List<Guid> UserIds { get; set; } = new List<Guid>();
     }
+
+    public class ResetPasswordUserRequest
+    {
+        [Required]
+        public string NewPassword { get; set; }
+
+        [Required]
+        [Compare("NewPassword", ErrorMessage = "Mật khẩu xác nhận không khớp")]
+        public string ConfirmPassword { get; set; }
+    }
+
 }

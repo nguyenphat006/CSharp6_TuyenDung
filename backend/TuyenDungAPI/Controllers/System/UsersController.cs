@@ -104,5 +104,20 @@ namespace TuyenDungAPI.Controllers
             var response = await _userService.DeleteUsersAsync(new List<Guid> { id }, user);
             return StatusCode(response.Status, response);
         }
+
+        /// <summary>
+        /// Đổi mật khẩu người dùng
+        /// </summary>
+        [HttpPut("{id}/reset-password")]
+        public async Task<IActionResult> ResetPassword(Guid id, [FromBody] ResetPasswordUserRequest request)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var user = HttpContext.User;
+            var result = await _userService.ResetPasswordUserAsync(request, id, user);
+            return StatusCode(result.Status, result);
+        }
+
     }
 }

@@ -1,0 +1,42 @@
+﻿using TuyenDungAPI.Model.ModelBase;
+
+namespace TuyenDungAPI.Model.Job
+{
+    public class JobResponse: BaseReponseEntity
+    {
+        public Guid Id { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public string Skills { get; set; } = string.Empty;
+        public string Location { get; set; } = string.Empty;
+        public decimal Salary { get; set; }
+        public int Quantity { get; set; }
+        public string Level { get; set; } = "Intern";
+        public string CompanyName { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
+        public DateTime StartDate { get; set; }
+        public DateTime? EndDate { get; set; }
+
+        // 👉 Constructor khởi tạo từ entity Job
+        public JobResponse(Job job)
+        {
+            Id = job.Id;
+            Name = job.Name;
+            Skills = job.Skills;
+            Location = job.Location;
+            Salary = job.Salary;
+            Quantity = job.Quantity;
+            Level = job.Level;
+            CompanyName = job.CompanyName;
+            Description = job.Description;
+            StartDate = job.StartDate;
+            EndDate = job.EndDate;
+            CreatedAt = job.CreatedAt;
+            CreatedBy = job.CreatedBy;
+            UpdatedAt = job.UpdatedAt;
+            UpdatedBy = job.UpdatedBy;
+            IsDeleted = job.IsDeleted;
+            DeletedBy = job.DeletedBy;
+            IsActive = job.IsActive;
+        }
+    }
+}

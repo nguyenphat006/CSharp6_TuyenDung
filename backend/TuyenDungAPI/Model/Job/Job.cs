@@ -1,10 +1,11 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
 using System.ComponentModel.DataAnnotations;
 using TuyenDungAPI.Model.Company;
+using TuyenDungAPI.Model.ModelBase;
 
 namespace TuyenDungAPI.Model.Job
 {
-    public class Job
+    public class Job: BaseEntity
     {
         [Key]
         public Guid Id { get; set; } = Guid.NewGuid();
