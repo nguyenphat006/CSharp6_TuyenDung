@@ -1,11 +1,15 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { toast } from "sonner";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -13,39 +17,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { Pencil, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { X } from "lucide-react";
-import dynamic from "next/dynamic";
-import { format } from "date-fns";
-
-// Import Rich Text Editor động để tránh lỗi SSR
-const RichTextEditor = dynamic(() => import('@/components/RichTextEditor'), {
-  ssr: false,
-  loading: () => <p>Đang tải editor...</p>
-});
-
-interface Job {
-  id: string;
-  title: string;
-  skills: string[];
-  location: string;
-  salary: {
-    min: number;
-    max: number;
-    currency: string;
-  };
-  headcount: number;
-  level: "intern" | "fresher" | "junior" | "mid" | "senior";
-  company: string;
-  startDate: string;
-  endDate: string;
-  isActive: boolean;
-  description: string;
-  createdAt: string;
-  applications: number;
-}
+import { Switch } from "@/components/ui/switch";
+import RichTextEditor from "@/components/RichTextEditor";
 
 const levels = [
   { value: "intern", label: "Thực tập sinh" },
@@ -60,7 +36,10 @@ const locations = [
   "Hồ Chí Minh",
   "Đà Nẵng",
   "Cần Thơ",
-  // Thêm các tỉnh thành khác
+  "Hải Phòng",
+  "Nha Trang",
+  "Bình Dương",
+  "Đồng Nai",
 ];
 
 const skills = [
@@ -71,128 +50,176 @@ const skills = [
   "NodeJS",
   "C#",
   ".NET",
-  // Thêm các kỹ năng khác
+  "Java",
+  "Python",
+  "SQL",
+  "MongoDB",
+  "AWS",
+  "Docker",
+  "Git",
+  "Agile",
+  "English",
 ];
 
-export default function EditJobPage({ params }: { params: { id: string } }) {
-  const router = useRouter();
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [job, setJob] = useState<Job | null>(null);
+// Dữ liệu mẫu cho việc làm
+const sampleJob = {
+  id: "1",
+  title: "Senior Frontend Developer",
+  skills: ["ReactJS", "TypeScript", "JavaScript"],
+  location: "Hồ Chí Minh",
+  salary: {
+    min: "25000000",
+    max: "45000000",
+    currency: "VND",
+  },
+  headcount: "2",
+  level: "senior",
+  company: "Tech Company",
+  startDate: "2024-03-20",
+  endDate: "2024-04-20",
+  isActive: true,
+  description: "Chúng tôi đang tìm kiếm một Senior Frontend Developer có kinh nghiệm làm việc với ReactJS và TypeScript. Ứng viên sẽ tham gia vào các dự án lớn và có cơ hội làm việc với các công nghệ mới nhất.",
+};
+
+interface EditJobFormProps {
+  jobId: string;
+  onSubmit: (data: any) => void;
+}
+
+export function EditJobForm({ jobId, onSubmit }: EditJobFormProps) {
+  const [open, setOpen] = useState(false);
   const [skillInput, setSkillInput] = useState("");
+  const [formData, setFormData] = useState(sampleJob);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    const fetchJob = async () => {
-      try {
-        const response = await fetch(`https://localhost:7152/api/jobs/${params.id}`);
-        if (!response.ok) {
-          throw new Error('Không thể tải thông tin việc làm');
+    if (open) {
+      setLoading(true);
+      setError("");
+      
+      // Giả lập API call
+      setTimeout(() => {
+        if (jobId === sampleJob.id) {
+          setFormData(sampleJob);
+          setLoading(false);
+        } else {
+          setError("Không tìm thấy việc làm");
+          setLoading(false);
         }
-        const data = await response.json();
-        setJob(data);
-      } catch (error) {
-        console.error("Error fetching job:", error);
-        toast.error("Không thể tải thông tin việc làm");
-      } finally {
-        setLoading(false);
-      }
-    };
+      }, 1000);
+    }
+  }, [open, jobId]);
 
-    fetchJob();
-  }, [params.id]);
-
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!job) return;
 
     // Validation
-    if (!job.title.trim()) {
-      toast.error("Vui lòng nhập tên công việc");
+    if (!formData.title.trim()) {
+      alert("Vui lòng nhập tên công việc");
       return;
     }
 
-    if (job.skills.length === 0) {
-      toast.error("Vui lòng chọn ít nhất một kỹ năng");
+    if (formData.skills.length === 0) {
+      alert("Vui lòng chọn ít nhất một kỹ năng");
       return;
     }
 
-    if (job.salary.min < 1000000) {
-      toast.error("Mức lương tối thiểu phải từ 1,000,000 VND");
+    if (Number(formData.salary.min) < 1000000) {
+      alert("Mức lương tối thiểu phải từ 1,000,000 VND");
       return;
     }
 
-    if (job.headcount < 1) {
-      toast.error("Số lượng tuyển dụng phải từ 1 trở lên");
+    if (Number(formData.salary.max) <= Number(formData.salary.min)) {
+      alert("Mức lương tối đa phải lớn hơn mức lương tối thiểu");
       return;
     }
 
-    if (new Date(job.endDate) <= new Date(job.startDate)) {
-      toast.error("Ngày kết thúc phải sau ngày bắt đầu");
+    if (Number(formData.headcount) < 1) {
+      alert("Số lượng tuyển dụng phải từ 1 trở lên");
       return;
     }
 
-    if (job.description.length < 50) {
-      toast.error("Mô tả công việc phải có ít nhất 50 ký tự");
+    if (!formData.location) {
+      alert("Vui lòng chọn địa điểm làm việc");
       return;
     }
 
-    setSaving(true);
-    try {
-      const response = await fetch(`https://localhost:7152/api/jobs/${params.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(job),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Không thể cập nhật thông tin');
-      }
-
-      toast.success("Cập nhật thông tin thành công");
-      router.push("/admin/jobs");
-    } catch (error: any) {
-      console.error("Error updating job:", error);
-      toast.error(error.message || "Không thể cập nhật thông tin");
-    } finally {
-      setSaving(false);
+    if (!formData.startDate || !formData.endDate) {
+      alert("Vui lòng chọn thời gian tuyển dụng");
+      return;
     }
+
+    if (new Date(formData.endDate) <= new Date(formData.startDate)) {
+      alert("Ngày kết thúc phải sau ngày bắt đầu");
+      return;
+    }
+
+    if (formData.description.length < 50) {
+      alert("Mô tả công việc phải có ít nhất 50 ký tự");
+      return;
+    }
+
+    // Log dữ liệu mẫu
+    console.log("Form data:", {
+      ...formData,
+      salary: {
+        min: Number(formData.salary.min),
+        max: Number(formData.salary.max),
+        currency: formData.salary.currency,
+      },
+      headcount: Number(formData.headcount),
+    });
+
+    onSubmit({
+      ...formData,
+      salary: {
+        min: Number(formData.salary.min),
+        max: Number(formData.salary.max),
+        currency: formData.salary.currency,
+      },
+      headcount: Number(formData.headcount),
+    });
+
+    setOpen(false);
   };
 
   const handleAddSkill = () => {
-    if (!job) return;
     const skill = skillInput.trim();
-    if (skill && !job.skills.includes(skill)) {
-      setJob({ ...job, skills: [...job.skills, skill] });
+    if (skill && !formData.skills.includes(skill)) {
+      setFormData({ ...formData, skills: [...formData.skills, skill] });
       setSkillInput("");
     }
   };
 
   const handleRemoveSkill = (skillToRemove: string) => {
-    if (!job) return;
-    setJob({ ...job, skills: job.skills.filter(skill => skill !== skillToRemove) });
+    setFormData({
+      ...formData,
+      skills: formData.skills.filter(skill => skill !== skillToRemove)
+    });
   };
 
-  if (loading) {
-    return <div>Đang tải...</div>;
-  }
-
-  if (!job) {
-    return <div>Không tìm thấy việc làm</div>;
-  }
-
   return (
-    <div className="container mx-auto py-6">
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Chỉnh sửa thông tin việc làm</CardTitle>
-          <Button variant="outline" onClick={() => router.push('/admin/jobs')}>
-            Trở về danh sách
-          </Button>
-        </CardHeader>
-        <CardContent>
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="outline" size="icon">
+          <Pencil className="w-4 h-4" />
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-4xl">
+        <DialogHeader>
+          <DialogTitle>Chỉnh sửa việc làm</DialogTitle>
+        </DialogHeader>
+
+        {loading ? (
+          <div className="flex items-center justify-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+          </div>
+        ) : error ? (
+          <div className="flex items-center justify-center py-8 text-red-500">
+            {error}
+          </div>
+        ) : (
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Cột trái */}
@@ -203,8 +230,8 @@ export default function EditJobPage({ params }: { params: { id: string } }) {
                   <Input
                     id="title"
                     placeholder="Nhập tên công việc..."
-                    value={job.title}
-                    onChange={(e) => setJob({ ...job, title: e.target.value })}
+                    value={formData.title}
+                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                     maxLength={100}
                     required
                   />
@@ -214,7 +241,7 @@ export default function EditJobPage({ params }: { params: { id: string } }) {
                 <div>
                   <Label>Kỹ năng yêu cầu</Label>
                   <div className="flex flex-wrap gap-2 mb-2">
-                    {job.skills.map((skill) => (
+                    {formData.skills.map((skill) => (
                       <Badge key={skill} variant="secondary" className="flex items-center gap-1">
                         {skill}
                         <X 
@@ -254,11 +281,12 @@ export default function EditJobPage({ params }: { params: { id: string } }) {
                       id="salaryMin"
                       type="number"
                       min={1000000}
-                      value={job.salary.min}
+                      placeholder="VD: 1000000"
+                      value={formData.salary.min}
                       onChange={(e) =>
-                        setJob({
-                          ...job,
-                          salary: { ...job.salary, min: Number(e.target.value) }
+                        setFormData({
+                          ...formData,
+                          salary: { ...formData.salary, min: e.target.value }
                         })
                       }
                       required
@@ -270,11 +298,12 @@ export default function EditJobPage({ params }: { params: { id: string } }) {
                       id="salaryMax"
                       type="number"
                       min={1000000}
-                      value={job.salary.max}
+                      placeholder="VD: 2000000"
+                      value={formData.salary.max}
                       onChange={(e) =>
-                        setJob({
-                          ...job,
-                          salary: { ...job.salary, max: Number(e.target.value) }
+                        setFormData({
+                          ...formData,
+                          salary: { ...formData.salary, max: e.target.value }
                         })
                       }
                       required
@@ -289,8 +318,9 @@ export default function EditJobPage({ params }: { params: { id: string } }) {
                     id="headcount"
                     type="number"
                     min={1}
-                    value={job.headcount}
-                    onChange={(e) => setJob({ ...job, headcount: Number(e.target.value) })}
+                    placeholder="VD: 1"
+                    value={formData.headcount}
+                    onChange={(e) => setFormData({ ...formData, headcount: e.target.value })}
                     required
                   />
                 </div>
@@ -299,8 +329,8 @@ export default function EditJobPage({ params }: { params: { id: string } }) {
                 <div>
                   <Label htmlFor="level">Trình độ</Label>
                   <Select
-                    value={job.level}
-                    onValueChange={(value: Job['level']) => setJob({ ...job, level: value })}
+                    value={formData.level}
+                    onValueChange={(value) => setFormData({ ...formData, level: value })}
                   >
                     <SelectTrigger>
                       <SelectValue />
@@ -322,8 +352,8 @@ export default function EditJobPage({ params }: { params: { id: string } }) {
                 <div>
                   <Label htmlFor="location">Địa điểm làm việc</Label>
                   <Select
-                    value={job.location}
-                    onValueChange={(value) => setJob({ ...job, location: value })}
+                    value={formData.location}
+                    onValueChange={(value) => setFormData({ ...formData, location: value })}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Chọn địa điểm..." />
@@ -345,8 +375,8 @@ export default function EditJobPage({ params }: { params: { id: string } }) {
                     <Input
                       id="startDate"
                       type="date"
-                      value={job.startDate.split('T')[0]}
-                      onChange={(e) => setJob({ ...job, startDate: e.target.value })}
+                      value={formData.startDate}
+                      onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
                       required
                     />
                   </div>
@@ -355,8 +385,8 @@ export default function EditJobPage({ params }: { params: { id: string } }) {
                     <Input
                       id="endDate"
                       type="date"
-                      value={job.endDate.split('T')[0]}
-                      onChange={(e) => setJob({ ...job, endDate: e.target.value })}
+                      value={formData.endDate}
+                      onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
                       required
                     />
                   </div>
@@ -366,8 +396,8 @@ export default function EditJobPage({ params }: { params: { id: string } }) {
                 <div className="flex items-center space-x-2">
                   <Switch
                     id="isActive"
-                    checked={job.isActive}
-                    onCheckedChange={(checked) => setJob({ ...job, isActive: checked })}
+                    checked={formData.isActive}
+                    onCheckedChange={(checked) => setFormData({ ...formData, isActive: checked })}
                   />
                   <Label htmlFor="isActive">Đang tuyển dụng</Label>
                 </div>
@@ -376,8 +406,8 @@ export default function EditJobPage({ params }: { params: { id: string } }) {
                 <div className="space-y-2">
                   <Label>Mô tả công việc</Label>
                   <RichTextEditor
-                    value={job.description}
-                    onChange={(value) => setJob({ ...job, description: value })}
+                    value={formData.description}
+                    onChange={(value: string) => setFormData({ ...formData, description: value })}
                   />
                 </div>
               </div>
@@ -385,32 +415,16 @@ export default function EditJobPage({ params }: { params: { id: string } }) {
 
             {/* Buttons */}
             <div className="flex justify-end gap-4">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => router.push('/admin/jobs')}
-              >
+              <Button type="button" variant="outline" onClick={() => setOpen(false)}>
                 Hủy
               </Button>
-              <Button 
-                variant="destructive" 
-                type="button"
-                onClick={() => {
-                  // TODO: Implement delete functionality
-                  if (confirm('Bạn có chắc chắn muốn xóa việc làm này?')) {
-                    // handleDelete()
-                  }
-                }}
-              >
-                Xóa
-              </Button>
-              <Button type="submit" disabled={saving}>
-                {saving ? 'Đang lưu...' : 'Lưu thay đổi'}
+              <Button type="submit">
+                Lưu thay đổi
               </Button>
             </div>
           </form>
-        </CardContent>
-      </Card>
-    </div>
+        )}
+      </DialogContent>
+    </Dialog>
   );
 } 

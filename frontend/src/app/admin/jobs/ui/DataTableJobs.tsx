@@ -19,7 +19,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { MoreHorizontal, Trash2, Pencil } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
-import { format } from 'date-fns'
+import { format, parseISO } from 'date-fns'
 import { vi } from 'date-fns/locale'
 import {
   Select,
@@ -49,8 +49,8 @@ export interface Job {
     max: number
     currency: string
   }
-  deadline: Date
-  createdAt: Date
+  deadline: string
+  createdAt: string
   applications: number
 }
 
@@ -130,6 +130,16 @@ export function DataTableJobs({ data, onUpdateJob, onDeleteJob }: DataTableJobsP
     }
   }
 
+  const formatDate = (dateString: string | null | undefined) => {
+    if (!dateString) return 'N/A';
+    try {
+      const date = parseISO(dateString);
+      return format(date, 'dd/MM/yyyy', { locale: vi });
+    } catch (error) {
+      return 'N/A';
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div className="rounded-md border">
@@ -166,10 +176,10 @@ export function DataTableJobs({ data, onUpdateJob, onDeleteJob }: DataTableJobsP
                   {job.salary.min.toLocaleString()} - {job.salary.max.toLocaleString()} {job.salary.currency}
                 </TableCell>
                 <TableCell>
-                  {format(job.deadline, 'dd/MM/yyyy', { locale: vi })}
+                  {formatDate(job.deadline)}
                 </TableCell>
                 <TableCell>
-                  {format(job.createdAt, 'dd/MM/yyyy', { locale: vi })}
+                  {formatDate(job.createdAt)}
                 </TableCell>
                 <TableCell>{job.applications}</TableCell>
                 <TableCell>

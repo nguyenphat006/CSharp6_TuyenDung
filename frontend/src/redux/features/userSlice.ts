@@ -93,6 +93,26 @@ export const deleteUsers = createAsyncThunk(
   }
 );
 
+export const changePassword = createAsyncThunk(
+  'users/changePassword',
+  async ({ id, newPassword }: { id: string; newPassword: string }) => {
+    const response = await fetch(`https://localhost:7152/api/users/${id}/change-password`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ newPassword }),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || 'Có lỗi xảy ra khi đổi mật khẩu');
+    }
+
+    return await response.json();
+  }
+);
+
 const userSlice = createSlice({
   name: 'users',
   initialState,

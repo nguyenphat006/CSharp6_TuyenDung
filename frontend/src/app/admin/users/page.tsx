@@ -23,13 +23,15 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { EditUserForm } from "./ui/EditUserForm";
+import { ChangePasswordForm } from "./ui/ChangePasswordForm";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import { 
   fetchUsers, 
   addUser, 
   updateUser, 
   deleteUsers,
-  setSelectedUsers 
+  setSelectedUsers,
+  changePassword 
 } from "@/redux/features/userSlice";
 import { User } from "@/types/user";
 
@@ -42,6 +44,7 @@ export default function UsersPage() {
   const [dateFilter, setDateFilter] = useState<string>("all");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isChangePasswordDialogOpen, setIsChangePasswordDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   useSetPageTitle();
 
@@ -96,6 +99,24 @@ export default function UsersPage() {
     setIsEditDialogOpen(true);
   };
 
+  const handleChangePassword = async (data: { newPassword: string; confirmPassword: string }) => {
+    if (!selectedUser) return;
+
+    try {
+      await dispatch(changePassword({ id: selectedUser.id, newPassword: data.newPassword })).unwrap();
+      toast.success("Đổi mật khẩu thành công");
+      setIsChangePasswordDialogOpen(false);
+      setSelectedUser(null);
+    } catch (error: any) {
+      toast.error(error.message || "Có lỗi xảy ra khi đổi mật khẩu");
+    }
+  };
+
+  const handleOpenChangePassword = (user: User) => {
+    setSelectedUser(user);
+    setIsChangePasswordDialogOpen(true);
+  };
+
   if (loading) {
     return <div>Đang tải...</div>;
   }
@@ -126,6 +147,7 @@ export default function UsersPage() {
         data={users}
         onDelete={handleDeleteUser}
         onEditUser={handleEditUser}
+        onChangePassword={handleOpenChangePassword}
         selectedUsers={selectedUsers}
         setSelectedUsers={(users) => dispatch(setSelectedUsers(users))}
       />
@@ -148,6 +170,20 @@ export default function UsersPage() {
         open={isEditDialogOpen}
         onOpenChange={setIsEditDialogOpen}
       />
+
+      <Dialog open={isChangePasswordDialogOpen} onOpenChange={setIsChangePasswordDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Đổi mật khẩu người dùng</DialogTitle>
+          </DialogHeader>
+          <ChangePasswordForm
+            user={selectedUser}
+            onSubmit={handleChangePassword}
+            onCancel={() => setIsChangePasswordDialogOpen(false)}
+            isLoading={loading}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

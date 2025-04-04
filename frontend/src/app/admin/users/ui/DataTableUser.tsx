@@ -26,9 +26,11 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { MoreHorizontal, Pencil, Trash2 } from 'lucide-react'
+import { MoreHorizontal, Pencil, Trash2, Key } from 'lucide-react'
 import {
   Dialog,
   DialogContent,
@@ -55,6 +57,7 @@ interface DataTableUserProps {
   data: User[];
   onDelete: (id: string) => void;
   onEditUser: (user: User) => void;
+  onChangePassword: (user: User) => void;
   selectedUsers: string[];
   setSelectedUsers: (users: string[]) => void;
 }
@@ -63,6 +66,7 @@ export function DataTableUser({
   data,
   onDelete,
   onEditUser,
+  onChangePassword,
   selectedUsers,
   setSelectedUsers,
 }: DataTableUserProps) {
@@ -172,14 +176,21 @@ export function DataTableUser({
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button variant="ghost" className="h-8 w-8 p-0">
+                        <span className="sr-only">Mở menu</span>
                         <MoreHorizontal className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
+                      <DropdownMenuLabel>Thao tác</DropdownMenuLabel>
                       <DropdownMenuItem onClick={() => onEditUser(user)}>
                         <Pencil className="mr-2 h-4 w-4" />
                         Chỉnh sửa
                       </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => onChangePassword(user)}>
+                        <Key className="mr-2 h-4 w-4" />
+                        Đổi mật khẩu
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
                       <DropdownMenuItem
                         onClick={() => handleDelete(user.id)}
                         className="text-red-600"
