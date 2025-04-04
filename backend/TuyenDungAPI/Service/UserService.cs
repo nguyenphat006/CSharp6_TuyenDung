@@ -29,8 +29,6 @@ namespace TuyenDungAPI.Service
 
             return new ApiResponse<List<UserResponse>>(true, 200, response, "Lấy danh sách người dùng thành công");
         }
-
-
         public async Task<ApiResponse<UserResponse>> GetUserByIdAsync(Guid id)
         {
             var user = await _dbContext.Users
@@ -43,8 +41,6 @@ namespace TuyenDungAPI.Service
             var response = new UserResponse(user);
             return new ApiResponse<UserResponse>(true, 200, response, "Lấy thông tin người dùng thành công");
         }
-
-
         public async Task<ApiResponse<UserResponse>> CreateUserAsync(CreateUserRequest request, ClaimsPrincipal currentUser)
         {
             string createdBy = currentUser?.Identity?.Name ?? "System";
@@ -100,8 +96,6 @@ namespace TuyenDungAPI.Service
             var response = new UserResponse(user);
             return new ApiResponse<UserResponse>(true, 201, response, "Tạo người dùng thành công!");
         }
-
-
         public async Task<ApiResponse<UserResponse>> UpdateUserAsync(UpdateUserRequest request, ClaimsPrincipal currentUser)
         {
             string updatedBy = currentUser?.Identity?.Name ?? "System";
@@ -173,9 +167,6 @@ namespace TuyenDungAPI.Service
             var response = new UserResponse(user);
             return new ApiResponse<UserResponse>(true, 200, response, "Cập nhật thông tin người dùng thành công!");
         }
-
-
-
         public async Task<ApiResponse<DeleteUsersResponse>> DeleteUsersAsync(List<Guid> userIds, ClaimsPrincipal currentUser)
         {
             string deletedBy = currentUser?.Identity?.Name ?? "System";
@@ -245,6 +236,26 @@ namespace TuyenDungAPI.Service
                 deletedCount > 0 ? 200 : 404,
                 response,
                 message);
+        }
+        public async Task<ApiResponse<UserResponse>> ResetPasswordUserAsync(ResetPasswordUserRequest request, Guid id, ClaimsPrincipal currentUser)
+        {
+            string updatedBy = currentUser?.Identity?.Name ?? "System";
+            var user = await _dbContext.Users.FirstOrDefaultAsync(u => u.Id == id && !u.IsDeleted);
+            if (user == null)
+            {
+                return new ApiResponse<UserResponse>(false, 404, null, "Người dùng không tồn tại!");
+            }
+
+            // ✅ Hash mật khẩu mới và cập nhật
+            user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
+            user.UpdatedAt = DateTime.UtcNow;
+            user.UpdatedBy = updatedBy;
+
+            _dbContext.Users.Update(user);
+            await _dbContext.SaveChangesAsync();
+
+            var response = new UserResponse(user);
+            return new ApiResponse<UserResponse>(true, 200, response, "Đổi mật khẩu thành công!");
         }
 
     }
