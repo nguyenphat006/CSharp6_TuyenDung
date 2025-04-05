@@ -86,8 +86,10 @@ builder.Services.AddAuthorization(); // Để sử dụng [Authorize]
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<EmailService>();
 builder.Services.AddScoped<UserService>();
-builder.Services.AddScoped<RoleService>();  
-                                                
+builder.Services.AddScoped<RoleService>();
+builder.Services.AddScoped<CompanyService>();
+
+
 var app = builder.Build();
 
 // 🔥 Kích hoạt CORS
@@ -131,7 +133,7 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
-
+app.UseStaticFiles();
 app.MapControllers();
 
 app.Run();

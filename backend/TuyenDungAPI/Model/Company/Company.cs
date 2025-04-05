@@ -27,6 +27,9 @@ namespace TuyenDungAPI.Model.Company
 
         [Required, MaxLength(100)]
         public string WorkingTime { get; set; } = string.Empty; // Ví dụ: "Thứ 2 - Thứ 6, 9h - 18h"
+        [MaxLength(500)]
+        public string? LogoUrl { get; set; } // hoặc AvatarUrl / ImageUrl
+
 
         // 🔗 Danh sách các công việc liên kết với công ty này
         public ICollection<CompanyJobs> CompanyJob { get; set; } = new List<CompanyJobs>();

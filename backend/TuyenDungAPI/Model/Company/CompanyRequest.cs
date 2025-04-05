@@ -10,8 +10,6 @@ namespace TuyenDungAPI.Model.Company
     }
     public class CreateCompanyRequest : BaseRequestEntity
     {
-        [DefaultValue("11111111-1111-1111-1111-111111111111")]
-        public Guid Id { get; set; }
         [Required, MaxLength(255)]
         [DefaultValue("Tiktok")]
         public string Name { get; set; } = string.Empty;
@@ -41,7 +39,6 @@ namespace TuyenDungAPI.Model.Company
 
     public class UpdateCompanyRequest : BaseRequestEntity
     {
-        [DefaultValue("11111111-1111-1111-1111-111111111111")]
         public Guid Id { get; set; }
         [Required, MaxLength(255)]
         [DefaultValue("Tiktok")]
@@ -73,6 +70,15 @@ namespace TuyenDungAPI.Model.Company
     public class DeleteCompanyRequest
     {
         [Required(ErrorMessage = "Cần phải có ít nhất một ID công ty")]
-        public List<Guid> Companys { get; set; } = new List<Guid>();
+        public List<Guid> CompanysId { get; set; } = new List<Guid>();
+    }
+
+    public class UploadCompanyLogoRequest
+    {
+        [Required(ErrorMessage = "Id công ty là bắt buộc")]
+        public Guid CompanyId { get; set; }
+
+        [Required(ErrorMessage = "File logo là bắt buộc")]
+        public IFormFile Logo { get; set; }
     }
 }
