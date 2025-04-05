@@ -10,58 +10,71 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Download } from "lucide-react";
+import { Download, Plus } from "lucide-react";
 import { DataTableJobs, Job } from "./ui/DataTableJobs";
 import { useSetPageTitle } from "@/lib/hooks/useSetPageTitle";
-import { AddJobForm } from "./ui/AddJobForm";
+import Link from "next/link";
+import { toast } from "sonner";
 
 // Mock data
 const mockJobs: Job[] = [
   {
     id: "01458",
     title: "Senior Frontend Developer",
-    company: "Công ty A",
+    skills: ["React", "TypeScript", "Next.js"],
     location: "Hà Nội",
-    type: "full-time",
-    status: "active",
     salary: {
       min: 20000000,
       max: 30000000,
       currency: "VND",
     },
-    deadline: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+    headcount: 2,
+    level: "senior",
+    company: "Công ty A",
+    startDate: new Date(Date.now()).toISOString(),
+    endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+    isActive: true,
+    description: "Chúng tôi đang tìm kiếm Senior Frontend Developer...",
     createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
     applications: 25,
   },
   {
     id: "01459",
     title: "UI/UX Designer",
-    company: "Công ty B",
+    skills: ["Figma", "Adobe XD", "UI Design", "UX Research"],
     location: "TP.HCM",
-    type: "part-time",
-    status: "pending",
     salary: {
       min: 15000000,
       max: 20000000,
       currency: "VND",
     },
-    deadline: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString(),
+    headcount: 1,
+    level: "mid",
+    company: "Công ty B",
+    startDate: new Date(Date.now()).toISOString(),
+    endDate: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString(),
+    isActive: true,
+    description: "Chúng tôi cần tuyển UI/UX Designer...",
     createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
     applications: 12,
   },
   {
     id: "01460",
     title: "Backend Developer",
-    company: "Công ty C",
+    skills: ["Node.js", "Express", "MongoDB", "SQL"],
     location: "Đà Nẵng",
-    type: "full-time",
-    status: "expired",
     salary: {
       min: 25000000,
       max: 35000000,
       currency: "VND",
     },
-    deadline: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
+    headcount: 3,
+    level: "junior",
+    company: "Công ty C",
+    startDate: new Date(Date.now()).toISOString(),
+    endDate: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
+    isActive: false,
+    description: "Vị trí Backend Developer...",
     createdAt: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000).toISOString(),
     applications: 45,
   },
@@ -94,14 +107,17 @@ export default function JobsPage() {
     setJobs(jobs.filter((job) => job.id !== jobId));
   };
 
-  const handleAddJob = (newJob: Omit<Job, "id" | "createdAt" | "applications">) => {
-    const job: Job = {
-      ...newJob,
-      id: String(Date.now()),
-      createdAt: new Date().toISOString(),
-      applications: 0,
-    };
-    setJobs([...jobs, job]);
+  const handleDelete = async (id: string) => {
+    try {
+      // Giả lập API call
+      console.log("Deleting job:", id);
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      handleDeleteJob(id);
+      toast.success("Xóa việc làm thành công!");
+    } catch (error) {
+      console.error("Error deleting job:", error);
+      toast.error("Có lỗi xảy ra khi xóa việc làm!");
+    }
   };
 
   return (
@@ -109,7 +125,12 @@ export default function JobsPage() {
       {/* Header */}
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold">Quản lý việc làm</h1>
-        <AddJobForm onSubmit={handleAddJob} />
+        <Link href="/admin/jobs/add">
+          <Button>
+            <Plus className="w-4 h-4 mr-2" />
+            Thêm việc làm
+          </Button>
+        </Link>
       </div>
 
       {/* Filters */}
@@ -130,8 +151,7 @@ export default function JobsPage() {
             <SelectContent>
               <SelectItem value="all">Tất cả</SelectItem>
               <SelectItem value="active">Đang tuyển</SelectItem>
-              <SelectItem value="pending">Chờ duyệt</SelectItem>
-              <SelectItem value="expired">Hết hạn</SelectItem>
+              <SelectItem value="inactive">Đã đóng</SelectItem>
             </SelectContent>
           </Select>
 
@@ -158,7 +178,7 @@ export default function JobsPage() {
       <DataTableJobs 
         data={jobs} 
         onUpdateJob={handleUpdateJob}
-        onDeleteJob={handleDeleteJob}
+        onDeleteJob={handleDelete}
       />
     </div>
   );

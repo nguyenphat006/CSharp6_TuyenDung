@@ -17,7 +17,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { MoreHorizontal, Trash2, Pencil } from 'lucide-react'
+import { MoreHorizontal, Trash, Pencil } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { format, parseISO } from 'date-fns'
 import { vi } from 'date-fns/locale'
@@ -36,28 +36,43 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
+import Link from 'next/link'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 
 export interface Job {
   id: string
   title: string
-  company: string
+  skills: string[]
   location: string
-  type: 'full-time' | 'part-time' | 'contract' | 'internship'
-  status: 'active' | 'closed' | 'draft'
   salary: {
     min: number
     max: number
     currency: string
   }
-  deadline: string
+  headcount: number
+  level: string
+  company: string
+  startDate: string
+  endDate: string
+  isActive: boolean
+  description: string
   createdAt: string
   applications: number
 }
 
 interface DataTableJobsProps {
   data: Job[]
-  onUpdateJob: (id: string, data: Omit<Job, 'id' | 'createdAt' | 'applications'>) => void
-  onDeleteJob: (id: string) => void
+  onUpdateJob: (jobId: string, updatedJob: Omit<Job, 'id' | 'createdAt' | 'applications'>) => void
+  onDeleteJob: (jobId: string) => void
 }
 
 export function DataTableJobs({ data, onUpdateJob, onDeleteJob }: DataTableJobsProps) {
@@ -65,21 +80,21 @@ export function DataTableJobs({ data, onUpdateJob, onDeleteJob }: DataTableJobsP
   const [currentPage, setCurrentPage] = useState(1)
   const [rowsPerPage, setRowsPerPage] = useState(10)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
-  const [jobToDelete, setJobToDelete] = useState<string | null>(null)
+  const [jobToDelete, setJobToDelete] = useState<Job | null>(null)
 
   const totalPages = Math.ceil(data.length / rowsPerPage)
   const startIndex = (currentPage - 1) * rowsPerPage
   const endIndex = startIndex + rowsPerPage
   const currentData = data.slice(startIndex, endIndex)
 
-  const handleDelete = (id: string) => {
-    setJobToDelete(id)
+  const handleDelete = (job: Job) => {
+    setJobToDelete(job)
     setDeleteDialogOpen(true)
   }
 
   const confirmDelete = () => {
     if (jobToDelete) {
-      onDeleteJob(jobToDelete)
+      onDeleteJob(jobToDelete.id)
       setDeleteDialogOpen(false)
       setJobToDelete(null)
     }
@@ -140,63 +155,89 @@ export function DataTableJobs({ data, onUpdateJob, onDeleteJob }: DataTableJobsP
     }
   };
 
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('vi-VN', {
+      style: 'currency',
+      currency: 'VND',
+      maximumFractionDigits: 0,
+    }).format(amount);
+  };
+
+  const levelLabels: Record<string, string> = {
+    intern: "Thực tập sinh",
+    fresher: "Fresher",
+    junior: "Junior",
+    mid: "Middle",
+    senior: "Senior",
+  };
+
   return (
     <div className="space-y-4">
       <div className="rounded-md border">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>ID</TableHead>
-              <TableHead>Tiêu đề</TableHead>
-              <TableHead>Công ty</TableHead>
+              <TableHead>Tên công việc</TableHead>
+              <TableHead>Kỹ năng</TableHead>
               <TableHead>Địa điểm</TableHead>
-              <TableHead>Loại</TableHead>
+              <TableHead>Mức lương</TableHead>
+              <TableHead>Số lượng</TableHead>
+              <TableHead>Trình độ</TableHead>
+              <TableHead>Thời gian</TableHead>
               <TableHead>Trạng thái</TableHead>
-              <TableHead>Lương</TableHead>
-              <TableHead>Hạn nộp</TableHead>
-              <TableHead>Ngày tạo</TableHead>
-              <TableHead>Đơn ứng tuyển</TableHead>
-              <TableHead className="w-[100px]">Thao tác</TableHead>
+              <TableHead>Ứng tuyển</TableHead>
+              <TableHead className="text-right">Thao tác</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {currentData.map((job) => (
               <TableRow key={job.id}>
-                <TableCell className="font-medium">{job.id}</TableCell>
                 <TableCell className="font-medium">{job.title}</TableCell>
-                <TableCell>{job.company}</TableCell>
-                <TableCell>{job.location}</TableCell>
-                <TableCell>{getTypeText(job.type)}</TableCell>
                 <TableCell>
-                  <Badge className={getStatusColor(job.status)}>
-                    {getStatusText(job.status)}
+                  <div className="flex flex-wrap gap-1">
+                    {job.skills.map((skill) => (
+                      <Badge key={skill} variant="secondary">
+                        {skill}
+                      </Badge>
+                    ))}
+                  </div>
+                </TableCell>
+                <TableCell>{job.location}</TableCell>
+                <TableCell>
+                  {formatCurrency(job.salary.min)} - {formatCurrency(job.salary.max)}
+                </TableCell>
+                <TableCell>{job.headcount}</TableCell>
+                <TableCell>{levelLabels[job.level]}</TableCell>
+                <TableCell>
+                  {formatDate(job.startDate)} - {formatDate(job.endDate)}
+                </TableCell>
+                <TableCell>
+                  <Badge variant={job.isActive ? "default" : "secondary"}>
+                    {job.isActive ? "Đang tuyển" : "Đã đóng"}
                   </Badge>
                 </TableCell>
-                <TableCell>
-                  {job.salary.min.toLocaleString()} - {job.salary.max.toLocaleString()} {job.salary.currency}
-                </TableCell>
-                <TableCell>
-                  {formatDate(job.deadline)}
-                </TableCell>
-                <TableCell>
-                  {formatDate(job.createdAt)}
-                </TableCell>
                 <TableCell>{job.applications}</TableCell>
-                <TableCell>
+                <TableCell className="text-right">
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button variant="ghost" className="h-8 w-8 p-0">
+                        <span className="sr-only">Mở menu</span>
                         <MoreHorizontal className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => handleEdit(job.id)}>
-                        <Pencil className="mr-2 h-4 w-4" />
-                        Chỉnh sửa
+                      <DropdownMenuItem asChild>
+                        <Link href={`/admin/jobs/${job.id}/edit`} className="flex items-center">
+                          <Pencil className="mr-2 h-4 w-4" />
+                          <span>Chỉnh sửa</span>
+                        </Link>
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleDelete(job.id)} className="text-red-600">
-                        <Trash2 className="mr-2 h-4 w-4" />
-                        Xóa
+                      <DropdownMenuItem
+                        className="text-red-600"
+                        onClick={() => handleDelete(job)}
+                      >
+                        <Trash className="mr-2 h-4 w-4" />
+                        <span>Xóa</span>
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
@@ -250,24 +291,25 @@ export function DataTableJobs({ data, onUpdateJob, onDeleteJob }: DataTableJobsP
       </div>
 
       {/* Dialog xác nhận xóa */}
-      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Xác nhận xóa</DialogTitle>
-            <DialogDescription>
-              Bạn có chắc chắn muốn xóa việc làm này? Hành động này không thể hoàn tác.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
-              Hủy
-            </Button>
-            <Button variant="destructive" onClick={confirmDelete}>
+      <AlertDialog open={!!jobToDelete} onOpenChange={() => setJobToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Bạn có chắc chắn muốn xóa?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Hành động này không thể hoàn tác. Việc làm này sẽ bị xóa vĩnh viễn khỏi hệ thống.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Hủy</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-600 hover:bg-red-700"
+              onClick={confirmDelete}
+            >
               Xóa
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 } 
