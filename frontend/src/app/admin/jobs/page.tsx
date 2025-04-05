@@ -11,80 +11,27 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Download, Plus } from "lucide-react";
-import { DataTableJobs, Job } from "./ui/DataTableJobs";
+import { DataTableJobs } from "./ui/DataTableJobs";
 import { useSetPageTitle } from "@/lib/hooks/useSetPageTitle";
 import Link from "next/link";
 import { toast } from "sonner";
-
-// Mock data
-const mockJobs: Job[] = [
-  {
-    id: "01458",
-    title: "Senior Frontend Developer",
-    skills: ["React", "TypeScript", "Next.js"],
-    location: "Hà Nội",
-    salary: {
-      min: 20000000,
-      max: 30000000,
-      currency: "VND",
-    },
-    headcount: 2,
-    level: "senior",
-    company: "Công ty A",
-    startDate: new Date(Date.now()).toISOString(),
-    endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-    isActive: true,
-    description: "Chúng tôi đang tìm kiếm Senior Frontend Developer...",
-    createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-    applications: 25,
-  },
-  {
-    id: "01459",
-    title: "UI/UX Designer",
-    skills: ["Figma", "Adobe XD", "UI Design", "UX Research"],
-    location: "TP.HCM",
-    salary: {
-      min: 15000000,
-      max: 20000000,
-      currency: "VND",
-    },
-    headcount: 1,
-    level: "mid",
-    company: "Công ty B",
-    startDate: new Date(Date.now()).toISOString(),
-    endDate: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString(),
-    isActive: true,
-    description: "Chúng tôi cần tuyển UI/UX Designer...",
-    createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-    applications: 12,
-  },
-  {
-    id: "01460",
-    title: "Backend Developer",
-    skills: ["Node.js", "Express", "MongoDB", "SQL"],
-    location: "Đà Nẵng",
-    salary: {
-      min: 25000000,
-      max: 35000000,
-      currency: "VND",
-    },
-    headcount: 3,
-    level: "junior",
-    company: "Công ty C",
-    startDate: new Date(Date.now()).toISOString(),
-    endDate: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-    isActive: false,
-    description: "Vị trí Backend Developer...",
-    createdAt: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000).toISOString(),
-    applications: 45,
-  },
-];
+import { Job, sampleJobs } from "./data/sampleData";
 
 export default function JobsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [dateFilter, setDateFilter] = useState<string>("all");
-  const [jobs, setJobs] = useState<Job[]>(mockJobs);
+  const [jobs, setJobs] = useState<Job[]>(
+    Object.values(sampleJobs).map(job => ({
+      ...job,
+      salary: {
+        min: Number(job.salary.min),
+        max: Number(job.salary.max),
+        currency: job.salary.currency,
+      },
+      headcount: Number(job.headcount),
+    }))
+  );
   useSetPageTitle();
 
   const handleUpdateJob = (
@@ -103,16 +50,13 @@ export default function JobsPage() {
     );
   };
 
-  const handleDeleteJob = (jobId: string) => {
-    setJobs(jobs.filter((job) => job.id !== jobId));
-  };
-
   const handleDelete = async (id: string) => {
     try {
       // Giả lập API call
       console.log("Deleting job:", id);
       await new Promise(resolve => setTimeout(resolve, 1000));
-      handleDeleteJob(id);
+      
+      setJobs(jobs.filter(job => job.id !== id));
       toast.success("Xóa việc làm thành công!");
     } catch (error) {
       console.error("Error deleting job:", error);

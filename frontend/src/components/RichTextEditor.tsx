@@ -1,8 +1,8 @@
-'use client'
+"use client"
 
-import { Editor } from "@tinymce/tinymce-react"
-import { useRef } from "react"
-import { Editor as TinyMCEEditor } from 'tinymce'
+import { useMemo } from "react"
+import dynamic from "next/dynamic"
+import "react-quill/dist/quill.snow.css"
 
 interface RichTextEditorProps {
   value: string
@@ -10,60 +10,81 @@ interface RichTextEditorProps {
   placeholder?: string
 }
 
+const QuillNoSSR = dynamic(() => import("react-quill"), {
+  ssr: false,
+  loading: () => <p>Đang tải trình soạn thảo...</p>,
+})
+
+const modules = {
+  toolbar: [
+    [{ header: [1, 2, 3, 4, 5, 6, false] }],
+    ["bold", "italic", "underline", "strike"],
+    [{ color: [] }, { background: [] }],
+    [{ list: "ordered" }, { list: "bullet" }],
+    [{ align: [] }],
+    ["clean"],
+  ],
+}
+
+const formats = [
+  "header",
+  "bold",
+  "italic",
+  "underline",
+  "strike",
+  "color",
+  "background",
+  "list",
+  "bullet",
+  "align",
+]
+
 export function RichTextEditor({
   value,
   onChange,
   placeholder = "Nhập mô tả công việc...",
 }: RichTextEditorProps) {
-  const editorRef = useRef<TinyMCEEditor | null>(null)
+  const memoizedModules = useMemo(() => modules, [])
 
   return (
-    <Editor
-      apiKey="your-api-key" // Bạn cần đăng ký và thay thế bằng API key của bạn từ TinyMCE
-      onInit={(_evt: any, editor: TinyMCEEditor) => (editorRef.current = editor)}
-      value={value}
-      onEditorChange={onChange}
-      init={{
-        height: 400,
-        menubar: false,
-        plugins: [
-          "advlist", "autolink", "lists", "link", "image", "charmap", "preview",
-          "searchreplace", "visualblocks", "code", "fullscreen",
-          "insertdatetime", "media", "table", "code", "help", "wordcount"
-        ],
-        toolbar: [
-          "undo redo | formatselect | bold italic underline strikethrough | forecolor backcolor",
-          "alignleft aligncenter alignright alignjustify | bullist numlist outdent indent",
-          "removeformat | help"
-        ],
-        content_style: `
-          body { 
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            font-size: 14px;
-            line-height: 1.5;
-          }
-        `,
-        placeholder: placeholder,
-        language: "vi",
-        language_url: "/tinymce/langs/vi.js", // Đường dẫn đến file ngôn ngữ tiếng Việt
-        formats: {
-          bold: { inline: "strong" },
-          italic: { inline: "em" },
-          underline: { inline: "u" },
-          strikethrough: { inline: "strike" }
-        },
-        // Các tùy chọn màu sắc cho văn bản
-        color_map: [
-          "000000", "Đen",
-          "808080", "Xám",
-          "FF0000", "Đỏ",
-          "008000", "Xanh lá",
-          "0000FF", "Xanh dương",
-          "FFD700", "Vàng",
-          "FFA500", "Cam",
-          "800080", "Tím"
-        ]
-      }}
-    />
+    <div className="rich-text-editor">
+      <style jsx global>{`
+        .rich-text-editor .ql-container {
+          min-height: 200px;
+          border-bottom-left-radius: 0.5rem;
+          border-bottom-right-radius: 0.5rem;
+          background: white;
+        }
+        .rich-text-editor .ql-toolbar {
+          border-top-left-radius: 0.5rem;
+          border-top-right-radius: 0.5rem;
+          background: #f9fafb;
+        }
+        .rich-text-editor .ql-editor {
+          min-height: 200px;
+          font-size: 1rem;
+          line-height: 1.5;
+        }
+        .rich-text-editor .ql-editor p {
+          margin-bottom: 0.5rem;
+        }
+        .rich-text-editor .ql-snow.ql-toolbar button:hover,
+        .rich-text-editor .ql-snow .ql-toolbar button:hover {
+          color: #2563eb;
+        }
+        .rich-text-editor .ql-snow.ql-toolbar button.ql-active,
+        .rich-text-editor .ql-snow .ql-toolbar button.ql-active {
+          color: #2563eb;
+        }
+      `}</style>
+      <QuillNoSSR
+        theme="snow"
+        value={value}
+        onChange={onChange}
+        modules={memoizedModules}
+        formats={formats}
+        placeholder={placeholder}
+      />
+    </div>
   )
 } 

@@ -16,8 +16,12 @@ import { Button } from '@/components/ui/button'
 import { User } from '@/types/user'
 
 const changePasswordSchema = z.object({
-  newPassword: z.string().min(6, 'Mật khẩu phải có ít nhất 6 ký tự'),
-  confirmPassword: z.string().min(6, 'Mật khẩu phải có ít nhất 6 ký tự'),
+  newPassword: z.string()
+    .min(6, 'Mật khẩu phải có ít nhất 6 ký tự')
+    .regex(/[A-Z]/, 'Mật khẩu phải chứa ít nhất 1 ký tự in hoa')
+    .regex(/[!@#$%^&*(),.?":{}|<>]/, 'Mật khẩu phải chứa ít nhất 1 ký tự đặc biệt'),
+  confirmPassword: z.string()
+    .min(6, 'Mật khẩu phải có ít nhất 6 ký tự')
 }).refine((data) => data.newPassword === data.confirmPassword, {
   message: "Mật khẩu xác nhận không khớp",
   path: ["confirmPassword"],

@@ -103,10 +103,19 @@ export default function UsersPage() {
     if (!selectedUser) return;
 
     try {
-      await dispatch(changePassword({ id: selectedUser.id, newPassword: data.newPassword })).unwrap();
-      toast.success("Đổi mật khẩu thành công");
-      setIsChangePasswordDialogOpen(false);
-      setSelectedUser(null);
+      const result = await dispatch(changePassword({ 
+        id: selectedUser.id, 
+        newPassword: data.newPassword,
+        confirmPassword: data.confirmPassword 
+      })).unwrap();
+
+      if (result.result) {
+        toast.success(result.message || "Đổi mật khẩu thành công");
+        setIsChangePasswordDialogOpen(false);
+        setSelectedUser(null);
+      } else {
+        toast.error(result.message || "Có lỗi xảy ra khi đổi mật khẩu");
+      }
     } catch (error: any) {
       toast.error(error.message || "Có lỗi xảy ra khi đổi mật khẩu");
     }

@@ -15,6 +15,12 @@ const initialState: UserState = {
   selectedUsers: [],
 };
 
+interface ChangePasswordPayload {
+  id: string;
+  newPassword: string;
+  confirmPassword: string;
+}
+
 // Async thunks
 export const fetchUsers = createAsyncThunk(
   'users/fetchUsers',
@@ -95,21 +101,30 @@ export const deleteUsers = createAsyncThunk(
 
 export const changePassword = createAsyncThunk(
   'users/changePassword',
-  async ({ id, newPassword }: { id: string; newPassword: string }) => {
-    const response = await fetch(`https://localhost:7152/api/users/${id}/change-password`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ newPassword }),
-    });
+  async ({ id, newPassword, confirmPassword }: ChangePasswordPayload) => {
+    try {
+      const response = await fetch(`https://localhost:7152/api/users/${id}/reset-password`, {
+        method: 'PUT',
+        headers: {
+          'accept': '*/*',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          newPassword,
+          confirmPassword
+        })
+      });
 
-    if (!response.ok) {
-      const error = await response.json();
+      const data = await response.json();
+      
+      if (!data.result) {
+        throw new Error(data.message || 'Có lỗi xảy ra khi đổi mật khẩu');
+      }
+
+      return data;
+    } catch (error: any) {
       throw new Error(error.message || 'Có lỗi xảy ra khi đổi mật khẩu');
     }
-
-    return await response.json();
   }
 );
 

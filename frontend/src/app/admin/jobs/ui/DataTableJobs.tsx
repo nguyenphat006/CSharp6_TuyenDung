@@ -47,31 +47,11 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-
-export interface Job {
-  id: string
-  title: string
-  skills: string[]
-  location: string
-  salary: {
-    min: number
-    max: number
-    currency: string
-  }
-  headcount: number
-  level: string
-  company: string
-  startDate: string
-  endDate: string
-  isActive: boolean
-  description: string
-  createdAt: string
-  applications: number
-}
+import { Job } from "../data/sampleData"
 
 interface DataTableJobsProps {
   data: Job[]
-  onUpdateJob: (jobId: string, updatedJob: Omit<Job, 'id' | 'createdAt' | 'applications'>) => void
+  onUpdateJob: (jobId: string, updatedJob: Omit<Job, 'id'>) => void
   onDeleteJob: (jobId: string) => void
 }
 
@@ -145,21 +125,14 @@ export function DataTableJobs({ data, onUpdateJob, onDeleteJob }: DataTableJobsP
     }
   }
 
-  const formatDate = (dateString: string | null | undefined) => {
-    if (!dateString) return 'N/A';
-    try {
-      const date = parseISO(dateString);
-      return format(date, 'dd/MM/yyyy', { locale: vi });
-    } catch (error) {
-      return 'N/A';
-    }
+  const formatDate = (dateString: string) => {
+    return new Intl.DateTimeFormat("vi-VN").format(new Date(dateString));
   };
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('vi-VN', {
-      style: 'currency',
-      currency: 'VND',
-      maximumFractionDigits: 0,
+    return new Intl.NumberFormat("vi-VN", {
+      style: "currency",
+      currency: "VND",
     }).format(amount);
   };
 

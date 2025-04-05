@@ -16,6 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { RichTextEditor } from "@/components/RichTextEditor";
 import { useRouter } from "next/navigation";
+import { Job, JobFormData, sampleJobs } from "../data/sampleData";
 
 const levels = [
   { value: "intern", label: "Thực tập sinh" },
@@ -74,25 +75,6 @@ interface Job {
   description: string;
 }
 
-interface JobFormData {
-  id: string;
-  title: string;
-  skills: string[];
-  location: string;
-  salary: {
-    min: string;
-    max: string;
-    currency: string;
-  };
-  headcount: string;
-  level: string;
-  company: string;
-  startDate: string;
-  endDate: string;
-  isActive: boolean;
-  description: string;
-}
-
 interface JobSubmitData extends Omit<Job, 'salary' | 'headcount'> {
   salary: {
     min: number;
@@ -101,26 +83,6 @@ interface JobSubmitData extends Omit<Job, 'salary' | 'headcount'> {
   };
   headcount: number;
 }
-
-// Dữ liệu mẫu cho việc làm
-const sampleJob: JobFormData = {
-  id: "1",
-  title: "Senior Frontend Developer",
-  skills: ["ReactJS", "TypeScript", "JavaScript"],
-  location: "Hồ Chí Minh",
-  salary: {
-    min: "25000000",
-    max: "45000000",
-    currency: "VND",
-  },
-  headcount: "2",
-  level: "senior",
-  company: "Tech Company",
-  startDate: "2024-03-20",
-  endDate: "2024-04-20",
-  isActive: true,
-  description: "Chúng tôi đang tìm kiếm một Senior Frontend Developer có kinh nghiệm làm việc với ReactJS và TypeScript. Ứng viên sẽ tham gia vào các dự án lớn và có cơ hội làm việc với các công nghệ mới nhất.",
-};
 
 const emptyJob: JobFormData = {
   id: "",
@@ -156,14 +118,15 @@ export function JobForm({ jobId, onSubmit }: JobFormProps) {
   const isEditMode = Boolean(jobId);
 
   useEffect(() => {
-    if (isEditMode) {
+    if (isEditMode && jobId) {
       setLoading(true);
       setError("");
       
       // Giả lập API call
       setTimeout(() => {
-        if (jobId === sampleJob.id) {
-          setFormData(sampleJob);
+        const foundJob = sampleJobs[jobId];
+        if (foundJob) {
+          setFormData(foundJob);
           setLoading(false);
         } else {
           setError("Không tìm thấy việc làm");
