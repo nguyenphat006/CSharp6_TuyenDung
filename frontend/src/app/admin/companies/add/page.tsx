@@ -1,45 +1,53 @@
 "use client";
 
-import { AddCompanyForm } from "../ui/AddCompanyForm";
-import { Company } from "@/types/company";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
+import { CompanyForm } from "../ui/CompanyForm";
+import { toast } from "sonner";
+import { axiosClient } from "@/lib/axios-client";
 
 export default function AddCompanyPage() {
   const router = useRouter();
 
-  const handleSubmit = async (data: Partial<Company>) => {
+  const handleSubmit = async (values: any, logoFile: File | null) => {
     try {
-      // TODO: Gọi API để thêm công ty
-      console.log("Thêm công ty:", data);
-      router.push("/admin/companies");
-    } catch (error) {
-      console.error("Lỗi khi thêm công ty:", error);
+      // Thêm công ty
+      const response = await axiosClient.post("/api/Company", values);
+      
+      if (response.data.result) {
+        const companyId = response.data.data.id;
+
+        // Upload logo nếu có
+        if (logoFile) {
+          const formData = new FormData();
+          formData.append("CompanyId", companyId);
+          formData.append("Logo", logoFile);
+
+          const uploadResponse = await axiosClient.post("/api/Company/upload-logo", formData, {
+            headers: {
+              "Content-Type": "multipart/form-data",
+            },
+          });
+
+          if (!uploadResponse.data.result) {
+            toast.error("Có lỗi xảy ra khi upload logo");
+          }
+        }
+
+        toast.success(response.data.message || "Thêm công ty thành công");
+        router.push("/admin/companies");
+        router.refresh();
+      } else {
+        toast.error(response.data.message || "Có lỗi xảy ra khi thêm công ty");
+      }
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.message || "Có lỗi xảy ra khi thêm công ty";
+      toast.error(errorMessage);
     }
   };
 
   return (
-    <div className="container mx-auto py-10">
-      <div className="mb-6">
-        <Button
-          variant="ghost"
-          className="gap-2"
-          onClick={() => router.push("/admin/companies")}
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Quay lại
-        </Button>
-      </div>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-3xl font-bold">Thêm công ty mới</h1>
-      </div>
-      <div className="border rounded-lg p-4">
-        <AddCompanyForm
-          onSubmit={handleSubmit}
-          onCancel={() => router.push("/admin/companies")}
-        />
-      </div>
+    <div className="h-full flex-1 flex-col p-8 flex">
+      <CompanyForm onSubmit={handleSubmit} />
     </div>
   );
 } 
