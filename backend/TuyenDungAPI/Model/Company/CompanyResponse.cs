@@ -13,6 +13,7 @@ namespace TuyenDungAPI.Model.Company
         public string Address { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;
         public string WorkingTime { get; set; } = string.Empty;
+        public string? LogoUrl { get; set; }
 
         // 👉 Constructor từ entity
         public CompanyResponse(Company company)
@@ -25,6 +26,8 @@ namespace TuyenDungAPI.Model.Company
             Address = company.Address;
             Description = company.Description;
             WorkingTime = company.WorkingTime;
+            LogoUrl = company.LogoUrl;
+
             CreatedAt = company.CreatedAt;
             CreatedBy = company.CreatedBy;
             UpdatedAt = company.UpdatedAt;
@@ -33,5 +36,11 @@ namespace TuyenDungAPI.Model.Company
             DeletedBy = company.DeletedBy;
             IsActive = company.IsActive;
         }
+    }
+
+    public class DeleteComnpanysResponse : BaseEntity
+    {
+        public int DeletedCount { get; set; }
+        public List<string> DeletedCompanyNames { get; set; } = new List<string>();
     }
 }

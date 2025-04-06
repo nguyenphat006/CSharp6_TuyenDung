@@ -17,7 +17,7 @@ namespace TuyenDungAPI.Database
         public DbSet<Role> Roles { get; set; }
         public DbSet<UserRole> UserRoles { get; set; }
         public DbSet<OtpVerification> OtpVerifications { get; set; } // ✅ Thêm bảng OTP
-        public DbSet<Company> Companies { get; set; }
+        public DbSet<Company> Company { get; set; }
         public DbSet<Job> Jobs { get; set; }
         public DbSet<CompanyJobs> CompanyJobs { get; set; }
 
