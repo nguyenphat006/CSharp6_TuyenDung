@@ -2,102 +2,45 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Download, Plus, Trash2 } from "lucide-react";
+import { Plus } from "lucide-react";
 import { DataTableCompany } from "./ui/DataTableCompany";
-import { useSetPageTitle } from "@/lib/hooks/useSetPageTitle";
-import { AddCompanyForm } from "./ui/AddCompanyForm";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { EditCompanyForm } from "./ui/EditCompanyForm";
-import { useAppDispatch, useAppSelector } from "@/redux/hooks";
-import { 
-  fetchCompanies, 
-  addCompany, 
-  updateCompany, 
-  deleteCompanies,
-  setSelectedCompanies,
-} from "@/redux/features/companySlice";
 import { Company } from "@/types/company";
-import { sampleCompanies } from "./data/sampleData";
+import { axiosClient } from "@/lib/axios-client";
 
 export default function CompaniesPage() {
   const router = useRouter();
-  const dispatch = useAppDispatch();
-  const { companies, loading, selectedCompanies } = useAppSelector((state) => state.companies);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [dateFilter, setDateFilter] = useState<string>("all");
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
-  const [companiesState, setCompaniesState] = useState<Company[]>(sampleCompanies);
-  useSetPageTitle();
+  const [companies, setCompanies] = useState<Company[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchCompanies = async () => {
+    try {
+      const response = await axiosClient.get("/api/Company");
+      if (response.data.result) {
+        setCompanies(response.data.data);
+      }
+    } catch (error: any) {
+      toast.error(error.message || "Có lỗi xảy ra khi tải danh sách công ty");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    dispatch(fetchCompanies());
-  }, [dispatch]);
+    fetchCompanies();
+  }, []);
 
-  const handleAddCompany = async (data: any) => {
+  const handleDelete = async (id: string) => {
     try {
-      await dispatch(addCompany(data)).unwrap();
-      toast.success("Thêm công ty thành công");
-      setIsAddDialogOpen(false);
-    } catch (error: any) {
-      toast.error(error.message || "Có lỗi xảy ra khi thêm công ty");
-      throw error;
-    }
-  };
-
-  const handleUpdateCompany = async (data: any) => {
-    if (!selectedCompany) return;
-
-    try {
-      await dispatch(updateCompany({ ...data, id: selectedCompany.id })).unwrap();
-      toast.success("Cập nhật công ty thành công");
-      setIsEditDialogOpen(false);
-      setSelectedCompany(null);
-    } catch (error: any) {
-      toast.error(error.message || "Có lỗi xảy ra khi cập nhật công ty");
-    }
-  };
-
-  const handleDeleteCompany = async (id: string) => {
-    try {
-      await dispatch(deleteCompanies([id])).unwrap();
-      toast.success("Xóa công ty thành công");
-      setCompaniesState(companiesState.filter((company) => company.id !== id));
+      const response = await axiosClient.delete(`/api/Company/${id}`);
+      if (response.data.result) {
+        toast.success("Xóa công ty thành công");
+        setCompanies(companies.filter((company) => company.id !== id));
+      }
     } catch (error: any) {
       toast.error(error.message || "Có lỗi xảy ra khi xóa công ty");
     }
-  };
-
-  const handleDeleteMultipleCompanies = async (companyIds: string[]) => {
-    try {
-      const result = await dispatch(deleteCompanies(companyIds)).unwrap();
-      toast.success(`Đã xóa ${result.result.deletedCount}/${result.result.totalRequested} công ty`);
-      setCompaniesState(companiesState.filter((company) => !companyIds.includes(company.id)));
-    } catch (error: any) {
-      toast.error(error.message || "Có lỗi xảy ra khi xóa công ty");
-    }
-  };
-
-  const handleEditCompany = (company: Company) => {
-    setSelectedCompany(company);
-    setIsEditDialogOpen(true);
   };
 
   if (loading) {
@@ -105,36 +48,21 @@ export default function CompaniesPage() {
   }
 
   return (
-    <div className="container mx-auto py-10">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-3xl font-bold">Quản lý công ty</h1>
+    <div className="h-full flex-1 flex-col space-y-8 p-8 flex">
+      <div className="flex items-center justify-between space-y-2">
+        <div>
+          <h2 className="text-2xl font-bold tracking-tight">Quản lý công ty</h2>
+          <p className="text-muted-foreground">
+            Quản lý danh sách các công ty trong hệ thống
+          </p>
+        </div>
+        <div className="flex items-center space-x-2">
+          <Button onClick={() => router.push("/admin/companies/add")}>
+            <Plus className="mr-2 h-4 w-4" /> Thêm công ty
+          </Button>
+        </div>
       </div>
-      <DataTableCompany
-        data={companiesState}
-        onDelete={handleDeleteCompany}
-        onEditCompany={handleEditCompany}
-        selectedCompanies={selectedCompanies}
-        setSelectedCompanies={(companies) => dispatch(setSelectedCompanies(companies))}
-      />
-
-      <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-        <DialogContent className="sm:max-w-[600px]">
-          <DialogHeader>
-            <DialogTitle>Thêm công ty mới</DialogTitle>
-          </DialogHeader>
-          <AddCompanyForm
-            onSubmit={handleAddCompany}
-            onCancel={() => setIsAddDialogOpen(false)}
-          />
-        </DialogContent>
-      </Dialog>
-
-      <EditCompanyForm
-        company={selectedCompany}
-        onUpdateCompany={handleUpdateCompany}
-        open={isEditDialogOpen}
-        onOpenChange={setIsEditDialogOpen}
-      />
+      <DataTableCompany data={companies} onDelete={handleDelete} />
     </div>
   );
 } 

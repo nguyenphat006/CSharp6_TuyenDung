@@ -37,6 +37,7 @@ import { Company } from "@/types/company";
 import { Badge } from "@/components/ui/badge";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { format } from "date-fns";
 
 interface DataTableCompanyProps {
   data: Company[];
@@ -52,10 +53,10 @@ export function DataTableCompany({ data, onDelete }: DataTableCompanyProps) {
 
   const columns: ColumnDef<Company>[] = [
     {
-      accessorKey: "logo",
+      accessorKey: "logoUrl",
       header: "Logo",
       cell: ({ row }) => {
-        const logo = row.getValue("logo") as string;
+        const logo = row.getValue("logoUrl") as string;
         return (
           <div className="relative w-10 h-10">
             <Image
@@ -101,9 +102,22 @@ export function DataTableCompany({ data, onDelete }: DataTableCompanyProps) {
       cell: ({ row }) => <div>{row.getValue("companySize")}</div>,
     },
     {
+      accessorKey: "address",
+      header: "Địa chỉ",
+      cell: ({ row }) => <div>{row.getValue("address")}</div>,
+    },
+    {
       accessorKey: "workingTime",
       header: "Giờ làm việc",
       cell: ({ row }) => <div>{row.getValue("workingTime")}</div>,
+    },
+    {
+      accessorKey: "createdAt",
+      header: "Ngày tạo",
+      cell: ({ row }) => {
+        const date = row.getValue("createdAt") as string;
+        return format(new Date(date), "dd/MM/yyyy");
+      },
     },
     {
       accessorKey: "isActive",
@@ -182,12 +196,6 @@ export function DataTableCompany({ data, onDelete }: DataTableCompanyProps) {
           }
           className="max-w-sm"
         />
-        <Button
-          variant="outline"
-          onClick={() => router.push("/admin/companies/add")}
-        >
-          Thêm công ty
-        </Button>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" className="ml-auto">

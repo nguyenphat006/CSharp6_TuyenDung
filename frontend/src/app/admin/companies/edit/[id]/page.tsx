@@ -38,26 +38,29 @@ export default function EditCompanyPage({ params }: EditCompanyPageProps) {
 
   if (!company) {
     return (
-      <div className="container mx-auto py-10">
+      <div className="h-full flex-1 flex-col space-y-8 p-8 flex">
         <div className="text-center">Đang tải...</div>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto py-10">
-      <div className="mb-6">
-        <Button
-          variant="ghost"
-          className="gap-2"
-          onClick={() => router.push("/admin/companies")}
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Quay lại
-        </Button>
-      </div>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-3xl font-bold">Chỉnh sửa công ty</h1>
+    <div className="h-full flex-1 flex-col space-y-8 p-8 flex">
+      <div className="flex items-center justify-between space-y-2">
+        <div className="space-y-2">
+          <Button
+            variant="ghost"
+            className="flex items-center gap-2"
+            onClick={() => router.push("/admin/companies")}
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Quay lại
+          </Button>
+          <h2 className="text-2xl font-bold tracking-tight">Chỉnh sửa công ty</h2>
+          <p className="text-muted-foreground">
+            Cập nhật thông tin chi tiết về công ty
+          </p>
+        </div>
       </div>
       <div className="border rounded-lg p-4">
         <AddCompanyForm

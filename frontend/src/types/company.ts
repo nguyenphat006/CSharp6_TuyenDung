@@ -7,12 +7,12 @@ export interface Company {
   address: string;
   description: string; // Markdown nội dung mô tả
   workingTime: string; // Thời gian làm việc
-  logo?: string;
-  isActive: boolean;
+  logoUrl: string;
   createdBy: string | null;
   createdAt: string;
   updatedBy: string | null;
   updatedAt: string | null;
+  isActive: boolean;
   deletedBy: string | null;
   isDeleted: boolean;
 } 
