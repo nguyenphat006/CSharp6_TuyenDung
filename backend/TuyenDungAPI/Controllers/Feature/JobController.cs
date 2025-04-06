@@ -88,6 +88,19 @@ namespace TuyenDungAPI.Controllers.Feature
             return StatusCode(result.Status, result);
         }
 
+        /// <summary>
+        /// Lấy danh sách các công việc theo CompanyId.
+        /// </summary>
+        /// <param name="companyId">ID công ty.</param>
+        /// <returns>Danh sách các công việc.</returns>
+        [HttpGet("{companyId}/jobsBycompany")]
+        [SwaggerOperation(Summary = "Lấy danh sách Job theo công ty")]
+        public async Task<IActionResult> GetJobsByCompany(Guid companyId)
+        {
+            var result = await _jobService.GetJobsByCompanyAsync(companyId);
+            return StatusCode(result.Status, result);
+        }
+
 
 
 

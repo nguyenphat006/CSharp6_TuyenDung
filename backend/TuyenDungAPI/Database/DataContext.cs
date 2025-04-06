@@ -19,7 +19,6 @@ namespace TuyenDungAPI.Database
         public DbSet<OtpVerification> OtpVerifications { get; set; } // ✅ Thêm bảng OTP
         public DbSet<Company> Company { get; set; }
         public DbSet<Job> Jobs { get; set; }
-        public DbSet<CompanyJobs> CompanyJobs { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -35,22 +34,6 @@ namespace TuyenDungAPI.Database
                 .HasOne(ur => ur.Role)
                 .WithMany(r => r.UserRoles)
                 .HasForeignKey(ur => ur.RoleId);
-
-            modelBuilder.Entity<CompanyJobs>()
-                .HasKey(cj => new { cj.CompanyId, cj.JobId });
-
-            modelBuilder.Entity<CompanyJobs>()
-                .HasOne(cj => cj.Company)
-                .WithMany(c => c.CompanyJob)
-                .HasForeignKey(cj => cj.CompanyId)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            modelBuilder.Entity<CompanyJobs>()
-                .HasOne(cj => cj.Job)
-                .WithMany(j => j.CompanyJob)
-                .HasForeignKey(cj => cj.JobId)
-                .OnDelete(DeleteBehavior.Cascade);
-
         }
     }
 }

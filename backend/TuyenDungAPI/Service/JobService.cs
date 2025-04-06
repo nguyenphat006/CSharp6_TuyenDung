@@ -84,8 +84,6 @@ namespace TuyenDungAPI.Service
 
             return new ApiResponse<PagedResult<JobResponse>>(true, 200, response, "Lấy danh sách job thành công");
         }
-
-
         public async Task<ApiResponse<JobResponse>> GetJobByIdAsync(Guid id)
         {
             var job = await _dbContext.Jobs
@@ -101,10 +99,6 @@ namespace TuyenDungAPI.Service
 
             return new ApiResponse<JobResponse>(true, 200, response, "Lấy thông tin công việc thành công.");
         }
-
-        /// <summary>
-        /// Tạo công việc mới lưu theo CompanyId.
-        /// </summary>
         public async Task<ApiResponse<JobResponse>> CreateJobAsync(CreateJobRequest request, ClaimsPrincipal currentUser)
         {
             string createdBy = currentUser?.Identity?.Name ?? "System";
@@ -154,9 +148,6 @@ namespace TuyenDungAPI.Service
             var response = new JobResponse(job);
             return new ApiResponse<JobResponse>(true, 201, response, "Tạo công việc thành công!");
         }
-
-
-
         public async Task<ApiResponse<JobResponse>> UpdateJobAsync(Guid id, UpdateJobRequest request, ClaimsPrincipal currentUser)
         {
             string updatedBy = currentUser?.Identity?.Name ?? "System";
@@ -196,13 +187,6 @@ namespace TuyenDungAPI.Service
             var response = new JobResponse(job);
             return new ApiResponse<JobResponse>(true, 200, response, "Cập nhật công việc thành công!");
         }
-
-        /// <summary>
-        /// Xóa mềm 1 hoặc nhiều công việc theo danh sách ID.
-        /// </summary>
-        /// <param name="request">Danh sách ID công việc cần xóa.</param>
-        /// <param name="currentUser">Thông tin người dùng hiện tại.</param>
-        /// <returns>Kết quả xóa.</returns>
         public async Task<ApiResponse<string>> DeleteJobsAsync(DeleteJobRequest request, ClaimsPrincipal currentUser)
         {
             string deletedBy = currentUser?.Identity?.Name ?? "System";
@@ -233,7 +217,20 @@ namespace TuyenDungAPI.Service
 
             return new ApiResponse<string>(true, 200, null, $"Đã xóa thành công {jobs.Count} công việc.");
         }
+        public async Task<ApiResponse<List<JobResponse>>> GetJobsByCompanyAsync(Guid companyId)
+        {
+            var jobs = await _dbContext.Jobs
+                .Where(j => j.CompanyId == companyId && !j.IsDeleted && j.IsActive)
+                .Select(j => new JobResponse(j))
+                .ToListAsync();
 
+            if (!jobs.Any())
+            {
+                return new ApiResponse<List<JobResponse>>(true, 200, jobs, "Không có công việc nào cho công ty này.");
+            }
+
+            return new ApiResponse<List<JobResponse>>(true, 200, jobs, "Lấy danh sách công việc theo công ty thành công.");
+        }
 
 
 

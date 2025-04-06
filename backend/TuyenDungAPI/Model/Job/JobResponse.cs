@@ -2,25 +2,31 @@
 
 namespace TuyenDungAPI.Model.Job
 {
-    public class JobResponse: BaseReponseEntity
+    public class JobResponse : BaseReponseEntity
     {
         public Guid Id { get; set; }
         public string Name { get; set; } = string.Empty;
         public string Skills { get; set; } = string.Empty;
+
         public List<string> SkillsList =>
-        string.IsNullOrWhiteSpace(Skills)
-        ? new List<string>()
-        : Skills.Split(new[] { ", " }, StringSplitOptions.RemoveEmptyEntries).ToList();
+            string.IsNullOrWhiteSpace(Skills)
+            ? new List<string>()
+            : Skills.Split(new[] { ", " }, StringSplitOptions.RemoveEmptyEntries).ToList();
+
         public string Location { get; set; } = string.Empty;
         public decimal Salary { get; set; }
         public int Quantity { get; set; }
         public string Level { get; set; } = "Intern";
-        public string CompanyName { get; set; } = string.Empty;
+
+        public Guid CompanyId { get; set; } // ✅ Thêm mới
+
+        public string? CompanyName { get; set; } = string.Empty; // ✅ Optional (nếu Include Company trong query)
+
         public string Description { get; set; } = string.Empty;
         public DateTime StartDate { get; set; }
         public DateTime? EndDate { get; set; }
 
-        // 👉 Constructor khởi tạo từ entity Job
+        // Constructor khởi tạo từ entity Job
         public JobResponse(Job job)
         {
             Id = job.Id;
@@ -33,6 +39,10 @@ namespace TuyenDungAPI.Model.Job
             Description = job.Description;
             StartDate = job.StartDate;
             EndDate = job.EndDate;
+            CompanyId = job.CompanyId;
+
+            CompanyName = job.Company?.Name ?? ""; // ✅ Chỉ dùng nếu Include Company
+
             CreatedAt = job.CreatedAt;
             CreatedBy = job.CreatedBy;
             UpdatedAt = job.UpdatedAt;

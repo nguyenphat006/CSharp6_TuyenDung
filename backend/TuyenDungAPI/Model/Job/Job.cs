@@ -42,7 +42,6 @@ namespace TuyenDungAPI.Model.Job
 
         public DateTime? EndDate { get; set; }
 
-        // 👋 Không cần lưu CompanyName riêng nếu có Navigation (hoặc để nếu cần display nhanh)
     }
 
 }
