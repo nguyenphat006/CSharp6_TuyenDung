@@ -10,54 +10,43 @@ namespace TuyenDungAPI.Model.Job
     }
     public class CreateJobRequest : BaseRequestEntity
     {
-
-        [DefaultValue("11111111-1111-1111-1111-111111111111")]
-        public Guid Id { get; set; }
+        [Required]
+        public Guid CompanyId { get; set; } // 🔥 FE gửi ID của công ty lên
 
         [Required, MaxLength(255)]
-        [DefaultValue("Lập trình viên .NET")]
         public string Name { get; set; } = string.Empty;
 
         [Required]
-        [DefaultValue(new[] { "C#", ".NET", "SQL" })]
         public List<string> Skills { get; set; } = new();
 
         [Required]
-        [DefaultValue("Hà Nội")]
         public string Location { get; set; } = string.Empty;
 
         [Required]
-        [DefaultValue(1500)]
         public decimal Salary { get; set; }
 
         [Required]
-        [DefaultValue(2)]
         public int Quantity { get; set; }
 
         [Required, MaxLength(50)]
-        [DefaultValue("Junior")]
         public string Level { get; set; } = "Intern";
 
         [Required]
-        [DefaultValue("Công ty ABC")]
-        public string CompanyName { get; set; } = string.Empty;
-
-        [Required]
-        [DefaultValue("## Mô tả công việc\n- Làm việc nhóm\n- Học hỏi và phát triển")]
         public string Description { get; set; } = string.Empty;
 
         [Required]
-        [DefaultValue(typeof(DateTime), "2025-04-01")]
         public DateTime StartDate { get; set; }
 
-        [DefaultValue(typeof(DateTime), "2025-06-01")]
         public DateTime? EndDate { get; set; }
     }
+
 
 
     public class UpdateJobRequest : BaseRequestEntity
     {
         public Guid Id { get; set; }
+        [Required]
+        public Guid CompanyId { get; set; } // 🔥 FE gửi ID của công ty lên
         [Required, MaxLength(255)]
         public string Name { get; set; } = string.Empty;
         [Required]
@@ -75,9 +64,6 @@ namespace TuyenDungAPI.Model.Job
         [Required, MaxLength(50)]
         public string Level { get; set; }
         [Required]
-        public string CompanyName { get; set; } = string.Empty;
-
-        [Required]
         public string Description { get; set; } = string.Empty; // 🔥 Markdown
 
         [Required]
@@ -90,6 +76,20 @@ namespace TuyenDungAPI.Model.Job
     {
         [Required(ErrorMessage = "Cần phải có ít nhất một ID việc làm")]
         public List<Guid> JobIds { get; set; } = new List<Guid>();
+    }
+
+    public class JobQueryParameters
+    {
+        public string? Keyword { get; set; }
+        public string? Level { get; set; }
+        public string? Location { get; set; }
+        public string? CompanyName { get; set; }
+        public decimal? MinSalary { get; set; }
+        public decimal? MaxSalary { get; set; }
+        public bool? IsActive { get; set; }
+
+        public int PageNumber { get; set; } = 1;
+        public int PageSize { get; set; } = 10;
     }
 
 }

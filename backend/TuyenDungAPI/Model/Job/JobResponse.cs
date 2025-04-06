@@ -7,6 +7,10 @@ namespace TuyenDungAPI.Model.Job
         public Guid Id { get; set; }
         public string Name { get; set; } = string.Empty;
         public string Skills { get; set; } = string.Empty;
+        public List<string> SkillsList =>
+        string.IsNullOrWhiteSpace(Skills)
+        ? new List<string>()
+        : Skills.Split(new[] { ", " }, StringSplitOptions.RemoveEmptyEntries).ToList();
         public string Location { get; set; } = string.Empty;
         public decimal Salary { get; set; }
         public int Quantity { get; set; }
@@ -26,7 +30,6 @@ namespace TuyenDungAPI.Model.Job
             Salary = job.Salary;
             Quantity = job.Quantity;
             Level = job.Level;
-            CompanyName = job.CompanyName;
             Description = job.Description;
             StartDate = job.StartDate;
             EndDate = job.EndDate;

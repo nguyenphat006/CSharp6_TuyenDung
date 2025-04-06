@@ -168,7 +168,7 @@ public class CompanyService
         company.WorkingTime = request.WorkingTime;
         company.UpdatedAt = DateTime.UtcNow;
         company.UpdatedBy = currentUser?.Identity?.Name ?? "System";
-
+        company.IsActive = request.IsActive;
         await _dbContext.SaveChangesAsync();
 
         var response = new CompanyResponse(company);
