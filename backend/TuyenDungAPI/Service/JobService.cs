@@ -133,6 +133,7 @@ namespace TuyenDungAPI.Service
                 EndDate = request.EndDate,
                 CreatedAt = DateTime.UtcNow,
                 CreatedBy = createdBy,
+                IsActive = request.IsActive,
             };
 
             try

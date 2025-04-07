@@ -19,16 +19,21 @@ namespace TuyenDungAPI.Controllers.Feature
         }
 
         /// <summary>
-        /// Lấy danh sách toàn bộ công ty hiện tại trong hệ thống.
+        /// Lấy danh sách toàn bộ công ty hiện tại trong hệ thống, hỗ trợ phân trang và lọc.
         /// </summary>
+        /// <param name="query">Các tham số lọc và phân trang</param>
         /// <returns>Danh sách công ty</returns>
         [HttpGet]
-        [SwaggerOperation(Summary = "Lấy danh sách toàn bộ công ty hiện tại trong hệ thống")]
-        public async Task<IActionResult> GetAllCompanies()
+        [SwaggerOperation(Summary = "Lấy danh sách toàn bộ công ty hiện tại trong hệ thống, hỗ trợ phân trang và lọc")]
+        public async Task<IActionResult> GetAllCompanies([FromQuery] CompanyQueryParameters query)
         {
-            var result = await _companyService.GetAllCompanysAsync();
+            // Gọi service để lấy danh sách công ty với các tham số lọc và phân trang
+            var result = await _companyService.GetAllCompaniesAsync(query);
+
+            // Trả về kết quả
             return StatusCode(result.Status, result);
         }
+
 
         /// <summary>
         /// Lấy thông tin chi tiết công ty theo ID.
@@ -88,9 +93,11 @@ namespace TuyenDungAPI.Controllers.Feature
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            var response = await _companyService.UpdateCompanyAsync(request, User);
+            // Truyền id từ URL vào service, không cần lấy từ body nữa
+            var response = await _companyService.UpdateCompanyAsync(id, request, User);
             return StatusCode(response.Status, response);
         }
+
 
         /// <summary>
         /// Xóa một hoặc nhiều công ty khỏi hệ thống.

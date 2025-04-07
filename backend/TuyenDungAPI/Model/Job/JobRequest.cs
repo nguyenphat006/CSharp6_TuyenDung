@@ -44,7 +44,6 @@ namespace TuyenDungAPI.Model.Job
 
     public class UpdateJobRequest : BaseRequestEntity
     {
-        public Guid Id { get; set; }
         [Required]
         public Guid CompanyId { get; set; } // 🔥 FE gửi ID của công ty lên
         [Required, MaxLength(255)]
