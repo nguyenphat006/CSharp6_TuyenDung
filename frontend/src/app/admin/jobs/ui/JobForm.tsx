@@ -16,7 +16,8 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { RichTextEditor } from "@/components/RichTextEditor";
 import { useRouter } from "next/navigation";
-import { Job, JobFormData, sampleJobs } from "../data/sampleData";
+import { Job, JobFormData, CreateJobRequest } from "@/services/jobService";
+import { toast } from "react-hot-toast";
 
 const levels = [
   { value: "intern", label: "Thực tập sinh" },
@@ -56,26 +57,7 @@ const skills = [
   "English",
 ];
 
-interface Job {
-  id: string;
-  title: string;
-  skills: string[];
-  location: string;
-  salary: {
-    min: number;
-    max: number;
-    currency: string;
-  };
-  headcount: number;
-  level: string;
-  company: string;
-  startDate: string;
-  endDate: string;
-  isActive: boolean;
-  description: string;
-}
-
-interface JobSubmitData extends Omit<Job, 'salary' | 'headcount'> {
+interface JobSubmitData extends Omit<JobFormData, 'salary' | 'headcount'> {
   salary: {
     min: number;
     max: number;
@@ -105,7 +87,7 @@ const emptyJob: JobFormData = {
 
 interface JobFormProps {
   jobId?: string;
-  onSubmit: (data: Job) => void;
+  onSubmit: (data: CreateJobRequest) => void;
 }
 
 export function JobForm({ jobId, onSubmit }: JobFormProps) {
@@ -118,87 +100,28 @@ export function JobForm({ jobId, onSubmit }: JobFormProps) {
   const isEditMode = Boolean(jobId);
 
   useEffect(() => {
-    if (isEditMode && jobId) {
+    if (jobId) {
       setLoading(true);
       setError("");
       
-      // Giả lập API call
+      // TODO: Implement get job by id API call
       setTimeout(() => {
-        const foundJob = sampleJobs[jobId];
-        if (foundJob) {
-          setFormData(foundJob);
-          setLoading(false);
-        } else {
-          setError("Không tìm thấy việc làm");
-          setLoading(false);
-        }
+        setFormData(emptyJob);
+        setLoading(false);
       }, 1000);
     }
-  }, [jobId, isEditMode]);
+  }, [jobId]);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-
-    // Validation
-    if (!formData.title.trim()) {
-      alert("Vui lòng nhập tên công việc");
-      return;
+  const handleSubmit = async (values: FormValues) => {
+    try {
+      setLoading(true);
+      await onSubmit(values as CreateJobRequest);
+    } catch (error) {
+      console.error("Error submitting form:", error);
+      toast.error("Có lỗi xảy ra khi lưu công việc");
+    } finally {
+      setLoading(false);
     }
-
-    if (formData.skills.length === 0) {
-      alert("Vui lòng chọn ít nhất một kỹ năng");
-      return;
-    }
-
-    if (Number(formData.salary.min) < 1000000) {
-      alert("Mức lương tối thiểu phải từ 1,000,000 VND");
-      return;
-    }
-
-    if (Number(formData.salary.max) <= Number(formData.salary.min)) {
-      alert("Mức lương tối đa phải lớn hơn mức lương tối thiểu");
-      return;
-    }
-
-    if (Number(formData.headcount) < 1) {
-      alert("Số lượng tuyển dụng phải từ 1 trở lên");
-      return;
-    }
-
-    if (!formData.location) {
-      alert("Vui lòng chọn địa điểm làm việc");
-      return;
-    }
-
-    if (!formData.startDate || !formData.endDate) {
-      alert("Vui lòng chọn thời gian tuyển dụng");
-      return;
-    }
-
-    if (new Date(formData.endDate) <= new Date(formData.startDate)) {
-      alert("Ngày kết thúc phải sau ngày bắt đầu");
-      return;
-    }
-
-    if (formData.description.length < 50) {
-      alert("Mô tả công việc phải có ít nhất 50 ký tự");
-      return;
-    }
-
-    const submitData: JobSubmitData = {
-      ...formData,
-      salary: {
-        min: Number(formData.salary.min),
-        max: Number(formData.salary.max),
-        currency: formData.salary.currency,
-      },
-      headcount: Number(formData.headcount),
-    };
-
-    // Log dữ liệu mẫu
-    console.log("Form data:", submitData);
-
-    onSubmit(submitData);
   };
 
   const handleAddSkill = () => {

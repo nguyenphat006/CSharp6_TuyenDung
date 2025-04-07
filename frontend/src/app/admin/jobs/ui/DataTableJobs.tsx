@@ -47,34 +47,39 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { Job } from "../data/sampleData"
+import { Job } from "@/services/jobService"
+import { Checkbox } from "@/components/ui/checkbox"
+
+interface PaginationProps {
+  currentPage: number;
+  totalPages: number;
+  pageSize: number;
+  onPageChange: (page: number) => void;
+  onPageSizeChange: (size: number) => void;
+}
 
 interface DataTableJobsProps {
   data: Job[]
-  onUpdateJob: (jobId: string, updatedJob: Omit<Job, 'id'>) => void
-  onDeleteJob: (jobId: string) => void
+  onUpdateJob: (jobId: string, updatedJob: Partial<Job>) => Promise<void>
+  onDeleteJob: (jobId: string) => Promise<void>
+  onSelectJob: (jobId: string) => void
+  selectedJobs: string[]
+  pagination: PaginationProps
 }
 
-export function DataTableJobs({ data, onUpdateJob, onDeleteJob }: DataTableJobsProps) {
+export function DataTableJobs({ data, onUpdateJob, onDeleteJob, onSelectJob, selectedJobs, pagination }: DataTableJobsProps) {
   const router = useRouter()
-  const [currentPage, setCurrentPage] = useState(1)
-  const [rowsPerPage, setRowsPerPage] = useState(10)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [jobToDelete, setJobToDelete] = useState<Job | null>(null)
-
-  const totalPages = Math.ceil(data.length / rowsPerPage)
-  const startIndex = (currentPage - 1) * rowsPerPage
-  const endIndex = startIndex + rowsPerPage
-  const currentData = data.slice(startIndex, endIndex)
 
   const handleDelete = (job: Job) => {
     setJobToDelete(job)
     setDeleteDialogOpen(true)
   }
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (jobToDelete) {
-      onDeleteJob(jobToDelete.id)
+      await onDeleteJob(jobToDelete.id)
       setDeleteDialogOpen(false)
       setJobToDelete(null)
     }
@@ -150,6 +155,20 @@ export function DataTableJobs({ data, onUpdateJob, onDeleteJob }: DataTableJobsP
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="w-[50px]">
+                <Checkbox
+                  checked={
+                    data.length > 0 && selectedJobs.length === data.length
+                  }
+                  onCheckedChange={(checked) => {
+                    if (checked) {
+                      data.forEach((job) => onSelectJob(job.id));
+                    } else {
+                      data.forEach((job) => onSelectJob(job.id));
+                    }
+                  }}
+                />
+              </TableHead>
               <TableHead>Tên công việc</TableHead>
               <TableHead>Kỹ năng</TableHead>
               <TableHead>Địa điểm</TableHead>
@@ -158,17 +177,22 @@ export function DataTableJobs({ data, onUpdateJob, onDeleteJob }: DataTableJobsP
               <TableHead>Trình độ</TableHead>
               <TableHead>Thời gian</TableHead>
               <TableHead>Trạng thái</TableHead>
-              <TableHead>Ứng tuyển</TableHead>
               <TableHead className="text-right">Thao tác</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {currentData.map((job) => (
+            {data.map((job) => (
               <TableRow key={job.id}>
-                <TableCell className="font-medium">{job.title}</TableCell>
+                <TableCell>
+                  <Checkbox
+                    checked={selectedJobs.includes(job.id)}
+                    onCheckedChange={() => onSelectJob(job.id)}
+                  />
+                </TableCell>
+                <TableCell className="font-medium">{job.name}</TableCell>
                 <TableCell>
                   <div className="flex flex-wrap gap-1">
-                    {job.skills.map((skill) => (
+                    {job.skillsList.map((skill) => (
                       <Badge key={skill} variant="secondary">
                         {skill}
                       </Badge>
@@ -177,10 +201,10 @@ export function DataTableJobs({ data, onUpdateJob, onDeleteJob }: DataTableJobsP
                 </TableCell>
                 <TableCell>{job.location}</TableCell>
                 <TableCell>
-                  {formatCurrency(job.salary.min)} - {formatCurrency(job.salary.max)}
+                  {formatCurrency(job.salary)}
                 </TableCell>
-                <TableCell>{job.headcount}</TableCell>
-                <TableCell>{levelLabels[job.level]}</TableCell>
+                <TableCell>{job.quantity}</TableCell>
+                <TableCell>{levelLabels[job.level] || job.level}</TableCell>
                 <TableCell>
                   {formatDate(job.startDate)} - {formatDate(job.endDate)}
                 </TableCell>
@@ -189,7 +213,6 @@ export function DataTableJobs({ data, onUpdateJob, onDeleteJob }: DataTableJobsP
                     {job.isActive ? "Đang tuyển" : "Đã đóng"}
                   </Badge>
                 </TableCell>
-                <TableCell>{job.applications}</TableCell>
                 <TableCell className="text-right">
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -207,7 +230,7 @@ export function DataTableJobs({ data, onUpdateJob, onDeleteJob }: DataTableJobsP
                       </DropdownMenuItem>
                       <DropdownMenuItem
                         className="text-red-600"
-                        onClick={() => handleDelete(job)}
+                        onClick={() => onDeleteJob(job.id)}
                       >
                         <Trash className="mr-2 h-4 w-4" />
                         <span>Xóa</span>
@@ -225,10 +248,10 @@ export function DataTableJobs({ data, onUpdateJob, onDeleteJob }: DataTableJobsP
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <span>Số dòng mỗi trang:</span>
-          <Select value={rowsPerPage.toString()} onValueChange={(value) => {
-            setRowsPerPage(Number(value))
-            setCurrentPage(1)
-          }}>
+          <Select 
+            value={pagination.pageSize.toString()} 
+            onValueChange={(value) => pagination.onPageSizeChange(Number(value))}
+          >
             <SelectTrigger className="w-[100px]">
               <SelectValue />
             </SelectTrigger>
@@ -244,19 +267,19 @@ export function DataTableJobs({ data, onUpdateJob, onDeleteJob }: DataTableJobsP
           <Button
             variant="outline"
             size="sm"
-            onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-            disabled={currentPage === 1}
+            onClick={() => pagination.onPageChange(pagination.currentPage - 1)}
+            disabled={pagination.currentPage === 1}
           >
             Trước
           </Button>
           <span>
-            Trang {currentPage} / {totalPages}
+            Trang {pagination.currentPage} / {pagination.totalPages}
           </span>
           <Button
             variant="outline"
             size="sm"
-            onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-            disabled={currentPage === totalPages}
+            onClick={() => pagination.onPageChange(pagination.currentPage + 1)}
+            disabled={pagination.currentPage === pagination.totalPages}
           >
             Sau
           </Button>
@@ -264,22 +287,17 @@ export function DataTableJobs({ data, onUpdateJob, onDeleteJob }: DataTableJobsP
       </div>
 
       {/* Dialog xác nhận xóa */}
-      <AlertDialog open={!!jobToDelete} onOpenChange={() => setJobToDelete(null)}>
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Bạn có chắc chắn muốn xóa?</AlertDialogTitle>
+            <AlertDialogTitle>Xác nhận xóa</AlertDialogTitle>
             <AlertDialogDescription>
-              Hành động này không thể hoàn tác. Việc làm này sẽ bị xóa vĩnh viễn khỏi hệ thống.
+              Bạn có chắc chắn muốn xóa công việc này? Hành động này không thể hoàn tác.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Hủy</AlertDialogCancel>
-            <AlertDialogAction
-              className="bg-red-600 hover:bg-red-700"
-              onClick={confirmDelete}
-            >
-              Xóa
-            </AlertDialogAction>
+            <AlertDialogAction onClick={confirmDelete}>Xóa</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

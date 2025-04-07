@@ -13,7 +13,7 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { ArrowUpDown, ChevronDown, MoreHorizontal, Pencil, Trash } from "lucide-react";
+import { ArrowUpDown, ChevronDown, MoreHorizontal, Pencil, Trash, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -60,6 +60,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { DataTable } from "@/components/ui/data-table";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface DataTableCompanyProps {
   data: Company[];
@@ -81,6 +88,8 @@ export function DataTableCompany({
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [companyToDelete, setCompanyToDelete] = useState<Company | null>(null);
   const [showDeleteSelectedDialog, setShowDeleteSelectedDialog] = useState(false);
+  const [showDescription, setShowDescription] = useState(false);
+  const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
 
   // Notify parent component when row selection changes
   React.useEffect(() => {
@@ -315,22 +324,33 @@ export function DataTableCompany({
                 <MoreHorizontal className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-[160px]">
+            <DropdownMenuContent align="end">
               <DropdownMenuItem
                 onClick={() => router.push(`/admin/companies/edit/${company.id}`)}
-                className="cursor-pointer"
+                className="flex items-center"
               >
                 <Pencil className="mr-2 h-4 w-4" />
                 Chỉnh sửa
               </DropdownMenuItem>
-              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={() => {
+                  if (company.description) {
+                    setSelectedCompany(company);
+                    setShowDescription(true);
+                  }
+                }}
+                className="flex items-center"
+                disabled={!company.description}
+              >
+                <Eye className="mr-2 h-4 w-4" />
+                Xem mô tả
+              </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => handleDelete(company)}
-                className="cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50"
-                disabled={loading}
+                className="flex items-center text-red-600"
               >
                 <Trash className="mr-2 h-4 w-4" />
-                {loading ? "Đang xử lý..." : "Xóa"}
+                Xóa
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -566,6 +586,18 @@ export function DataTableCompany({
           Sau
         </Button>
       </div>
+
+      <Dialog open={showDescription} onOpenChange={setShowDescription}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Mô tả công ty</DialogTitle>
+          </DialogHeader>
+          <div 
+            className="prose prose-stone dark:prose-invert max-w-none [&>ul]:list-disc [&>ul]:pl-10 [&>ol]:list-decimal [&>ol]:pl-10 [&>*:first-child]:mt-0 [&>*:last-child]:mb-0 [&_li]:pl-2 [&_ul]:my-2 [&_ol]:my-2"
+            dangerouslySetInnerHTML={{ __html: selectedCompany?.description || "" }}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 } 

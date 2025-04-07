@@ -1,18 +1,17 @@
 export interface Company {
   id: string;
   name: string;
-  companyModel: string; // Mô hình công ty
-  industry: string; // Lĩnh vực công ty
-  companySize: string; // Quy mô công ty
+  description: string;
   address: string;
-  description: string; // Markdown nội dung mô tả
-  workingTime: string; // Thời gian làm việc
-  logoUrl: string;
-  createdBy: string | null;
-  createdAt: string;
-  updatedBy: string | null;
-  updatedAt: string | null;
+  website: string;
+  email: string;
+  phone: string;
+  logo: string;
   isActive: boolean;
-  deletedBy: string | null;
+  createdAt: string;
+  updatedAt: string | null;
+  createdBy: string;
+  updatedBy: string | null;
   isDeleted: boolean;
+  deletedBy: string | null;
 } 
