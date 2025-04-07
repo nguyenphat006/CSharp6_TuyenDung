@@ -4,6 +4,7 @@ using System.Security.Claims;
 using TuyenDungAPI.Service;
 using TuyenDungAPI.Model.Authentication;
 using TuyenDungAPI.Model.ModelBase;
+using Swashbuckle.AspNetCore.Annotations;
 
 namespace TuyenDungAPI.Controllers.Authentication
 {
@@ -21,9 +22,12 @@ namespace TuyenDungAPI.Controllers.Authentication
         }
 
         /// <summary>
-        /// Đăng ký tài khoản người dùng
+        /// Đăng ký tài khoản người dùng mới trong hệ thống.
         /// </summary>
+        /// <param name="request">Thông tin đăng ký tài khoản (bao gồm email, mật khẩu, v.v.)</param>
+        /// <returns>Kết quả đăng ký, có thể bao gồm thông báo thành công hoặc lỗi</returns>
         [HttpPost("register")]
+        [SwaggerOperation(Summary = "Đăng ký tài khoản người dùng mới trong hệ thống")]
         public async Task<IActionResult> Register([FromBody] RegisterRequest request)
         {
             if (!ModelState.IsValid)
@@ -37,35 +41,40 @@ namespace TuyenDungAPI.Controllers.Authentication
         }
 
         /// <summary>
-        /// Đăng nhập tài khoản người dùng
+        /// Đăng nhập tài khoản người dùng với email và mật khẩu.
         /// </summary>
+        /// <param name="request">Thông tin đăng nhập (email và mật khẩu)</param>
+        /// <returns>Kết quả đăng nhập và token JWT</returns>
         [HttpPost("login")]
+        [SwaggerOperation(Summary = "Đăng nhập tài khoản người dùng với email và mật khẩu")]
         public async Task<IActionResult> Login([FromBody] LoginRequest request)
         {
             var response = await _authService.LoginAsync(request.Email, request.Password);
             return StatusCode(response.Status, response);
         }
 
-
         /// <summary>
-        /// Đăng xuất tài khoản người dùng
+        /// Đăng xuất tài khoản người dùng (Yêu cầu token hợp lệ).
         /// </summary>
+        /// <returns>Kết quả đăng xuất</returns>
         [Authorize] // ✅ Yêu cầu token hợp lệ để logout
         [HttpPost("logout")]
+        [SwaggerOperation(Summary = "Đăng xuất tài khoản người dùng (Yêu cầu token hợp lệ)")]
         public async Task<IActionResult> Logout()
         {
-            // Lấy email từ token (vì user đã đăng nhập nên sẽ có email trong token)
             string email = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value!;
 
             var response = await _authService.LogoutAsync(email);
             return StatusCode(response.Status, response);
         }
 
-
         /// <summary>
-        /// API Refresh-token
+        /// Cung cấp API Refresh-token để lấy token mới bằng refresh token.
         /// </summary>
+        /// <param name="request">Thông tin yêu cầu refresh token (token hiện tại và refresh token)</param>
+        /// <returns>Token mới và refresh token mới</returns>
         [HttpPost("refresh-token")]
+        [SwaggerOperation(Summary = "Cung cấp API Refresh-token để lấy token mới bằng refresh token")]
         public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenRequest request)
         {
             var response = await _authService.RefreshTokenAsync(request.Token, request.RefreshToken);
@@ -73,9 +82,12 @@ namespace TuyenDungAPI.Controllers.Authentication
         }
 
         /// <summary>
-        /// API Gửi mã OTP về Email
+        /// Gửi mã OTP đến email của người dùng để xác thực.
         /// </summary>
+        /// <param name="request">Thông tin email yêu cầu gửi OTP</param>
+        /// <returns>Kết quả gửi mã OTP</returns>
         [HttpPost("send-otp")]
+        [SwaggerOperation(Summary = "Gửi mã OTP đến email của người dùng để xác thực")]
         public async Task<IActionResult> SendOtp([FromBody] SendOtpRequest request)
         {
             if (string.IsNullOrEmpty(request.Email))
@@ -83,28 +95,34 @@ namespace TuyenDungAPI.Controllers.Authentication
                 return BadRequest(new { success = false, message = "Email không được để trống!" });
             }
 
-            var reponse = await _authService.RequestOtpAsync(request.Email);
-            return StatusCode(reponse.Status, reponse);
+            var response = await _authService.RequestOtpAsync(request.Email);
+            return StatusCode(response.Status, response);
         }
 
         /// <summary>
-        /// API Xác thực OTP
+        /// Xác thực mã OTP đã gửi đến email.
         /// </summary>
+        /// <param name="request">Thông tin OTP và email để xác thực</param>
+        /// <returns>Kết quả xác thực OTP</returns>
         [HttpPost("verify-code")]
+        [SwaggerOperation(Summary = "Xác thực mã OTP đã gửi đến email")]
         public async Task<IActionResult> VerifyCode([FromBody] VerificationRequest request)
         {
             if (string.IsNullOrEmpty(request.Otp))
             {
                 return BadRequest(new { success = false, message = "Mã OTP không được để trống" });
             }
-            var reponse = await _authService.VerifyOtpAsync(request.Email ,request.Otp);
-            return StatusCode(reponse.Status,reponse);
+            var response = await _authService.VerifyOtpAsync(request.Email, request.Otp);
+            return StatusCode(response.Status, response);
         }
 
         /// <summary>
-        /// API đổi mật khẩu người dùng 
+        /// API để người dùng thay đổi mật khẩu mới.
         /// </summary>
+        /// <param name="request">Thông tin email và mật khẩu mới</param>
+        /// <returns>Kết quả thay đổi mật khẩu</returns>
         [HttpPost("reset-password")]
+        [SwaggerOperation(Summary = "API để người dùng thay đổi mật khẩu mới")]
         public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequest request)
         {
             if (string.IsNullOrEmpty(request.Email) || string.IsNullOrEmpty(request.NewPassword))
@@ -115,5 +133,7 @@ namespace TuyenDungAPI.Controllers.Authentication
             var response = await _authService.ResetPasswordAsync(request.Email, request.NewPassword);
             return StatusCode(response.Status, response);
         }
+
+
     }
 }

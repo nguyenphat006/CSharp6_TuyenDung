@@ -77,7 +77,7 @@ namespace TuyenDungAPI.Controllers.Feature
         /// </summary>
         /// <param name="request">Danh sách ID công việc cần xóa.</param>
         /// <returns>Kết quả xóa.</returns>
-        [HttpPost("delete")]
+        [HttpDelete("delete")]
         [SwaggerOperation(Summary = "Xóa 1 hoặc nhiều công việc (soft delete)")]
         public async Task<IActionResult> DeleteJobs([FromBody] DeleteJobRequest request)
         {

@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Swashbuckle.AspNetCore.Annotations;
 using TuyenDungAPI.Model.Company;
 using TuyenDungAPI.Model.ModelBase;
 using TuyenDungAPI.Service;
@@ -18,9 +19,11 @@ namespace TuyenDungAPI.Controllers.Feature
         }
 
         /// <summary>
-        /// Lấy toàn bộ danh sách công ty
+        /// Lấy danh sách toàn bộ công ty hiện tại trong hệ thống.
         /// </summary>
+        /// <returns>Danh sách công ty</returns>
         [HttpGet]
+        [SwaggerOperation(Summary = "Lấy danh sách toàn bộ công ty hiện tại trong hệ thống")]
         public async Task<IActionResult> GetAllCompanies()
         {
             var result = await _companyService.GetAllCompanysAsync();
@@ -28,9 +31,12 @@ namespace TuyenDungAPI.Controllers.Feature
         }
 
         /// <summary>
-        /// Lấy thông tin công ty theo ID
+        /// Lấy thông tin chi tiết công ty theo ID.
         /// </summary>
+        /// <param name="id">ID công ty cần lấy thông tin</param>
+        /// <returns>Thông tin công ty</returns>
         [HttpGet("{id}")]
+        [SwaggerOperation(Summary = "Lấy thông tin chi tiết công ty theo ID")]
         public async Task<IActionResult> GetCompanyById(Guid id)
         {
             var result = await _companyService.GetCompanyByIdAsync(id);
@@ -38,9 +44,12 @@ namespace TuyenDungAPI.Controllers.Feature
         }
 
         /// <summary>
-        /// Tạo công ty mới
+        /// Tạo một công ty mới và thêm vào hệ thống.
         /// </summary>
+        /// <param name="request">Thông tin công ty cần tạo</param>
+        /// <returns>Thông tin công ty mới được tạo</returns>
         [HttpPost]
+        [SwaggerOperation(Summary = "Tạo một công ty mới và thêm vào hệ thống")]
         public async Task<IActionResult> CreateCompany([FromBody] CreateCompanyRequest request)
         {
             if (!ModelState.IsValid)
@@ -51,9 +60,12 @@ namespace TuyenDungAPI.Controllers.Feature
         }
 
         /// <summary>
-        /// Upload logo cho công ty
+        /// Upload logo cho công ty.
         /// </summary>
+        /// <param name="request">Yêu cầu chứa tệp hình ảnh logo công ty</param>
+        /// <returns>Kết quả upload logo</returns>
         [HttpPost("upload-logo")]
+        [SwaggerOperation(Summary = "Upload logo cho công ty")]
         public async Task<IActionResult> UploadCompanyLogo([FromForm] UploadCompanyLogoRequest request)
         {
             if (!ModelState.IsValid)
@@ -64,9 +76,13 @@ namespace TuyenDungAPI.Controllers.Feature
         }
 
         /// <summary>
-        /// Cập nhật thông tin công ty
+        /// Cập nhật thông tin công ty.
         /// </summary>
+        /// <param name="id">ID công ty cần cập nhật</param>
+        /// <param name="request">Thông tin cần cập nhật cho công ty</param>
+        /// <returns>Kết quả cập nhật công ty</returns>
         [HttpPut("{id}")]
+        [SwaggerOperation(Summary = "Cập nhật thông tin công ty")]
         public async Task<IActionResult> UpdateCompany(Guid id, [FromBody] UpdateCompanyRequest request)
         {
             if (!ModelState.IsValid)
@@ -77,9 +93,12 @@ namespace TuyenDungAPI.Controllers.Feature
         }
 
         /// <summary>
-        /// Xóa một hoặc nhiều công ty
+        /// Xóa một hoặc nhiều công ty khỏi hệ thống.
         /// </summary>
+        /// <param name="request">Danh sách công ty cần xóa</param>
+        /// <returns>Kết quả xóa công ty</returns>
         [HttpDelete]
+        [SwaggerOperation(Summary = "Xóa một hoặc nhiều công ty khỏi hệ thống")]
         public async Task<IActionResult> DeleteCompanies([FromBody] DeleteCompanyRequest request)
         {
             if (!ModelState.IsValid)
@@ -91,6 +110,7 @@ namespace TuyenDungAPI.Controllers.Feature
             var response = await _companyService.DeleteCompaniesAsync(request, User);
             return StatusCode(response.Status, response);
         }
+
 
     }
 }
