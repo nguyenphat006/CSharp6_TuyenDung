@@ -1,11 +1,13 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using TuyenDungAPI.Model.ModelBase;
 
 namespace TuyenDungAPI.Model.Resume
 {
-    public class ResumeRequest
+    public class ResumeRequest: BaseRequestEntity
     {
+        public Guid Id { get; set; }
     }
-    public class CreateResumeRequest
+    public class CreateResumeRequest: BaseRequestEntity
     {
         [Required]
         [MaxLength(255)]
@@ -28,7 +30,7 @@ namespace TuyenDungAPI.Model.Resume
         public List<Guid> Files { get; set; } = new List<Guid>(); // Chứa ID của các file nộp
     }
 
-    public class UpdateResumeRequest
+    public class UpdateResumeRequest: BaseRequestEntity
     {
         [Required]
         public Guid Id { get; set; }

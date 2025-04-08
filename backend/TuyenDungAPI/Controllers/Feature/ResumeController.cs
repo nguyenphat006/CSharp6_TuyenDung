@@ -7,5 +7,5 @@ namespace TuyenDungAPI.Controllers.Feature
     [ApiController]
     public class ResumeController : ControllerBase
     {
-    }
+    }   
 }
