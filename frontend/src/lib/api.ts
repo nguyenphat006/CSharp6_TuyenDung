@@ -1,3 +1,5 @@
+import axios from "axios";
+
 // API Base URLs
 export const API_BASE_URL = 'https://localhost:7152/api';
 
@@ -67,4 +69,11 @@ export interface ApiResponse<T = any> {
   status: number;
   data: T;
   message: string;
-} 
+}
+
+export const api = axios.create({
+  baseURL: "https://localhost:7152",
+  headers: {
+    "Content-Type": "application/json",
+  },
+}); 

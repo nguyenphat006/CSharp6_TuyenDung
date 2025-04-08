@@ -22,6 +22,7 @@ const modules = {
     [{ color: [] }, { background: [] }],
     [{ list: "ordered" }, { list: "bullet" }],
     [{ align: [] }],
+    ["link", "image"],
     ["clean"],
   ],
 }
@@ -37,6 +38,8 @@ const formats = [
   "list",
   "bullet",
   "align",
+  "link",
+  "image",
 ]
 
 export function RichTextEditor({
