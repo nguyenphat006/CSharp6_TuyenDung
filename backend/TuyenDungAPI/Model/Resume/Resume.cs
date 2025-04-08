@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using TuyenDungAPI.Model.ModelBase;
 
 namespace TuyenDungAPI.Model.Resume
@@ -14,7 +15,7 @@ namespace TuyenDungAPI.Model.Resume
 
         [Required]
         public Guid UserId { get; set; } // UserId của người nộp CV (ObjectId kiểu GUID)
-
+            
         [Required]
         [MaxLength(50)]
         public string Status { get; set; } // Trạng thái của Resume: PENDING, REVIEWING, APPROVED, REJECTED
@@ -24,6 +25,14 @@ namespace TuyenDungAPI.Model.Resume
 
         [Required]
         public Guid JobId { get; set; } // ID của công việc
+
+        // Liên kết với bảng Company (navigation property)
+        [ForeignKey("CompanyId")]  // Chỉ định rõ khóa ngoại
+        public Company.Company Company { get; set; } // Navigation property tới bảng Company
+
+        // Liên kết với bảng Job (navigation property)
+        [ForeignKey("JobId")] // Chỉ định rõ khóa ngoại
+        public Job.Job Job { get; set; } // Navigation property tới bảng Job
 
         // Lịch sử trạng thái của Resume
         public List<ResumeHistory> History { get; set; } = new List<ResumeHistory>();

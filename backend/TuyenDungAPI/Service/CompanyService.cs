@@ -22,6 +22,7 @@ public class CompanyService
             .Where(co => !co.IsDeleted)
             .AsQueryable();
 
+        companiesQuery = companiesQuery.OrderByDescending(r => r.CreatedAt);
         // Lọc theo Tên công ty nếu có
         if (!string.IsNullOrWhiteSpace(query.Keyword))
         {

@@ -25,6 +25,7 @@ namespace TuyenDungAPI.Database
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            // Mối quan hệ UserRole
             modelBuilder.Entity<UserRole>()
                 .HasKey(ur => new { ur.UserId, ur.RoleId });
 
@@ -38,12 +39,28 @@ namespace TuyenDungAPI.Database
                 .WithMany(r => r.UserRoles)
                 .HasForeignKey(ur => ur.RoleId);
 
+            // Mối quan hệ Resume và ResumeFile
             modelBuilder.Entity<ResumeFile>()
-      .HasOne(rf => rf.Resume)
-      .WithMany(r => r.Files)
-      .HasForeignKey(rf => rf.ResumeId);
+                .HasOne(rf => rf.Resume)
+                .WithMany(r => r.Files)
+                .HasForeignKey(rf => rf.ResumeId)
+                .OnDelete(DeleteBehavior.Cascade); // Chỉ xóa file khi Resume bị xóa
 
-            // 👉 Cấu hình Resume.History là Owned Collection
+            // Mối quan hệ Resume và Job
+            modelBuilder.Entity<Resume>()
+                .HasOne(r => r.Job)
+                .WithMany() // Không cần `WithMany()` nếu không có navigation property từ Job
+                .HasForeignKey(r => r.JobId)
+                .OnDelete(DeleteBehavior.Restrict);  // Sử dụng `Restrict` thay vì `Cascade`
+
+            // Mối quan hệ Resume và Company
+            modelBuilder.Entity<Resume>()
+                .HasOne(r => r.Company)
+                .WithMany() // Không cần `WithMany()` nếu không có navigation property từ Company
+                .HasForeignKey(r => r.CompanyId)
+                .OnDelete(DeleteBehavior.Restrict);  // Sử dụng `Restrict` thay vì `Cascade`
+
+            // Cấu hình Resume.History là Owned Collection
             modelBuilder.Entity<Resume>()
                 .OwnsMany(r => r.History, historyBuilder =>
                 {
@@ -51,7 +68,7 @@ namespace TuyenDungAPI.Database
                     historyBuilder.Property<int>("Id"); // EF yêu cầu khóa
                     historyBuilder.HasKey("Id");
 
-                    // 👉 Cấu hình tiếp ResumeHistory.UpdatedBy là Owned Entity
+                    // Cấu hình tiếp ResumeHistory.UpdatedBy là Owned Entity
                     historyBuilder.OwnsOne(h => h.UpdatedBy, updatedByBuilder =>
                     {
                         updatedByBuilder.Property(x => x._id).HasColumnName("UpdatedBy_Id");
@@ -59,5 +76,6 @@ namespace TuyenDungAPI.Database
                     });
                 });
         }
+
     }
 }

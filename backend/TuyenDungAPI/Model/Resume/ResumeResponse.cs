@@ -13,7 +13,7 @@ namespace TuyenDungAPI.Model.Resume
         public string? Status { get; set; } // Trạng thái của Resume (PENDING, REVIEWING, APPROVED, REJECTED)
 
         // Trả về đối tượng Company chứa ID và Name
-        public CompanyResponse Company { get; set; }
+        public CompanyResumeResponse Company { get; set; }
 
         // Trả về đối tượng Job chứa ID và Name
         public JobResponse Job { get; set; }
@@ -22,7 +22,7 @@ namespace TuyenDungAPI.Model.Resume
         public List<ResumeFileResponse> Files { get; set; } = new List<ResumeFileResponse>();
     }
 
-    public class CompanyResponse
+    public class CompanyResumeResponse
     {
         public Guid Id { get; set; } // ID của công ty
         public string? Name { get; set; } // Tên công ty
@@ -35,7 +35,7 @@ namespace TuyenDungAPI.Model.Resume
     }
 
 
-    public class ResumeFileResponse
+    public class ResumeFileResponse: BaseReponseEntity
     {
         public Guid Id { get; set; }
         public string? FileUrl { get; set; }

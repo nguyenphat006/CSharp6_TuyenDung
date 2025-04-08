@@ -25,6 +25,7 @@ namespace TuyenDungAPI.Service
                 .Where(j => !j.IsDeleted)
                 .AsQueryable();
 
+            jobsQuery = jobsQuery.OrderByDescending(r => r.CreatedAt);
             // Filtering
             if (!string.IsNullOrWhiteSpace(query.Keyword))
             {
