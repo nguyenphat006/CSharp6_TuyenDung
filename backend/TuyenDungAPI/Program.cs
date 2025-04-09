@@ -89,6 +89,8 @@ builder.Services.AddScoped<UserService>();
 builder.Services.AddScoped<RoleService>();
 builder.Services.AddScoped<CompanyService>();
 builder.Services.AddScoped<JobService>();
+builder.Services.AddScoped<ResumeService>();
+
 
 
 var app = builder.Build();

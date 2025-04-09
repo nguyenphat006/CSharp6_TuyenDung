@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using TuyenDungAPI.Database;
 
@@ -11,9 +12,11 @@ using TuyenDungAPI.Database;
 namespace TuyenDungAPI.Migrations
 {
     [DbContext(typeof(DataContext))]
-    partial class DataContextModelSnapshot : ModelSnapshot
+    [Migration("20250408054947_UpdateModelResume")]
+    partial class UpdateModelResume
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -234,10 +237,6 @@ namespace TuyenDungAPI.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("CompanyId");
-
-                    b.HasIndex("JobId");
-
                     b.ToTable("Resumes");
                 });
 
@@ -428,18 +427,6 @@ namespace TuyenDungAPI.Migrations
 
             modelBuilder.Entity("TuyenDungAPI.Model.Resume.Resume", b =>
                 {
-                    b.HasOne("TuyenDungAPI.Model.Company.Company", "Company")
-                        .WithMany()
-                        .HasForeignKey("CompanyId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("TuyenDungAPI.Model.Job.Job", "Job")
-                        .WithMany()
-                        .HasForeignKey("JobId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
                     b.OwnsMany("TuyenDungAPI.Model.Resume.ResumeHistory", "History", b1 =>
                         {
                             b1.Property<int>("Id")
@@ -494,11 +481,7 @@ namespace TuyenDungAPI.Migrations
                                 .IsRequired();
                         });
 
-                    b.Navigation("Company");
-
                     b.Navigation("History");
-
-                    b.Navigation("Job");
                 });
 
             modelBuilder.Entity("TuyenDungAPI.Model.Resume.ResumeFile", b =>

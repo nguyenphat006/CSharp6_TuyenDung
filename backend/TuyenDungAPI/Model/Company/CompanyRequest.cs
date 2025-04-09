@@ -39,7 +39,6 @@ namespace TuyenDungAPI.Model.Company
 
     public class UpdateCompanyRequest : BaseRequestEntity
     {
-        public Guid Id { get; set; }
         [Required, MaxLength(255)]
         [DefaultValue("Tiktok")]
         public string Name { get; set; } = string.Empty;
@@ -81,4 +80,26 @@ namespace TuyenDungAPI.Model.Company
         [Required(ErrorMessage = "File logo là bắt buộc")]
         public IFormFile Logo { get; set; }
     }
+
+    public class CompanyQueryParameters
+    {
+        // Tham số lọc theo từ khóa, ví dụ tên công ty hoặc mô hình công ty
+        public string? Keyword { get; set; }
+
+        // Lọc theo ngành nghề công ty
+        public string? Industry { get; set; }
+
+        // Lọc theo quy mô công ty
+        public string? CompanySize { get; set; }
+
+        // Lọc theo địa chỉ công ty
+        public string? Address { get; set; }
+
+        // Phân trang: Số trang hiện tại
+        public int PageNumber { get; set; } = 1;
+
+        // Phân trang: Kích thước trang
+        public int PageSize { get; set; } = 5;
+    }
+
 }

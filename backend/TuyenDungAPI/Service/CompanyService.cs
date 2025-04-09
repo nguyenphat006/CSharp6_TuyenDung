@@ -15,21 +15,63 @@ public class CompanyService
         _dbContext = dbContext;
     }
 
-    public async Task<ApiResponse<List<CompanyResponse>>> GetAllCompanysAsync()
+    public async Task<ApiResponse<PagedResult<CompanyResponse>>> GetAllCompaniesAsync(CompanyQueryParameters query)
     {
-        var companys = await _dbContext.Company
+        // Khởi tạo query để truy vấn các công ty chưa bị xóa
+        var companiesQuery = _dbContext.Company
             .Where(co => !co.IsDeleted)
-            .ToListAsync();
+            .AsQueryable();
 
-        if (!companys.Any())
+        companiesQuery = companiesQuery.OrderByDescending(r => r.CreatedAt);
+        // Lọc theo Tên công ty nếu có
+        if (!string.IsNullOrWhiteSpace(query.Keyword))
         {
-            return new ApiResponse<List<CompanyResponse>>(true, 200, new List<CompanyResponse>(), "Không có công ty nào trong hệ thống!");
+            companiesQuery = companiesQuery.Where(co => co.Name.Contains(query.Keyword));
         }
 
-        var response = companys.Select(co => new CompanyResponse(co)).ToList();
+        // Lọc theo ngành nghề công ty nếu có
+        if (!string.IsNullOrWhiteSpace(query.Industry))
+        {
+            companiesQuery = companiesQuery.Where(co => co.Industry.Contains(query.Industry));
+        }
 
-        return new ApiResponse<List<CompanyResponse>>(true, 200, response, "Lấy danh sách công ty thành công");
+        // Lọc theo quy mô công ty nếu có
+        if (!string.IsNullOrWhiteSpace(query.CompanySize))
+        {
+            companiesQuery = companiesQuery.Where(co => co.CompanySize.Contains(query.CompanySize));
+        }
+
+        // Lọc theo địa chỉ công ty nếu có
+        if (!string.IsNullOrWhiteSpace(query.Address))
+        {
+            companiesQuery = companiesQuery.Where(co => co.Address.Contains(query.Address));
+        }
+
+        // Pagination
+        var totalRecords = await companiesQuery.CountAsync();
+
+        var companies = await companiesQuery
+            .Skip((query.PageNumber - 1) * query.PageSize)
+            .Take(query.PageSize)
+            .ToListAsync();
+
+        // Chuyển đổi thành response
+        var response = new PagedResult<CompanyResponse>
+        {
+            CurrentPage = query.PageNumber,
+            PageSize = query.PageSize,
+            TotalRecords = totalRecords,
+            Items = companies.Select(co => new CompanyResponse(co)).ToList()
+        };
+
+        if (!response.Items.Any())
+        {
+            return new ApiResponse<PagedResult<CompanyResponse>>(true, 200, response, "Không có công ty nào trong hệ thống!");
+        }
+
+        return new ApiResponse<PagedResult<CompanyResponse>>(true, 200, response, "Lấy danh sách công ty thành công");
     }
+
 
     public async Task<ApiResponse<CompanyResponse>> GetCompanyByIdAsync(Guid id)
     {
@@ -148,17 +190,18 @@ public class CompanyService
         }
     }
 
-    public async Task<ApiResponse<CompanyResponse>> UpdateCompanyAsync(UpdateCompanyRequest request, ClaimsPrincipal currentUser)
+    public async Task<ApiResponse<CompanyResponse>> UpdateCompanyAsync(Guid id, UpdateCompanyRequest request, ClaimsPrincipal currentUser)
     {
+        // Tìm công ty theo ID từ URL (không cần lấy id từ request body nữa)
         var company = await _dbContext.Company
-            .FirstOrDefaultAsync(c => !c.IsDeleted && c.Id == request.Id);
+            .FirstOrDefaultAsync(c => !c.IsDeleted && c.Id == id);
 
         if (company == null)
         {
             return new ApiResponse<CompanyResponse>(false, 404, null, "Không tìm thấy công ty!");
         }
 
-        // Update company details
+        // Cập nhật thông tin công ty
         company.Name = request.Name;
         company.CompanyModel = request.CompanyModel;
         company.Industry = request.Industry;
@@ -169,11 +212,13 @@ public class CompanyService
         company.UpdatedAt = DateTime.UtcNow;
         company.UpdatedBy = currentUser?.Identity?.Name ?? "System";
         company.IsActive = request.IsActive;
+
         await _dbContext.SaveChangesAsync();
 
         var response = new CompanyResponse(company);
         return new ApiResponse<CompanyResponse>(true, 200, response, "Cập nhật công ty thành công");
     }
+
 
     public async Task<ApiResponse<DeleteComnpanysResponse>> DeleteCompaniesAsync(DeleteCompanyRequest request, ClaimsPrincipal currentUser)
     {
