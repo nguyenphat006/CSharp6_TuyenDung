@@ -4,23 +4,23 @@ namespace TuyenDungAPI.Model.Resume
 {
     public class ResumeResponse : BaseReponseEntity
     {
-        public Guid Id { get; set; } // ID của Resume
+        public Guid Id { get; set; }
 
-        public string? Email { get; set; } // Email của người nộp CV
+        public string Email { get; set; }
 
-        public Guid UserId { get; set; } // UserId của người nộp CV (ObjectId kiểu GUID)
+        public Guid UserId { get; set; }
 
-        public string? Status { get; set; } // Trạng thái của Resume (PENDING, REVIEWING, APPROVED, REJECTED)
+        public string Status { get; set; }
 
-        // Trả về đối tượng Company chứa ID và Name
         public CompanyResumeResponse Company { get; set; }
 
-        // Trả về đối tượng Job chứa ID và Name
         public JobResponse Job { get; set; }
 
         public List<ResumeHistory> History { get; set; } = new List<ResumeHistory>();
-        public List<ResumeFileResponse> Files { get; set; } = new List<ResumeFileResponse>();
+
+        public string FileUrl { get; set; } // Trả về URL file đã upload
     }
+
 
     public class CompanyResumeResponse
     {
@@ -34,14 +34,6 @@ namespace TuyenDungAPI.Model.Resume
         public string? Name { get; set; } // Tên công việc
     }
 
-
-    public class ResumeFileResponse: BaseReponseEntity
-    {
-        public Guid Id { get; set; }
-        public string? FileUrl { get; set; }
-        public string? FileType { get; set; }
-        public long FileSize { get; set; }
-    }
 
 
 }

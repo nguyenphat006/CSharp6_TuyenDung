@@ -15,10 +15,10 @@ namespace TuyenDungAPI.Model.Resume
 
         [Required]
         public Guid UserId { get; set; } // UserId của người nộp CV (ObjectId kiểu GUID)
-            
+
         [Required]
         [MaxLength(50)]
-        public string Status { get; set; } // Trạng thái của Resume: PENDING, REVIEWING, APPROVED, REJECTED
+        public string Status { get; set; } // Trạng thái của Resume (PENDING, REVIEWING, APPROVED, REJECTED)
 
         [Required]
         public Guid CompanyId { get; set; } // ID của công ty
@@ -27,47 +27,29 @@ namespace TuyenDungAPI.Model.Resume
         public Guid JobId { get; set; } // ID của công việc
 
         // Liên kết với bảng Company (navigation property)
-        [ForeignKey("CompanyId")]  // Chỉ định rõ khóa ngoại
-        public Company.Company Company { get; set; } // Navigation property tới bảng Company
+        [ForeignKey("CompanyId")]
+        public Company.Company Company { get; set; }
 
         // Liên kết với bảng Job (navigation property)
-        [ForeignKey("JobId")] // Chỉ định rõ khóa ngoại
-        public Job.Job Job { get; set; } // Navigation property tới bảng Job
+        [ForeignKey("JobId")]
+        public Job.Job Job { get; set; }
 
-        // Lịch sử trạng thái của Resume
+        // URL file đính kèm
+        [MaxLength(500)]
+        public string FileUrl { get; set; } // File upload lưu link
+
+        // Lịch sử thay đổi trạng thái
         public List<ResumeHistory> History { get; set; } = new List<ResumeHistory>();
-
-        // Liên kết với bảng ResumeFile (nếu có nhiều file liên quan)
-        public List<ResumeFile> Files { get; set; } = new List<ResumeFile>();
 
         public Resume()
         {
             History = new List<ResumeHistory>();
-            Files = new List<ResumeFile>();
         }
     }
 
 
-    public class ResumeHistory
-    {
-        [Required]
-        [MaxLength(50)]
-        public string Status { get; set; } // Trạng thái của Resume khi thay đổi
 
-        [Required]
-        public DateTime UpdatedAt { get; set; } // Thời gian thay đổi trạng thái
+   
 
-        [Required]
-        public ResumeUpdatedBy UpdatedBy { get; set; } // Người thay đổi trạng thái, gồm _id và email
-
-        public class ResumeUpdatedBy
-        {
-            [Required]
-            public Guid _id { get; set; } // ID của người thay đổi
-            [Required]
-            [EmailAddress]
-            public string Email { get; set; } // Email của người thay đổi
-        }
-    }
 
 }

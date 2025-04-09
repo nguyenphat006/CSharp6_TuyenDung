@@ -21,10 +21,12 @@ namespace TuyenDungAPI.Database
         public DbSet<Company> Company { get; set; }
         public DbSet<Job> Jobs { get; set; }
         public DbSet<Resume> Resumes { get; set; }
-        public DbSet<ResumeFile> ResumeFiles { get; set; }
+        public DbSet<ResumeHistory> ResumeHistories { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            base.OnModelCreating(modelBuilder);
+
             // Mối quan hệ UserRole
             modelBuilder.Entity<UserRole>()
                 .HasKey(ur => new { ur.UserId, ur.RoleId });
@@ -39,43 +41,28 @@ namespace TuyenDungAPI.Database
                 .WithMany(r => r.UserRoles)
                 .HasForeignKey(ur => ur.RoleId);
 
-            // Mối quan hệ Resume và ResumeFile
-            modelBuilder.Entity<ResumeFile>()
-                .HasOne(rf => rf.Resume)
-                .WithMany(r => r.Files)
-                .HasForeignKey(rf => rf.ResumeId)
-                .OnDelete(DeleteBehavior.Cascade); // Chỉ xóa file khi Resume bị xóa
-
             // Mối quan hệ Resume và Job
             modelBuilder.Entity<Resume>()
                 .HasOne(r => r.Job)
-                .WithMany() // Không cần `WithMany()` nếu không có navigation property từ Job
+                .WithMany()
                 .HasForeignKey(r => r.JobId)
-                .OnDelete(DeleteBehavior.Restrict);  // Sử dụng `Restrict` thay vì `Cascade`
+                .OnDelete(DeleteBehavior.Restrict);
 
             // Mối quan hệ Resume và Company
             modelBuilder.Entity<Resume>()
                 .HasOne(r => r.Company)
-                .WithMany() // Không cần `WithMany()` nếu không có navigation property từ Company
+                .WithMany()
                 .HasForeignKey(r => r.CompanyId)
-                .OnDelete(DeleteBehavior.Restrict);  // Sử dụng `Restrict` thay vì `Cascade`
+                .OnDelete(DeleteBehavior.Restrict);
 
-            // Cấu hình Resume.History là Owned Collection
-            modelBuilder.Entity<Resume>()
-                .OwnsMany(r => r.History, historyBuilder =>
-                {
-                    historyBuilder.WithOwner().HasForeignKey("ResumeId");
-                    historyBuilder.Property<int>("Id"); // EF yêu cầu khóa
-                    historyBuilder.HasKey("Id");
-
-                    // Cấu hình tiếp ResumeHistory.UpdatedBy là Owned Entity
-                    historyBuilder.OwnsOne(h => h.UpdatedBy, updatedByBuilder =>
-                    {
-                        updatedByBuilder.Property(x => x._id).HasColumnName("UpdatedBy_Id");
-                        updatedByBuilder.Property(x => x.Email).HasColumnName("UpdatedBy_Email");
-                    });
-                });
+            // Mối quan hệ giữa Resume và ResumeHistory
+            modelBuilder.Entity<ResumeHistory>()
+                .HasOne(rh => rh.Resume)
+                .WithMany(r => r.History)  // Một Resume có nhiều ResumeHistory
+                .HasForeignKey(rh => rh.ResumeId)
+                .OnDelete(DeleteBehavior.Cascade);  // Khi xóa Resume, các bản ghi ResumeHistory cũng sẽ bị xóa
         }
+
 
     }
 }

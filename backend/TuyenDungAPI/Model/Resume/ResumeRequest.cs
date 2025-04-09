@@ -7,30 +7,53 @@ namespace TuyenDungAPI.Model.Resume
     {
         public Guid Id { get; set; }
     }
-    public class CreateResumeRequest: BaseRequestEntity
+    public class CreateResumeRequest
     {
+        // Email của người nộp CV, sẽ lấy từ token khi gửi yêu cầu
         [Required]
         [MaxLength(255)]
         public string Email { get; set; }
 
-        [Required]
-        public Guid UserId { get; set; }
-
+        // UserId sẽ lấy từ token
         //[Required]
-        //[MaxLength(50)]
-        //public string Status { get; set; }
+        //public Guid UserId { get; set; }
 
+        // ID công ty, lấy từ frontend
         [Required]
         public Guid CompanyId { get; set; }
 
+        // ID công việc (Job), lấy từ frontend
         [Required]
         public Guid JobId { get; set; }
 
-        public List<ResumeHistory> History { get; set; } = new List<ResumeHistory>();
-        public List<Guid> Files { get; set; } = new List<Guid>(); // Chứa ID của các file nộp
+        // URL file đính kèm (FileUrl), lấy từ frontend
+        [Required]
+        [MaxLength(500)]
+        public string FileUrl { get; set; }
+
+        // Lịch sử thay đổi trạng thái, mặc định khi tạo sẽ có trạng thái PENDING
+        //public List<ResumeHistoryRequest> History { get; set; } = new List<ResumeHistoryRequest>();
     }
 
-    public class UpdateResumeRequest: BaseRequestEntity
+    public class ResumeHistoryRequest
+    {
+        [Required]
+        [MaxLength(50)]
+        public string Status { get; set; }  // Trạng thái của Resume khi tạo (ví dụ: "PENDING")
+
+        [Required]
+        public DateTime UpdatedAt { get; set; }  // Thời gian cập nhật trạng thái
+
+        public ResumeHistoryRequest()
+        {
+            Status = "PENDING"; // Mặc định trạng thái là PENDING khi tạo Resume
+            UpdatedAt = DateTime.UtcNow;
+        }
+    }
+
+
+
+    public class UpdateResumeRequest : BaseRequestEntity
     {
         [Required]
         public Guid Id { get; set; }
@@ -40,31 +63,14 @@ namespace TuyenDungAPI.Model.Resume
 
         public string Status { get; set; }
 
+        [MaxLength(500)]
+        public string FileUrl { get; set; } // Cho phép update lại file mới nếu cần
+
         public List<ResumeHistory> History { get; set; } = new List<ResumeHistory>();
-        public List<Guid> Files { get; set; } = new List<Guid>(); // Chứa ID của các file nộp
     }
 
-    public class ResumeHistoryRequest
-    {
-        [Required]
-        [MaxLength(50)]
-        public string Status { get; set; } // Trạng thái của Resume khi thay đổi
 
-        [Required]
-        public DateTime UpdatedAt { get; set; } // Thời gian thay đổi trạng thái
-
-        [Required]
-        public ResumeUpdatedByRequest UpdatedBy { get; set; } // Người thay đổi trạng thái, gồm _id và email
-
-        public class ResumeUpdatedByRequest
-        {
-            [Required]
-            public Guid _id { get; set; } // ID của người thay đổi
-            [Required]
-            [EmailAddress]
-            public string Email { get; set; } // Email của người thay đổi
-        }
-    }
+   
 
     public class ResumeQueryParameters
     {
