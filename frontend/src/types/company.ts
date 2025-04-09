@@ -1,17 +1,18 @@
 export interface Company {
   id: string;
   name: string;
-  description: string;
+  companyModel: string;
+  industry: string;
+  companySize: string;
   address: string;
-  website: string;
-  email: string;
-  phone: string;
-  logo: string;
-  isActive: boolean;
-  createdAt: string;
-  updatedAt: string | null;
+  description: string;
+  workingTime: string;
+  logoUrl: string;
   createdBy: string;
+  createdAt: string;
   updatedBy: string | null;
+  updatedAt: string | null;
+  isActive: boolean;
   isDeleted: boolean;
   deletedBy: string | null;
 } 

@@ -13,7 +13,7 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { ArrowUpDown, ChevronDown, MoreHorizontal, Pencil, Trash, Eye } from "lucide-react";
+import { ArrowUpDown, ChevronDown, MoreHorizontal, Pencil, Trash, Eye, ChevronLeft, ChevronRight, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -72,29 +72,86 @@ interface DataTableCompanyProps {
   data: Company[];
   onRefresh: () => void;
   onRowSelectionChange?: (selection: Record<string, boolean>) => void;
+  pagination: {
+    currentPage: number;
+    pageSize: number;
+    totalRecords: number;
+    totalPages: number;
+  };
+  onPageChange: (page: number) => void;
+  onPageSizeChange: (size: number) => void;
+  onFiltersChange: (filters: {
+    keyword: string;
+    industry: string;
+    companySize: string;
+    address: string;
+  }) => void;
 }
 
 export function DataTableCompany({ 
   data, 
   onRefresh,
-  onRowSelectionChange 
+  onRowSelectionChange,
+  pagination,
+  onPageChange,
+  onPageSizeChange,
+  onFiltersChange
 }: DataTableCompanyProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
-  const [rowSelection, setRowSelection] = React.useState({});
+  const [rowSelection, setRowSelection] = React.useState<Record<string, boolean>>({});
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [companyToDelete, setCompanyToDelete] = useState<Company | null>(null);
   const [showDeleteSelectedDialog, setShowDeleteSelectedDialog] = useState(false);
   const [showDescription, setShowDescription] = useState(false);
   const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
+  const [filters, setFilters] = useState({
+    keyword: "",
+    industry: "",
+    companySize: "",
+    address: ""
+  });
 
   // Notify parent component when row selection changes
   React.useEffect(() => {
     onRowSelectionChange?.(rowSelection);
   }, [rowSelection, onRowSelectionChange]);
+
+  // Update filters when column filters change
+  React.useEffect(() => {
+    const newFilters = {
+      keyword: "",
+      industry: "",
+      companySize: "",
+      address: ""
+    };
+
+    columnFilters.forEach((filter) => {
+      if (filter.id === "name") {
+        newFilters.keyword = filter.value as string;
+      } else if (filter.id === "industry") {
+        newFilters.industry = filter.value as string;
+      } else if (filter.id === "companySize") {
+        newFilters.companySize = filter.value as string;
+      } else if (filter.id === "address") {
+        newFilters.address = filter.value as string;
+      }
+    });
+
+    // Chỉ cập nhật khi có sự thay đổi
+    if (
+      newFilters.keyword !== filters.keyword ||
+      newFilters.industry !== filters.industry ||
+      newFilters.companySize !== filters.companySize ||
+      newFilters.address !== filters.address
+    ) {
+      setFilters(newFilters);
+      onFiltersChange(newFilters);
+    }
+  }, [columnFilters]);
 
   // Lấy danh sách unique các giá trị cho bộ lọc
   const uniqueLocations = React.useMemo(() => {
@@ -180,6 +237,30 @@ export function DataTableCompany({
     } finally {
       setLoading(false);
       setShowDeleteSelectedDialog(false);
+    }
+  };
+
+  const handleFilterChange = (columnId: string, value: string) => {
+    const newFilters = { ...filters };
+    if (columnId === "name") {
+      newFilters.keyword = value;
+    } else if (columnId === "industry") {
+      newFilters.industry = value === "all" ? "" : value;
+    } else if (columnId === "companySize") {
+      newFilters.companySize = value === "all" ? "" : value;
+    } else if (columnId === "address") {
+      newFilters.address = value === "all" ? "" : value;
+    }
+
+    // Chỉ cập nhật khi có sự thay đổi
+    if (
+      newFilters.keyword !== filters.keyword ||
+      newFilters.industry !== filters.industry ||
+      newFilters.companySize !== filters.companySize ||
+      newFilters.address !== filters.address
+    ) {
+      setFilters(newFilters);
+      onFiltersChange(newFilters);
     }
   };
 
@@ -364,12 +445,11 @@ export function DataTableCompany({
     columns,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
-    getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
     onColumnVisibilityChange: setColumnVisibility,
     onRowSelectionChange: setRowSelection,
+    getCoreRowModel: getCoreRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    getSortedRowModel: getSortedRowModel(),
     state: {
       sorting,
       columnFilters,
@@ -380,91 +460,204 @@ export function DataTableCompany({
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-        <Input
-          placeholder="Tìm kiếm theo tên công ty..."
-          value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
-          onChange={(event) =>
-            table.getColumn("name")?.setFilterValue(event.target.value)
-          }
-          className="max-w-sm"
-        />
-        <div className="flex flex-wrap items-center gap-4">
-          <Select
-            value={(table.getColumn("address")?.getFilterValue() as string) ?? "all"}
-            onValueChange={(value) => {
-              table.getColumn("address")?.setFilterValue(value === "all" ? "" : value);
+      <div className="flex items-center gap-4">
+        <div className="relative flex-1">
+          <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Tìm kiếm công ty..."
+            className="pl-8"
+            value={filters.keyword}
+            onChange={(e) => handleFilterChange("name", e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                handleFilterChange("name", e.target.value);
+              }
             }}
+          />
+        </div>
+        <Select
+          value={filters.industry || "all"}
+          onValueChange={(value) => handleFilterChange("industry", value)}
+        >
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Ngành nghề" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Tất cả</SelectItem>
+            {uniqueIndustries.map((industry) => (
+              <SelectItem key={industry} value={industry}>
+                {industry}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select
+          value={filters.companySize || "all"}
+          onValueChange={(value) => handleFilterChange("companySize", value)}
+        >
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Quy mô" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Tất cả</SelectItem>
+            {companySizes.map((size) => (
+              <SelectItem key={size} value={size}>
+                {size}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select
+          value={filters.address || "all"}
+          onValueChange={(value) => handleFilterChange("address", value)}
+        >
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Địa điểm" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Tất cả</SelectItem>
+            {uniqueLocations.map((location) => (
+              <SelectItem key={location} value={location}>
+                {location}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+      <div className="rounded-md border">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-[50px]">
+                <input
+                  type="checkbox"
+                  className="h-4 w-4"
+                  checked={Object.keys(rowSelection).length === data.length}
+                  onChange={(e) => {
+                    const newSelection: Record<string, boolean> = {};
+                    if (e.target.checked) {
+                      data.forEach((_, index) => {
+                        newSelection[index] = true;
+                      });
+                    }
+                    setRowSelection(newSelection);
+                    onRowSelectionChange?.(newSelection);
+                  }}
+                />
+              </TableHead>
+              <TableHead>Tên công ty</TableHead>
+              <TableHead>Ngành nghề</TableHead>
+              <TableHead>Quy mô</TableHead>
+              <TableHead>Địa chỉ</TableHead>
+              <TableHead>Trạng thái</TableHead>
+              <TableHead className="text-right">Thao tác</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {data.map((company, index) => (
+              <TableRow key={company.id}>
+                <TableCell>
+                  <input
+                    type="checkbox"
+                    className="h-4 w-4"
+                    checked={rowSelection[index] || false}
+                    onChange={(e) => {
+                      setRowSelection((prev) => ({
+                        ...prev,
+                        [index]: e.target.checked,
+                      }));
+                      onRowSelectionChange?.(rowSelection);
+                    }}
+                  />
+                </TableCell>
+                <TableCell className="font-medium">{company.name}</TableCell>
+                <TableCell>{company.industry}</TableCell>
+                <TableCell>{company.companySize}</TableCell>
+                <TableCell>{company.address}</TableCell>
+                <TableCell>
+                  <Badge variant={company.isActive ? "success" : "secondary"}>
+                    {company.isActive ? "Đang hoạt động" : "Không hoạt động"}
+                  </Badge>
+                </TableCell>
+                <TableCell className="text-right">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" className="h-8 w-8 p-0">
+                        <MoreHorizontal className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem
+                        onClick={() => router.push(`/admin/companies/edit/${company.id}`)}
+                      >
+                        <Pencil className="mr-2 h-4 w-4" />
+                        Chỉnh sửa
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => {
+                          setSelectedCompany(company);
+                          setShowDescription(true);
+                        }}
+                      >
+                        <Eye className="mr-2 h-4 w-4" />
+                        Xem mô tả
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => handleDelete(company)}
+                        className="text-red-600"
+                      >
+                        <Trash className="mr-2 h-4 w-4" />
+                        Xóa
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-2">
+          <p className="text-sm text-muted-foreground">
+            Hiển thị {data.length} trong tổng số {pagination.totalRecords} công ty
+          </p>
+          <Select
+            value={pagination.pageSize.toString()}
+            onValueChange={(value) => onPageSizeChange(Number(value))}
           >
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Lọc theo địa điểm" />
+            <SelectTrigger className="h-8 w-[70px]">
+              <SelectValue placeholder={pagination.pageSize} />
             </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Tất cả địa điểm</SelectItem>
-              {uniqueLocations.map((location) => (
-                <SelectItem key={location} value={location}>
-                  {location}
+            <SelectContent side="top">
+              {[10, 20, 30, 40, 50].map((size) => (
+                <SelectItem key={size} value={size.toString()}>
+                  {size}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
-
-          <Select
-            value={(table.getColumn("industry")?.getFilterValue() as string) ?? "all"}
-            onValueChange={(value) => {
-              table.getColumn("industry")?.setFilterValue(value === "all" ? "" : value);
-            }}
+        </div>
+        <div className="flex items-center space-x-2">
+          <Button
+            variant="outline"
+            className="h-8 w-8 p-0"
+            onClick={() => onPageChange(pagination.currentPage - 1)}
+            disabled={pagination.currentPage === 1}
           >
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Lọc theo lĩnh vực" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Tất cả lĩnh vực</SelectItem>
-              {uniqueIndustries.map((industry) => (
-                <SelectItem key={industry} value={industry}>
-                  {industry}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          <Select
-            value={(table.getColumn("companyModel")?.getFilterValue() as string) ?? "all"}
-            onValueChange={(value) => {
-              table.getColumn("companyModel")?.setFilterValue(value === "all" ? "" : value);
-            }}
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <div className="flex w-[100px] items-center justify-center text-sm font-medium">
+            Trang {pagination.currentPage} / {pagination.totalPages}
+          </div>
+          <Button
+            variant="outline"
+            className="h-8 w-8 p-0"
+            onClick={() => onPageChange(pagination.currentPage + 1)}
+            disabled={pagination.currentPage === pagination.totalPages}
           >
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Lọc theo mô hình" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Tất cả mô hình</SelectItem>
-              {companyModels.map((model) => (
-                <SelectItem key={model} value={model}>
-                  {model}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          <Select
-            value={(table.getColumn("companySize")?.getFilterValue() as string) ?? "all"}
-            onValueChange={(value) => {
-              table.getColumn("companySize")?.setFilterValue(value === "all" ? "" : value);
-            }}
-          >
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Lọc theo quy mô" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Tất cả quy mô</SelectItem>
-              {companySizes.map((size) => (
-                <SelectItem key={size} value={size}>
-                  {size} nhân viên
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            <ChevronRight className="h-4 w-4" />
+          </Button>
         </div>
       </div>
 
@@ -513,79 +706,6 @@ export function DataTableCompany({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => {
-                  return (
-                    <TableHead key={header.id}>
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                          )}
-                    </TableHead>
-                  );
-                })}
-              </TableRow>
-            ))}
-          </TableHeader>
-          <TableBody>
-            {table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map((row) => (
-                <TableRow
-                  key={row.id}
-                  data-state={row.getIsSelected() && "selected"}
-                >
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext()
-                      )}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell
-                  colSpan={columns.length}
-                  className="h-24 text-center"
-                >
-                  Không tìm thấy kết quả.
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </div>
-      <div className="flex items-center justify-end space-x-2 py-4">
-        <div className="text-muted-foreground text-sm">
-          Trang {table.getState().pagination.pageIndex + 1} trên{" "}
-          {table.getPageCount()}
-        </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => table.previousPage()}
-          disabled={!table.getCanPreviousPage()}
-        >
-          Trước
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => table.nextPage()}
-          disabled={!table.getCanNextPage()}
-        >
-          Sau
-        </Button>
-      </div>
 
       <Dialog open={showDescription} onOpenChange={setShowDescription}>
         <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">

@@ -18,35 +18,33 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import React from "react";
+import { useCompanies } from "@/hooks/useCompanies";
 
 export default function CompaniesPage() {
   const router = useRouter();
-  const [companies, setCompanies] = useState<Company[]>([]);
+  const { companies, updateParams } = useCompanies();
   const [loading, setLoading] = useState(true);
   const [rowSelection, setRowSelection] = useState<Record<string, boolean>>({});
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
 
-  const fetchCompanies = async () => {
-    try {
-      setLoading(true);
-      const response = await axiosClient.get("/api/Company");
-      if (response.data.result) {
-        setCompanies(response.data.data);
-      } else {
-        toast.error(response.data.message || "Có lỗi xảy ra khi tải dữ liệu");
-      }
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || "Có lỗi xảy ra khi tải dữ liệu");
-      setCompanies([]);
-    } finally {
-      setLoading(false);
-    }
+  const handlePageChange = (page: number) => {
+    updateParams({ pageNumber: page });
   };
 
-  useEffect(() => {
-    fetchCompanies();
-  }, []);
+  const handlePageSizeChange = (size: number) => {
+    updateParams({ pageSize: size, pageNumber: 1 });
+  };
+
+  const handleFiltersChange = (filters: {
+    keyword?: string;
+    industry?: string;
+    companySize?: string;
+    address?: string;
+  }) => {
+    updateParams({ ...filters, pageNumber: 1 });
+  };
 
   const handleDeleteSelected = () => {
     setShowDeleteDialog(true);
@@ -56,7 +54,7 @@ export default function CompaniesPage() {
     try {
       setDeleteLoading(true);
       const selectedIds = Object.keys(rowSelection).map(
-        (index) => companies[parseInt(index)].id
+        (index) => companies.data?.items[parseInt(index)].id
       );
 
       const response = await axiosClient.delete("/api/Company", {
@@ -68,7 +66,7 @@ export default function CompaniesPage() {
       if (response.data.result) {
         toast.success(response.data.message || "Xóa các công ty đã chọn thành công");
         setRowSelection({});
-        fetchCompanies();
+        updateParams({ pageNumber: 1 });
       } else {
         toast.error(response.data.message || "Có lỗi xảy ra khi xóa các công ty đã chọn");
       }
@@ -129,17 +127,21 @@ export default function CompaniesPage() {
         </AlertDialogContent>
       </AlertDialog>
 
-      {loading ? (
-        <div className="flex items-center justify-center h-24">
-          <p className="text-muted-foreground">Đang tải dữ liệu...</p>
-        </div>
-      ) : (
-        <DataTableCompany 
-          data={companies} 
-          onRefresh={fetchCompanies}
-          onRowSelectionChange={setRowSelection}
-        />
-      )}
+      <DataTableCompany
+        data={companies.data?.items || []}
+        loading={companies.loading}
+        error={companies.error}
+        pagination={{
+          currentPage: companies.data?.currentPage || 1,
+          pageSize: companies.data?.pageSize || 10,
+          totalPages: companies.data?.totalPages || 0,
+          totalRecords: companies.data?.totalRecords || 0,
+        }}
+        onPageChange={handlePageChange}
+        onPageSizeChange={handlePageSizeChange}
+        onFiltersChange={handleFiltersChange}
+        onRowSelectionChange={setRowSelection}
+      />
     </div>
   );
 } 
