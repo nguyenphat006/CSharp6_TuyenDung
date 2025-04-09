@@ -34,6 +34,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import axiosClient from "@/lib/axiosClient";
 
 const formSchema = z.object({
   name: z.string().min(1, "Vui lòng nhập tên công việc"),
@@ -41,9 +42,9 @@ const formSchema = z.object({
   location: z.string().min(1, "Vui lòng nhập địa điểm"),
   salary: z.coerce.number().min(0, "Mức lương không được âm"),
   quantity: z.coerce.number().min(1, "Số lượng phải lớn hơn 0"),
-  skills: z.array(z.string()).default([]),
+  skills: z.array(z.string()),
   description: z.string().min(1, "Vui lòng nhập mô tả công việc"),
-  isActive: z.boolean().default(true),
+  isActive: z.boolean(),
   companyId: z.string().min(1, "Vui lòng chọn công ty"),
   startDate: z.string(),
   endDate: z.string(),
@@ -64,17 +65,20 @@ export function JobForm({ initialData, onSubmit, onCancel }: JobFormProps) {
   const [showDescription, setShowDescription] = useState(false);
   const [companies, setCompanies] = useState<Company[]>([]);
 
-  useEffect(() => {
-    const fetchCompanies = async () => {
-      try {
-        const data = await companyService.getAll();
-        setCompanies(data);
-      } catch (error) {
-        console.error("Error fetching companies:", error);
-        toast.error("Không thể tải danh sách công ty");
+  const fetchCompanies = async () => {
+    try {
+      const response = await axiosClient.get("/api/Company");
+      if (response.data.result) {
+        setCompanies(response.data.data.items);
+      } else {
+        toast.error(response.data.message || "Có lỗi xảy ra khi tải danh sách công ty");
       }
-    };
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Có lỗi xảy ra khi tải danh sách công ty");
+    }
+  };
 
+  useEffect(() => {
     fetchCompanies();
   }, []);
 
@@ -142,7 +146,7 @@ export function JobForm({ initialData, onSubmit, onCancel }: JobFormProps) {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {companies.map((company) => (
+                          {companies?.map((company) => (
                             <SelectItem key={company.id} value={company.id}>
                               {company.name}
                             </SelectItem>
