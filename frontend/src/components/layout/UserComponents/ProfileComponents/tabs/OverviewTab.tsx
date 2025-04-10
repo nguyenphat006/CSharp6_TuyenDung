@@ -159,61 +159,29 @@ const OverviewTab: React.FC<OverviewTabProps> = ({
       </Box>
 
       <Box sx={{ mb: 4 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-          <Typography variant="body2" sx={{ color: '#666' }}>
-            Độ hoàn thành hồ sơ
-          </Typography>
-          <Typography variant="body2" sx={{ color: '#666' }}>
-            {profileCompletion}%
-          </Typography>
-        </Box>
+        <Typography variant="h6" sx={{ mb: 2 }}>
+          Hoàn thiện hồ sơ
+        </Typography>
         <ProgressBarStyled variant="determinate" value={profileCompletion} />
-        {profileCompletion < 70 && (
-          <Typography variant="body2" sx={{ color: '#E60023', mt: 1 }}>
-            Hồ sơ của bạn chưa đủ 70%. Hãy cập nhật thêm thông tin để tăng cơ hội tìm việc.
-          </Typography>
-        )}
-        <Button
-          variant="contained"
-          startIcon={<EditIcon />}
-          onClick={onUpgradeProfile}
-          sx={{
-            backgroundColor: '#E60023',
-            '&:hover': {
-              backgroundColor: '#CC001F',
-            },
-            borderRadius: '8px',
-            textTransform: 'none',
-            mt: 2,
-          }}
-        >
-          Nâng cấp hồ sơ
-        </Button>
+        <Typography variant="body2" sx={{ mt: 1, color: '#666' }}>
+          {profileCompletion}% hoàn thành
+        </Typography>
       </Box>
 
-      <Grid container spacing={3}>
-        <Grid item xs={12} md={4}>
-          <StatusBoxStyled>
-            <SendIcon sx={{ fontSize: 40, mb: 1 }} />
-            <Typography variant="h6">12</Typography>
-            <Typography variant="body2">Việc làm đã ứng tuyển</Typography>
-          </StatusBoxStyled>
-        </Grid>
-        <Grid item xs={12} md={4}>
-          <StatusBoxStyled>
-            <FavoriteIcon sx={{ fontSize: 40, mb: 1 }} />
-            <Typography variant="h6">5</Typography>
-            <Typography variant="body2">Việc làm đã lưu</Typography>
-          </StatusBoxStyled>
-        </Grid>
-        <Grid item xs={12} md={4}>
-          <StatusBoxStyled>
-            <MailIcon sx={{ fontSize: 40, mb: 1 }} />
-            <Typography variant="h6">3</Typography>
-            <Typography variant="body2">Lời mời công việc</Typography>
-          </StatusBoxStyled>
-        </Grid>
-      </Grid>
+      <Box sx={{ display: 'flex', gap: 2 }}>
+        <StatusBoxStyled>
+          <Typography variant="h6">0</Typography>
+          <Typography variant="body2">Việc làm đã ứng tuyển</Typography>
+        </StatusBoxStyled>
+        <StatusBoxStyled>
+          <Typography variant="h6">0</Typography>
+          <Typography variant="body2">Lời mời công việc</Typography>
+        </StatusBoxStyled>
+        <StatusBoxStyled>
+          <Typography variant="h6">0</Typography>
+          <Typography variant="body2">Công ty đã xem hồ sơ</Typography>
+        </StatusBoxStyled>
+      </Box>
     </>
   );
 };

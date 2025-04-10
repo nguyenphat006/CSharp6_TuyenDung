@@ -37,9 +37,6 @@ import { toast } from 'react-toastify';
 // Import các component tab
 import OverviewTab from './tabs/OverviewTab';
 import AttachmentsTab from './tabs/AttachmentsTab';
-import ITviecTab from './tabs/ITviecTab';
-import JobsTab from './tabs/JobsTab';
-import InvitationsTab from './tabs/InvitationsTab';
 import SettingsTab from './tabs/SettingsTab';
 
 interface Experience {
@@ -83,12 +80,9 @@ interface Invitation {
 
 interface ProfileInfo {
   fullName: string;
-  phone: string;
-  location: string;
-  experience: string;
-  level: string;
-  workType: string;
-  coverLetter: string;
+  email: string;
+  age: string;
+  gender: string;
 }
 
 interface PasswordInfo {
@@ -157,7 +151,7 @@ const MainContentStyled = styled(Paper)(({ theme }) => ({
 const Profile: React.FC = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTab] = useState('attachments');
   const [notifications, setNotifications] = useState(true);
   const [cvFile, setCvFile] = useState<File | null>(null);
   const [profileCompletion] = useState(65);
@@ -201,12 +195,9 @@ const Profile: React.FC = () => {
   const [profileDialog, setProfileDialog] = useState(false);
   const [profileInfo, setProfileInfo] = useState<ProfileInfo>({
     fullName: 'Nguyễn Văn A',
-    phone: '0123456789',
-    location: 'hanoi',
-    experience: '2',
-    level: 'junior',
-    workType: 'fulltime',
-    coverLetter: ''
+    email: 'example@email.com',
+    age: '25',
+    gender: 'Nam'
   });
   const [upgradeProfileDialog, setUpgradeProfileDialog] = useState(false);
   const [passwordDialog, setPasswordDialog] = useState(false);
@@ -243,16 +234,7 @@ const Profile: React.FC = () => {
   ]);
 
   const menuItems: MenuItem[] = [
-    { id: 'overview', label: 'Tổng quan', icon: <DashboardIcon /> },
-    { id: 'attachments', label: 'Hồ sơ đính kèm', icon: <AttachFileIcon /> },
-    { id: 'itviec', label: 'Hồ sơ ITviec', icon: <PersonIcon /> },
-    { id: 'jobs', label: 'Việc làm của tôi', icon: <WorkIcon /> },
-    { 
-      id: 'invitations', 
-      label: 'Lời mời công việc', 
-      icon: <MailIcon />,
-      badge: invitations.length 
-    },
+    { id: 'attachments', label: 'Thông tin cá nhân', icon: <AttachFileIcon /> },
     { id: 'settings', label: 'Cài đặt', icon: <SettingsIcon /> },
   ];
 
@@ -448,23 +430,6 @@ const Profile: React.FC = () => {
     setDeleteAccountDialog(true);
   };
 
-  const handleViewJob = () => {
-    // TODO: Implement view job details functionality
-    toast.success('Đang chuyển đến trang chi tiết công việc...');
-  };
-
-  const handleAcceptInvitation = (invitationId: number) => {
-    // TODO: Implement accept invitation functionality
-    setInvitations(invitations.filter(inv => inv.id !== invitationId));
-    toast.success('Đã chấp nhận lời mời công việc');
-  };
-
-  const handleRejectInvitation = (invitationId: number) => {
-    // TODO: Implement reject invitation functionality
-    setInvitations(invitations.filter(inv => inv.id !== invitationId));
-    toast.success('Đã từ chối lời mời công việc');
-  };
-
   const handleProfileInfoChange = (field: keyof ProfileInfo, value: string) => {
     setProfileInfo(prev => ({...prev, [field]: value}));
   };
@@ -502,60 +467,10 @@ const Profile: React.FC = () => {
         {/* Main Content */}
         <Grid item xs={12} md={9}>
           <MainContentStyled>
-            {activeTab === 'overview' && (
-              <OverviewTab
-                profileCompletion={profileCompletion}
-                cvFile={cvFile}
-                onUpdateProfile={handleUpdateProfileClick}
-                onUpgradeProfile={handleUpgradeProfile}
-                onFileUpload={handleFileUpload}
-                onDeleteCV={handleDeleteCV}
-                onDownloadCV={handleDownloadCV}
-              />
-            )}
-
             {activeTab === 'attachments' && (
               <AttachmentsTab
-                cvFile={cvFile}
-                onFileUpload={handleFileUpload}
-                onDeleteCV={handleDeleteCV}
-                onDownloadCV={handleDownloadCV}
                 profileInfo={profileInfo}
                 onProfileInfoChange={handleProfileInfoChange}
-              />
-            )}
-
-            {activeTab === 'itviec' && (
-              <ITviecTab
-                profileCompletion={profileCompletion}
-                skills={skills}
-                onAddSkill={handleAddSkill}
-                onDeleteSkill={handleDeleteSkill}
-                experiences={experiences}
-                onAddExperience={handleAddExperience}
-                onEditExperience={handleEditExperience}
-                onDeleteExperience={handleDeleteExperience}
-                certificates={certificates}
-                onAddCertificate={handleAddCertificate}
-                onEditCertificate={handleEditCertificate}
-                onDeleteCertificate={handleDeleteCertificate}
-                onCertificateFileUpload={handleCertificateFileUpload}
-                onDownloadCertificate={handleDownloadCertificate}
-              />
-            )}
-
-            {activeTab === 'jobs' && (
-              <JobsTab
-                jobs={jobs}
-                onViewJob={handleViewJob}
-              />
-            )}
-
-            {activeTab === 'invitations' && (
-              <InvitationsTab
-                invitations={invitations}
-                onAcceptInvitation={handleAcceptInvitation}
-                onRejectInvitation={handleRejectInvitation}
               />
             )}
 
@@ -747,73 +662,25 @@ const Profile: React.FC = () => {
               <Grid item xs={12} md={6}>
                 <TextField
                   fullWidth
-                  label="Số điện thoại"
-                  value={profileInfo.phone}
-                  onChange={(e) => setProfileInfo({...profileInfo, phone: e.target.value})}
+                  label="Email"
+                  value={profileInfo.email}
+                  onChange={(e) => setProfileInfo({...profileInfo, email: e.target.value})}
                 />
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <FormControl fullWidth>
-                  <InputLabel>Nơi làm việc mong muốn</InputLabel>
-                  <Select
-                    value={profileInfo.location}
-                    label="Nơi làm việc mong muốn"
-                    onChange={(e) => setProfileInfo({...profileInfo, location: e.target.value})}
-                  >
-                    <MenuItem value="hanoi">Hà Nội</MenuItem>
-                    <MenuItem value="hcm">TP.HCM</MenuItem>
-                    <MenuItem value="danang">Đà Nẵng</MenuItem>
-                  </Select>
-                </FormControl>
               </Grid>
               <Grid item xs={12} md={6}>
                 <TextField
                   fullWidth
-                  type="number"
-                  label="Tổng số năm kinh nghiệm"
-                  value={profileInfo.experience}
-                  onChange={(e) => setProfileInfo({...profileInfo, experience: e.target.value})}
+                  label="Tuổi"
+                  value={profileInfo.age}
+                  onChange={(e) => setProfileInfo({...profileInfo, age: e.target.value})}
                 />
               </Grid>
               <Grid item xs={12} md={6}>
-                <FormControl fullWidth>
-                  <InputLabel>Cấp bậc hiện tại</InputLabel>
-                  <Select
-                    value={profileInfo.level}
-                    label="Cấp bậc hiện tại"
-                    onChange={(e) => setProfileInfo({...profileInfo, level: e.target.value})}
-                  >
-                    <MenuItem value="fresher">Fresher</MenuItem>
-                    <MenuItem value="junior">Junior</MenuItem>
-                    <MenuItem value="senior">Senior</MenuItem>
-                    <MenuItem value="lead">Lead</MenuItem>
-                    <MenuItem value="manager">Manager</MenuItem>
-                  </Select>
-                </FormControl>
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <FormControl fullWidth>
-                  <InputLabel>Hình thức làm việc</InputLabel>
-                  <Select
-                    value={profileInfo.workType}
-                    label="Hình thức làm việc"
-                    onChange={(e) => setProfileInfo({...profileInfo, workType: e.target.value})}
-                  >
-                    <MenuItem value="fulltime">Full-time</MenuItem>
-                    <MenuItem value="parttime">Part-time</MenuItem>
-                    <MenuItem value="remote">Remote</MenuItem>
-                    <MenuItem value="freelance">Freelance</MenuItem>
-                  </Select>
-                </FormControl>
-              </Grid>
-              <Grid item xs={12}>
                 <TextField
                   fullWidth
-                  label="Thư xin việc"
-                  multiline
-                  rows={4}
-                  value={profileInfo.coverLetter}
-                  onChange={(e) => setProfileInfo({...profileInfo, coverLetter: e.target.value})}
+                  label="Giới tính"
+                  value={profileInfo.gender}
+                  onChange={(e) => setProfileInfo({...profileInfo, gender: e.target.value})}
                 />
               </Grid>
             </Grid>
