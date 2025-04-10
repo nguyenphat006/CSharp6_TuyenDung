@@ -4,6 +4,7 @@ using TuyenDungAPI.Model.ModelBase;
 using TuyenDungAPI.Model.Resume;
 using TuyenDungAPI.Model.Company;
 using System.Security.Claims;
+using Org.BouncyCastle.Utilities.Collections;
 
 
 namespace TuyenDungAPI.Service
@@ -17,245 +18,351 @@ namespace TuyenDungAPI.Service
             _dbContext = dbContext;
         }
 
-        public async Task<ApiResponse<ResumeResponse>> UploadResumeFileAsync(Guid resumeId, IFormFile file, ClaimsPrincipal currentUser)
+        public async Task<ApiResponse<ResumeResponse>> CreateResumeAsync(CreateResumeRequest request, ClaimsPrincipal currentUser)
+        {
+            string email = currentUser.FindFirstValue(ClaimTypes.Email);
+            string userIdStr = currentUser.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if (!Guid.TryParse(userIdStr, out Guid userId))
+            {
+                return new ApiResponse<ResumeResponse>(false, 401, null, "Token không hợp lệ hoặc thiếu UserId!");
+            }
+
+            // 🔍 Check company tồn tại
+            var company = await _dbContext.Company.FindAsync(request.CompanyId);
+            if (company == null || company.IsDeleted)
+            {
+                return new ApiResponse<ResumeResponse>(false, 404, null, "Công ty không tồn tại!");
+            }
+
+            // 🔍 Check job tồn tại
+            var job = await _dbContext.Jobs.FindAsync(request.JobId);
+            if (job == null || job.IsDeleted)
+            {
+                return new ApiResponse<ResumeResponse>(false, 404, null, "Công việc không tồn tại!");
+            }
+
+            // 🔁 Check đã ứng tuyển chưa
+            bool exists = await _dbContext.Resumes.AnyAsync(r =>
+                r.UserId == userId && r.JobId == request.JobId && !r.IsDeleted);
+
+            if (exists)
+            {
+                return new ApiResponse<ResumeResponse>(false, 409, null, "Bạn đã ứng tuyển công việc này rồi!");
+            }
+
+            // ✅ Validate file
+            var allowedExtensions = new[] { ".pdf", ".doc", ".docx" };
+            var ext = Path.GetExtension(request.File.FileName).ToLowerInvariant();
+
+            if (!allowedExtensions.Contains(ext))
+                return new ApiResponse<ResumeResponse>(false, 400, null, "Chỉ chấp nhận file PDF, DOC, DOCX");
+
+            if (request.File.Length > 5 * 1024 * 1024)
+                return new ApiResponse<ResumeResponse>(false, 400, null, "File không được vượt quá 5MB");
+
+            // ✅ Upload file
+            string uniqueFileName = $"{Guid.NewGuid()}{ext}";
+            string uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "resume");
+
+            if (!Directory.Exists(uploadsFolder))
+                Directory.CreateDirectory(uploadsFolder);
+
+            string filePath = Path.Combine(uploadsFolder, uniqueFileName);
+            using (var fileStream = new FileStream(filePath, FileMode.Create))
+            {
+                await request.File.CopyToAsync(fileStream);
+            }
+
+            string fileUrl = $"/uploads/resume/{uniqueFileName}";
+
+            // ✅ Tạo mới Resume
+            var resume = new Resume
+            {
+                Email = email ?? "NULL",
+                UserId = userId,
+                CompanyId = request.CompanyId,
+                JobId = request.JobId,
+                Status = "PENDING",
+                FileUrl = fileUrl,
+                CreatedAt = DateTime.UtcNow,
+                CreatedBy = currentUser?.Identity?.Name ?? "System"
+            };
+
+            _dbContext.Resumes.Add(resume);
+            await _dbContext.SaveChangesAsync();
+
+            // ✅ Tạo lịch sử
+            var history = new ResumeHistory
+            {
+                ResumeId = resume.Id,
+                Status = "PENDING",
+                CreatedAt = DateTime.UtcNow,
+                CreatedBy = currentUser?.Identity?.Name ?? "System"
+            };
+
+            _dbContext.ResumeHistories.Add(history);
+            await _dbContext.SaveChangesAsync();
+
+            // ✅ Tạo response
+            var response = new ResumeResponse
+            {
+                Id = resume.Id,
+                Email = resume.Email,
+                Status = resume.Status,
+                FileUrl = resume.FileUrl,
+                CreatedAt = resume.CreatedAt,
+                Company = new CompanyResumeResponse { Id = company.Id, Name = company.Name },
+                Job = new JobResponse { Id = job.Id, Name = job.Name },
+                History = new List<ResumeHistoryResponse> { new ResumeHistoryResponse(history) }
+            };
+
+            return new ApiResponse<ResumeResponse>(true, 201, response, "Nộp đơn ứng tuyển thành công!");
+        }
+        public async Task<ApiResponse<PagedResult<ResumeResponse>>> GetAllResumesAsync(ResumeQueryParameters parameters)
+        {
+            var query = _dbContext.Resumes
+                .Where(r => r.IsActive && !r.IsDeleted)
+                .AsQueryable();
+
+            // 🔎 Apply lọc
+            if (!string.IsNullOrEmpty(parameters.Email))
+            {
+                query = query.Where(r => r.Email.Contains(parameters.Email));
+            }
+
+            if (!string.IsNullOrEmpty(parameters.Status))
+            {
+                query = query.Where(r => r.Status == parameters.Status);
+            }
+
+            if (parameters.CompanyId.HasValue)
+            {
+                query = query.Where(r => r.CompanyId == parameters.CompanyId.Value);
+            }
+
+            if (parameters.JobId.HasValue)
+            {
+                query = query.Where(r => r.JobId == parameters.JobId.Value);
+            }
+
+            // 🔎 Tổng số bản ghi
+            var totalRecords = await query.CountAsync();
+
+            // 📄 Phân trang
+            var resumes = await query
+                .OrderByDescending(r => r.CreatedAt) // Mới nhất trước
+                .Skip((parameters.PageNumber - 1) * parameters.PageSize)
+                .Take(parameters.PageSize)
+                .Include(r => r.Company)
+                .Include(r => r.Job)
+                .Include(r => r.User)
+                .ToListAsync();
+
+            var response = resumes.Select(r => new ResumeResponse
+            {
+                Id = r.Id,
+                Email = r.Email,
+                Status = r.Status,
+                FileUrl = r.FileUrl,
+                CreatedAt = r.CreatedAt,
+                User = new UserResponse
+                {
+                    Id = r.User.Id,
+                    Name = r.User.Name
+                },
+                Company = new CompanyResumeResponse
+                {
+                    Id = r.Company.Id,
+                    Name = r.Company.Name
+                },
+                Job = new JobResponse
+                {
+                    Id = r.Job.Id,
+                    Name = r.Job.Name
+                }
+            }).ToList();
+
+            var pagedResult = new PagedResult<ResumeResponse>
+            {
+                Items = response,
+                TotalRecords = totalRecords,
+                CurrentPage = parameters.PageNumber,
+                PageSize = parameters.PageSize
+            };
+
+            return new ApiResponse<PagedResult<ResumeResponse>>(true, 200, pagedResult, "Lấy danh sách đơn ứng tuyển thành công!");
+        }
+        public async Task<ApiResponse<ResumeResponse>> GetResumeByIdAsync(Guid id)
         {
             var resume = await _dbContext.Resumes
                 .Include(r => r.Company)
                 .Include(r => r.Job)
                 .Include(r => r.History)
-                .FirstOrDefaultAsync(r => !r.IsDeleted && r.Id == resumeId);
+                .Include(r => r.User)
+                .Where(r => r.Id == id && r.IsActive && !r.IsDeleted)
+                .FirstOrDefaultAsync();
 
             if (resume == null)
             {
-                return new ApiResponse<ResumeResponse>(false, 404, null, "Không tìm thấy đơn ứng tuyển");
+                return new ApiResponse<ResumeResponse>(false, 404, null, "Đơn ứng tuyển không tồn tại!");
             }
 
-            var allowedExtensions = new[] { ".pdf", ".doc", ".docx" };
-            var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
-
-            if (!allowedExtensions.Contains(extension))
+            var response = new ResumeResponse
             {
-                return new ApiResponse<ResumeResponse>(false, 400, null, "Chỉ cho phép file .pdf, .doc, .docx");
-            }
-
-            if (file.Length > 5 * 1024 * 1024)
-            {
-                return new ApiResponse<ResumeResponse>(false, 400, null, "Kích thước file không được vượt quá 5MB");
-            }
-
-            try
-            {
-                var uniqueFileName = $"{Guid.NewGuid()}{extension}";
-                var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "resume");
-
-                if (!Directory.Exists(uploadsFolder))
+                Id = resume.Id,
+                Email = resume.Email,
+                Status = resume.Status,
+                FileUrl = resume.FileUrl,
+                CreatedAt = resume.CreatedAt,
+                User = new UserResponse
                 {
-                    Directory.CreateDirectory(uploadsFolder);
-                }
-
-                var filePath = Path.Combine(uploadsFolder, uniqueFileName);
-
-                using (var stream = new FileStream(filePath, FileMode.Create))
+                    Id = resume.User.Id,
+                    Name = resume.User.Name
+                },
+                Company = new CompanyResumeResponse
                 {
-                    await file.CopyToAsync(stream);
-                }
-
-                string fileUrl = $"/uploads/resume/{uniqueFileName}";
-
-                resume.FileUrl = fileUrl;
-                resume.UpdatedAt = DateTime.UtcNow;
-                resume.UpdatedBy = currentUser?.Identity?.Name ?? "System";
-
-                await _dbContext.SaveChangesAsync();
-
-                var response = new ResumeResponse
+                    Id = resume.Company.Id,
+                    Name = resume.Company.Name
+                },
+                Job = new JobResponse
                 {
-                    Id = resume.Id,
-                    Email = resume.Email,
-                    UserId = resume.UserId,
-                    Status = resume.Status,
-                    FileUrl = resume.FileUrl,
-                    CreatedAt = resume.CreatedAt,
-                    IsActive = resume.IsActive,
-                    IsDeleted = resume.IsDeleted,
-                    CreatedBy = resume.CreatedBy,
-                    DeletedBy = resume.DeletedBy,
-                    UpdatedAt = resume.UpdatedAt,
-                    UpdatedBy = resume.UpdatedBy,
-                    Company = new CompanyResumeResponse
-                    {
-                        Id = resume.Company.Id,
-                        Name = resume.Company.Name
-                    },
-                    Job = new JobResponse
-                    {
-                        Id = resume.Job.Id,
-                        Name = resume.Job.Name
-                    },
-                    History = resume.History
-                };
+                    Id = resume.Job.Id,
+                    Name = resume.Job.Name
+                },
+                History = resume.History.OrderByDescending(h => h.CreatedAt).Select(h => new ResumeHistoryResponse(h)).ToList()
+            };
 
-                return new ApiResponse<ResumeResponse>(true, 200, response, "Upload CV thành công!");
-            }
-            catch (Exception ex)
+            return new ApiResponse<ResumeResponse>(true, 200, response, "Lấy đơn ứng tuyển thành công!");
+        }
+        public async Task<ApiResponse<ResumeResponse>> ChangeResumeStatusAsync(Guid resumeId, UpdateStatusResumeRequest request, ClaimsPrincipal currentUser)
+        {
+            string updatedBy = currentUser?.Identity?.Name ?? "System";
+
+            var resume = await _dbContext.Resumes
+                .Include(r => r.Company)
+                .Include(r => r.Job)
+                .Include(r => r.History)
+                .FirstOrDefaultAsync(r => r.Id == resumeId && r.IsActive && !r.IsDeleted);
+
+            if (resume == null)
             {
-                return new ApiResponse<ResumeResponse>(false, 500, null, $"Lỗi khi upload file: {ex.Message}");
+                return new ApiResponse<ResumeResponse>(false, 404, null, "Đơn ứng tuyển không tồn tại!");
             }
+
+            // 🚀 Cập nhật trạng thái mới
+            resume.Status = request.Status;
+            resume.UpdatedAt = DateTime.UtcNow;
+            resume.UpdatedBy = updatedBy;
+
+            _dbContext.Resumes.Update(resume);
+
+            // 🚀 Ghi thêm lịch sử mới
+            var history = new ResumeHistory
+            {
+                ResumeId = resume.Id,
+                Status = request.Status,
+                CreatedAt = DateTime.UtcNow,
+                CreatedBy = updatedBy
+            };
+
+            _dbContext.ResumeHistories.Add(history);
+            await _dbContext.SaveChangesAsync();
+
+            // 🚀 Chuẩn bị response
+            var response = new ResumeResponse
+            {
+                Id = resume.Id,
+                Email = resume.Email,
+                Status = resume.Status,
+                FileUrl = resume.FileUrl,
+                CreatedAt = resume.CreatedAt,
+                Company = new CompanyResumeResponse { Id = resume.Company.Id, Name = resume.Company.Name },
+                Job = new JobResponse { Id = resume.Job.Id, Name = resume.Job.Name },
+                History = resume.History.OrderByDescending(h => h.CreatedAt).Select(h => new ResumeHistoryResponse(h)).ToList()
+            };
+
+            return new ApiResponse<ResumeResponse>(true, 200, response, "Cập nhật trạng thái đơn ứng tuyển thành công!");
+        }
+        public async Task<ApiResponse<string>> DeleteResumesAsync(DeleteResumeRequest request, ClaimsPrincipal currentUser)
+        {
+            if (request.ResumeIds == null || !request.ResumeIds.Any())
+            {
+                return new ApiResponse<string>(false, 400, null, "Danh sách ResumeId không được để trống!");
+            }
+
+            var deletedBy = currentUser?.Identity?.Name ?? "System";
+
+            var resumes = await _dbContext.Resumes
+                .Where(r => request.ResumeIds.Contains(r.Id) && r.IsActive && !r.IsDeleted)
+                .ToListAsync();
+
+            if (resumes == null || !resumes.Any())
+            {
+                return new ApiResponse<string>(false, 404, null, "Không tìm thấy đơn ứng tuyển nào để xoá!");
+            }
+
+            foreach (var resume in resumes)
+            {
+                resume.IsDeleted = true;
+                resume.DeletedBy = deletedBy;
+            }
+
+            _dbContext.Resumes.UpdateRange(resumes);
+            await _dbContext.SaveChangesAsync();
+
+            return new ApiResponse<string>(true, 200, null, "Xoá đơn ứng tuyển thành công!");
+        }
+        public async Task<ApiResponse<List<ResumeResponse>>> GetResumesByUserAsync(ClaimsPrincipal currentUser)
+        {
+            var userIdStr = currentUser.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if (!Guid.TryParse(userIdStr, out Guid userId))
+            {
+                return new ApiResponse<List<ResumeResponse>>(false, 401, null, "Token không hợp lệ hoặc thiếu UserId!");
+            }
+
+            var resumes = await _dbContext.Resumes
+                .Where(r => r.UserId == userId && r.IsActive && !r.IsDeleted)
+                .Include(r => r.Company)
+                .Include(r => r.Job)
+                .Include(r => r.User)
+                .OrderByDescending(r => r.CreatedAt)  // 🆙 Mới nhất lên trước
+                .ToListAsync();
+
+            var response = resumes.Select(r => new ResumeResponse
+            {
+                Id = r.Id,
+                Email = r.Email,
+                Status = r.Status,
+                FileUrl = r.FileUrl,
+                CreatedAt = r.CreatedAt,
+                User = new UserResponse
+                {
+                    Id = r.User.Id,
+                    Name = r.User.Name
+                },
+                Company = new CompanyResumeResponse
+                {
+                    Id = r.Company.Id,
+                    Name = r.Company.Name
+                },
+                Job = new JobResponse
+                {
+                    Id = r.Job.Id,
+                    Name = r.Job.Name
+                },
+            }).ToList();
+
+            return new ApiResponse<List<ResumeResponse>>(true, 200, response, "Lấy tất cả đơn ứng tuyển theo người dùng thành công!");
         }
 
 
 
-        //public async Task<ApiResponse<PagedResult<ResumeResponse>>> GetAllResumesAsync(ResumeQueryParameters query)
-        //{
-        //    var resumesQuery = _dbContext.Resumes
-        //        .Include(r => r.Company) // Join với bảng Company
-        //        .Include(r => r.Job) // Join với bảng Job
-        //        .Where(r => !r.IsDeleted); // Lọc các Resume chưa xóa
 
-        //    resumesQuery = resumesQuery.OrderByDescending(r => r.CreatedAt);
-        //    // Lọc theo Email
-        //    if (!string.IsNullOrWhiteSpace(query.Email))
-        //        resumesQuery = resumesQuery.Where(r => r.Email.Contains(query.Email));
 
-        //    // Lọc theo Status
-        //    if (!string.IsNullOrWhiteSpace(query.Status))
-        //        resumesQuery = resumesQuery.Where(r => r.Status == query.Status);
 
-        //    // Lọc theo CompanyId
-        //    if (query.CompanyId.HasValue)
-        //        resumesQuery = resumesQuery.Where(r => r.CompanyId == query.CompanyId);
 
-        //    // Lọc theo JobId
-        //    if (query.JobId.HasValue)
-        //        resumesQuery = resumesQuery.Where(r => r.JobId == query.JobId);
-
-        //    // Phân trang
-        //    var totalRecords = await resumesQuery.CountAsync();
-        //    var resumes = await resumesQuery
-        //        .Skip((query.PageNumber - 1) * query.PageSize)
-        //        .Take(query.PageSize)
-        //        .ToListAsync();
-
-        //    // Kiểm tra nếu không có Resume nào
-        //    if (!resumes.Any())
-        //    {
-        //        // Nếu không có Resume, trả về thông báo với danh sách rỗng
-        //        var emptyResponse = new PagedResult<ResumeResponse>
-        //        {
-        //            CurrentPage = query.PageNumber,
-        //            PageSize = query.PageSize,
-        //            TotalRecords = 0, // Không có bản ghi nào
-        //            Items = new List<ResumeResponse>(), // Danh sách rỗng
-        //        };
-        //        return new ApiResponse<PagedResult<ResumeResponse>>(true, 200, emptyResponse, "Không có resume nào trong hệ thống!");
-        //    }
-
-        //    // Tạo kết quả phân trang
-        //    var response = new PagedResult<ResumeResponse>
-        //    {
-        //        CurrentPage = query.PageNumber,
-        //        PageSize = query.PageSize,
-        //        TotalRecords = totalRecords,
-        //        Items = resumes.Select(r => new ResumeResponse
-        //        {
-        //            Id = r.Id,
-        //            Email = r.Email,
-        //            UserId = r.UserId,
-        //            Status = r.Status,
-        //            Company = new CompanyResumeResponse
-        //            {
-        //                Id = r.CompanyId,
-        //                Name = r.Company.Name
-        //            },
-        //            Job = new JobResponse
-        //            {
-        //                Id = r.JobId,
-        //                Name = r.Job.Name
-        //            },
-        //            History = r.History,
-        //            Files = r.Files.Select(f => new ResumeFileResponse
-        //            {
-        //                Id = f.Id,
-        //                FileUrl = f.FileUrl,
-        //                FileType = f.FileType,
-        //                FileSize = f.FileSize,
-        //                CreatedAt = f.CreatedAt,
-        //                CreatedBy = f.CreatedBy
-        //            }).ToList()
-        //        }).ToList()
-        //    };
-
-        //    return new ApiResponse<PagedResult<ResumeResponse>>(true, 200, response, "Lấy danh sách Resume thành công!");
-        //}
-
-        //public async Task<ApiResponse<PagedResult<ResumeResponse>>> GetAllResumesByUserIdAsync(Guid userId, ResumeQueryParameters query)
-        //{
-        //    var resumesQuery = _dbContext.Resumes
-        //        .Include(r => r.Company) // Join với bảng Company
-        //        .Include(r => r.Job) // Join với bảng Job
-        //        .Where(r => r.UserId == userId && !r.IsDeleted); // Lọc theo UserId và chưa xóa
-        //    resumesQuery = resumesQuery.OrderByDescending(r => r.CreatedAt);
-
-        //    // Lọc theo Email
-        //    if (!string.IsNullOrWhiteSpace(query.Email))
-        //        resumesQuery = resumesQuery.Where(r => r.Email.Contains(query.Email));
-
-        //    // Lọc theo Status
-        //    if (!string.IsNullOrWhiteSpace(query.Status))
-        //        resumesQuery = resumesQuery.Where(r => r.Status == query.Status);
-
-        //    // Lọc theo CompanyId
-        //    if (query.CompanyId.HasValue)
-        //        resumesQuery = resumesQuery.Where(r => r.CompanyId == query.CompanyId);
-
-        //    // Lọc theo JobId
-        //    if (query.JobId.HasValue)
-        //        resumesQuery = resumesQuery.Where(r => r.JobId == query.JobId);
-
-        //    // Phân trang
-        //    var totalRecords = await resumesQuery.CountAsync();
-        //    var resumes = await resumesQuery
-        //        .Skip((query.PageNumber - 1) * query.PageSize)
-        //        .Take(query.PageSize)
-        //        .ToListAsync();
-
-        //    // Tạo kết quả phân trang
-        //    var response = new PagedResult<ResumeResponse>
-        //    {
-        //        CurrentPage = query.PageNumber,
-        //        PageSize = query.PageSize,
-        //        TotalRecords = totalRecords,
-        //        Items = resumes.Select(r => new ResumeResponse
-        //        {
-        //            Id = r.Id,
-        //            Email = r.Email,
-        //            UserId = r.UserId,
-        //            Status = r.Status,
-        //            Company = new CompanyResumeResponse
-        //            {
-        //                Id = r.CompanyId,
-        //                Name = r.Company.Name
-        //            },
-        //            Job = new JobResponse
-        //            {
-        //                Id = r.JobId,
-        //                Name = r.Job.Name
-        //            },
-        //            History = r.History,
-        //            Files = r.Files.Select(f => new ResumeFileResponse
-        //            {
-        //                Id = f.Id,
-        //                FileUrl = f.FileUrl,
-        //                FileType = f.FileType,
-        //                FileSize = f.FileSize,
-        //                CreatedAt = f.CreatedAt,
-        //                CreatedBy = f.CreatedBy
-        //            }).ToList()
-        //        }).ToList()
-        //    };
-
-        //    return new ApiResponse<PagedResult<ResumeResponse>>(true, 200, response, "Lấy danh sách Resume của User thành công!");
-        //}
 
 
     }

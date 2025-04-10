@@ -5,34 +5,47 @@ namespace TuyenDungAPI.Model.Resume
     public class ResumeResponse : BaseReponseEntity
     {
         public Guid Id { get; set; }
-
         public string Email { get; set; }
-
-        public Guid UserId { get; set; }
-
+        public UserResponse User { get; set; }
         public string Status { get; set; }
-
         public CompanyResumeResponse Company { get; set; }
-
         public JobResponse Job { get; set; }
-
-        public List<ResumeHistory> History { get; set; } = new List<ResumeHistory>();
-
-        public string FileUrl { get; set; } // Trả về URL file đã upload
+        public List<ResumeHistoryResponse> History { get; set; } = new();
+        public string FileUrl { get; set; }
     }
 
-
-    public class CompanyResumeResponse
+    public class UserResponse
     {
-        public Guid Id { get; set; } // ID của công ty
-        public string? Name { get; set; } // Tên công ty
+        public Guid Id { get; set; }
+        public string? Name { get; set; }
+    }
+
+   public class CompanyResumeResponse
+    {
+        public Guid Id { get; set; }
+        public string? Name { get; set; }
     }
 
     public class JobResponse
     {
-        public Guid Id { get; set; } // ID của công việc
-        public string? Name { get; set; } // Tên công việc
+        public Guid Id { get; set; }
+        public string? Name { get; set; }
     }
+
+    public class ResumeHistoryResponse
+    {
+        public string Status { get; set; }
+        public string CreatedBy { get; set; }
+        public DateTime CreatedAt { get; set; }
+
+        public ResumeHistoryResponse(ResumeHistory history)
+        {
+            Status = history.Status;
+            CreatedBy = history.CreatedBy ?? "System";
+            CreatedAt = history.CreatedAt;
+        }
+    }
+
 
 
 

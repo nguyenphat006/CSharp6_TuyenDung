@@ -9,14 +9,6 @@ namespace TuyenDungAPI.Model.Resume
     }
     public class CreateResumeRequest
     {
-        // Email của người nộp CV, sẽ lấy từ token khi gửi yêu cầu
-        [Required]
-        [MaxLength(255)]
-        public string Email { get; set; }
-
-        // UserId sẽ lấy từ token
-        //[Required]
-        //public Guid UserId { get; set; }
 
         // ID công ty, lấy từ frontend
         [Required]
@@ -26,13 +18,8 @@ namespace TuyenDungAPI.Model.Resume
         [Required]
         public Guid JobId { get; set; }
 
-        // URL file đính kèm (FileUrl), lấy từ frontend
         [Required]
-        [MaxLength(500)]
-        public string FileUrl { get; set; }
-
-        // Lịch sử thay đổi trạng thái, mặc định khi tạo sẽ có trạng thái PENDING
-        //public List<ResumeHistoryRequest> History { get; set; } = new List<ResumeHistoryRequest>();
+        public IFormFile File { get; set; }  // ⚠️ Thay vì dùng FileUrl
     }
 
     public class ResumeHistoryRequest
@@ -51,35 +38,29 @@ namespace TuyenDungAPI.Model.Resume
         }
     }
 
-
-
-    public class UpdateResumeRequest : BaseRequestEntity
+    public class UpdateStatusResumeRequest
     {
         [Required]
-        public Guid Id { get; set; }
-
-        [MaxLength(255)]
-        public string Email { get; set; }
-
+        [MaxLength(50)]
         public string Status { get; set; }
-
-        [MaxLength(500)]
-        public string FileUrl { get; set; } // Cho phép update lại file mới nếu cần
-
-        public List<ResumeHistory> History { get; set; } = new List<ResumeHistory>();
     }
 
-
-   
+    public class DeleteResumeRequest
+    {
+        [Required]
+        public List<Guid> ResumeIds { get; set; } = new();
+    }
 
     public class ResumeQueryParameters
     {
-        public string? Email { get; set; } // Lọc theo Email
-        public string? Status { get; set; } // Lọc theo Status
-        public Guid? CompanyId { get; set; } // Lọc theo CompanyId
-        public Guid? JobId { get; set; } // Lọc theo JobId
-        public int PageNumber { get; set; } = 1; // Số trang (default là 1)
-        public int PageSize { get; set; } = 10; // Số bản ghi mỗi trang (default là 10)
+        public string? Email { get; set; }  // Lọc theo Email
+        public string? Status { get; set; }  // Lọc theo Status
+        public Guid? CompanyId { get; set; }  // Lọc theo CompanyId
+        public Guid? JobId { get; set; }  // Lọc theo JobId
+        public int PageNumber { get; set; } = 1;  // Trang hiện tại (mặc định 1)
+        public int PageSize { get; set; } = 10;   // Kích thước trang (mặc định 10)
     }
+
+ 
 
 }

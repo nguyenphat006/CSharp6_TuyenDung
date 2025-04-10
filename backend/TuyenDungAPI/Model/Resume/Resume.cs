@@ -33,6 +33,8 @@ namespace TuyenDungAPI.Model.Resume
         // Liên kết với bảng Job (navigation property)
         [ForeignKey("JobId")]
         public Job.Job Job { get; set; }
+        public User.User User { get; set; }
+
 
         // URL file đính kèm
         [MaxLength(500)]

@@ -21,7 +21,11 @@ builder.Services.AddCors(options =>
 });
 
 // 📌 Thêm dịch vụ Controller & API Explorer
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+  .AddJsonOptions(options =>
+   {
+       options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
+   });
 builder.Services.AddEndpointsApiExplorer();
 
 // 🛠️ Cấu hình Swagger & JWT Authentication trong Swagger UI
@@ -124,6 +128,8 @@ app.Use(async (context, next) =>
         }));
     }
 });
+  
+
 
 // 🛠️ Cấu hình Swagger UI
 if (app.Environment.IsDevelopment())
