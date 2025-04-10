@@ -4,44 +4,49 @@ namespace TuyenDungAPI.Model.Resume
 {
     public class ResumeResponse : BaseReponseEntity
     {
-        public Guid Id { get; set; } // ID của Resume
-
-        public string? Email { get; set; } // Email của người nộp CV
-
-        public Guid UserId { get; set; } // UserId của người nộp CV (ObjectId kiểu GUID)
-
-        public string? Status { get; set; } // Trạng thái của Resume (PENDING, REVIEWING, APPROVED, REJECTED)
-
-        // Trả về đối tượng Company chứa ID và Name
+        public Guid Id { get; set; }
+        public string Email { get; set; }
+        public UserResponse User { get; set; }
+        public string Status { get; set; }
         public CompanyResumeResponse Company { get; set; }
-
-        // Trả về đối tượng Job chứa ID và Name
         public JobResponse Job { get; set; }
-
-        public List<ResumeHistory> History { get; set; } = new List<ResumeHistory>();
-        public List<ResumeFileResponse> Files { get; set; } = new List<ResumeFileResponse>();
+        public List<ResumeHistoryResponse> History { get; set; } = new();
+        public string FileUrl { get; set; }
     }
 
-    public class CompanyResumeResponse
+    public class UserResponse
     {
-        public Guid Id { get; set; } // ID của công ty
-        public string? Name { get; set; } // Tên công ty
+        public Guid Id { get; set; }
+        public string? Name { get; set; }
+    }
+
+   public class CompanyResumeResponse
+    {
+        public Guid Id { get; set; }
+        public string? Name { get; set; }
     }
 
     public class JobResponse
     {
-        public Guid Id { get; set; } // ID của công việc
-        public string? Name { get; set; } // Tên công việc
-    }
-
-
-    public class ResumeFileResponse: BaseReponseEntity
-    {
         public Guid Id { get; set; }
-        public string? FileUrl { get; set; }
-        public string? FileType { get; set; }
-        public long FileSize { get; set; }
+        public string? Name { get; set; }
     }
+
+    public class ResumeHistoryResponse
+    {
+        public string Status { get; set; }
+        public string CreatedBy { get; set; }
+        public DateTime CreatedAt { get; set; }
+
+        public ResumeHistoryResponse(ResumeHistory history)
+        {
+            Status = history.Status;
+            CreatedBy = history.CreatedBy ?? "System";
+            CreatedAt = history.CreatedAt;
+        }
+    }
+
+
 
 
 }

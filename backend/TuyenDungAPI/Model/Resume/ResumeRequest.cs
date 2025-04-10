@@ -7,73 +7,60 @@ namespace TuyenDungAPI.Model.Resume
     {
         public Guid Id { get; set; }
     }
-    public class CreateResumeRequest: BaseRequestEntity
+    public class CreateResumeRequest
     {
-        [Required]
-        [MaxLength(255)]
-        public string Email { get; set; }
 
-        [Required]
-        public Guid UserId { get; set; }
-
-        //[Required]
-        //[MaxLength(50)]
-        //public string Status { get; set; }
-
+        // ID công ty, lấy từ frontend
         [Required]
         public Guid CompanyId { get; set; }
 
+        // ID công việc (Job), lấy từ frontend
         [Required]
         public Guid JobId { get; set; }
 
-        public List<ResumeHistory> History { get; set; } = new List<ResumeHistory>();
-        public List<Guid> Files { get; set; } = new List<Guid>(); // Chứa ID của các file nộp
-    }
-
-    public class UpdateResumeRequest: BaseRequestEntity
-    {
         [Required]
-        public Guid Id { get; set; }
-
-        [MaxLength(255)]
-        public string Email { get; set; }
-
-        public string Status { get; set; }
-
-        public List<ResumeHistory> History { get; set; } = new List<ResumeHistory>();
-        public List<Guid> Files { get; set; } = new List<Guid>(); // Chứa ID của các file nộp
+        public IFormFile File { get; set; }  // ⚠️ Thay vì dùng FileUrl
     }
 
     public class ResumeHistoryRequest
     {
         [Required]
         [MaxLength(50)]
-        public string Status { get; set; } // Trạng thái của Resume khi thay đổi
+        public string Status { get; set; }  // Trạng thái của Resume khi tạo (ví dụ: "PENDING")
 
         [Required]
-        public DateTime UpdatedAt { get; set; } // Thời gian thay đổi trạng thái
+        public DateTime UpdatedAt { get; set; }  // Thời gian cập nhật trạng thái
 
-        [Required]
-        public ResumeUpdatedByRequest UpdatedBy { get; set; } // Người thay đổi trạng thái, gồm _id và email
-
-        public class ResumeUpdatedByRequest
+        public ResumeHistoryRequest()
         {
-            [Required]
-            public Guid _id { get; set; } // ID của người thay đổi
-            [Required]
-            [EmailAddress]
-            public string Email { get; set; } // Email của người thay đổi
+            Status = "PENDING"; // Mặc định trạng thái là PENDING khi tạo Resume
+            UpdatedAt = DateTime.UtcNow;
         }
+    }
+
+    public class UpdateStatusResumeRequest
+    {
+        [Required]
+        [MaxLength(50)]
+        public string Status { get; set; }
+    }
+
+    public class DeleteResumeRequest
+    {
+        [Required]
+        public List<Guid> ResumeIds { get; set; } = new();
     }
 
     public class ResumeQueryParameters
     {
-        public string? Email { get; set; } // Lọc theo Email
-        public string? Status { get; set; } // Lọc theo Status
-        public Guid? CompanyId { get; set; } // Lọc theo CompanyId
-        public Guid? JobId { get; set; } // Lọc theo JobId
-        public int PageNumber { get; set; } = 1; // Số trang (default là 1)
-        public int PageSize { get; set; } = 10; // Số bản ghi mỗi trang (default là 10)
+        public string? Email { get; set; }  // Lọc theo Email
+        public string? Status { get; set; }  // Lọc theo Status
+        public Guid? CompanyId { get; set; }  // Lọc theo CompanyId
+        public Guid? JobId { get; set; }  // Lọc theo JobId
+        public int PageNumber { get; set; } = 1;  // Trang hiện tại (mặc định 1)
+        public int PageSize { get; set; } = 10;   // Kích thước trang (mặc định 10)
     }
+
+ 
 
 }

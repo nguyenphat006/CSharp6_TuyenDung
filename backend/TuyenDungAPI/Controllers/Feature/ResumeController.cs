@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 using TuyenDungAPI.Model.Resume;
@@ -16,47 +17,94 @@ namespace TuyenDungAPI.Controllers.Feature
             _resumeService = resumeService;
         }
 
+
         /// <summary>
-        /// Lấy danh sách tất cả Resume, hỗ trợ phân trang và lọc.
+        /// Nộp đơn ứng tuyển (tạo Resume mới với file đính kèm).
         /// </summary>
-        /// <param name="query">Các tham số để lọc và phân trang (Email, Status, CompanyId, JobId, etc.)</param>
-        /// <returns>Danh sách Resume</returns>
+        /// <param name="request">Thông tin đơn ứng tuyển: companyId, jobId, file CV.</param>
+        /// <returns>Thông tin Resume sau khi tạo.</returns>
+        [HttpPost]
+        [SwaggerOperation(Summary = "Nộp đơn ứng tuyển (Resume) với file đính kèm")]
+        public async Task<IActionResult> CreateResume([FromForm] CreateResumeRequest request)
+        {
+            var result = await _resumeService.CreateResumeAsync(request, User);
+            return StatusCode(result.Status, result);
+        }
+
+        /// <summary>
+        /// Lấy danh sách đơn ứng tuyển có phân trang và lọc
+        /// </summary>
+        /// <param name="parameters">Các điều kiện lọc và phân trang</param>
+        /// <returns>Danh sách đơn ứng tuyển</returns>
         [HttpGet]
-        [SwaggerOperation(Summary = "Lấy danh sách tất cả Resume với phân trang và lọc")]
-        public async Task<IActionResult> GetAllResumes([FromQuery] ResumeQueryParameters query)
+        [SwaggerOperation(Summary = "Danh sách đơn ứng tuyển (filter + paging) dành cho trang Admin")]
+        public async Task<IActionResult> GetAllResumes([FromQuery] ResumeQueryParameters parameters)
         {
-            // Gọi phương thức GetAllResumesAsync từ service để lấy dữ liệu
-            var result = await _resumeService.GetAllResumesAsync(query);
+            var result = await _resumeService.GetAllResumesAsync(parameters);
             return StatusCode(result.Status, result);
         }
 
         /// <summary>
-        /// Lấy danh sách tất cả Resume của User, hỗ trợ phân trang và lọc.
+        /// Lấy chi tiết đơn ứng tuyển theo Id
         /// </summary>
-        /// <param name="userId">ID của người dùng</param>
-        /// <param name="query">Các tham số để lọc và phân trang (Email, Status, CompanyId, JobId, etc.)</param>
-        /// <returns>Danh sách Resume</returns>
-        [HttpGet("get-all-by-user/{userId}")]
-        [SwaggerOperation(Summary = "Lấy danh sách tất cả Resume của User với phân trang và lọc")]
-        public async Task<IActionResult> GetAllResumesByUserId(Guid userId, [FromQuery] ResumeQueryParameters query)
+        /// <param name="id">ID của Resume</param>
+        /// <returns>Chi tiết đơn ứng tuyển</returns>
+        [HttpGet]
+        [Route("{ResumeId:guid}")]
+        [SwaggerOperation(Summary = "Lấy chi tiết đơn ứng tuyển theo ID")]
+        public async Task<IActionResult> GetResumeById(Guid id)
         {
-            // Gọi phương thức GetAllResumesByUserIdAsync từ service để lấy dữ liệu
-            var result = await _resumeService.GetAllResumesByUserIdAsync(userId, query);
+            var result = await _resumeService.GetResumeByIdAsync(id);
+            return StatusCode(result.Status, result);
+        }
+
+
+        /// <summary>
+        /// Cập nhật trạng thái đơn ứng tuyển
+        /// </summary>
+        /// <param name="resumeId">ID của Resume</param>
+        /// <param name="request">Thông tin trạng thái mới</param>
+        /// <returns>Resume đã được cập nhật trạng thái</returns>
+        [HttpPut]
+        [Route("{ResumeId:guid}/change-status")]
+        [SwaggerOperation(Summary = "Cập nhật trạng thái đơn ứng tuyển")]
+        public async Task<IActionResult> ChangeResumeStatus(Guid resumeId, [FromBody] UpdateStatusResumeRequest request)
+        {
+            var result = await _resumeService.ChangeResumeStatusAsync(resumeId, request, User);
             return StatusCode(result.Status, result);
         }
 
         /// <summary>
-        /// Tạo mới Resume cho người dùng.
+        /// Xoá mềm nhiều đơn ứng tuyển
         /// </summary>
-        /// <param name="request">Thông tin Resume cần tạo</param>
-        /// <returns>Thông tin Resume đã tạo</returns>
-        [HttpPost("create")]
-        [SwaggerOperation(Summary = "Tạo mới Resume cho người dùng")]
-        public async Task<IActionResult> CreateResume([FromBody] CreateResumeRequest request)
+        /// <param name="request">Danh sách ResumeIds cần xoá</param>
+        /// <returns>Kết quả xoá</returns>
+        [HttpDelete]
+        [SwaggerOperation(Summary = "Xoá mềm nhiều đơn ứng tuyển (soft delete)")]
+        public async Task<IActionResult> DeleteResumes([FromBody] DeleteResumeRequest request)
         {
-            // Gọi phương thức CreateResumeAsync từ service để tạo mới Resume
-            var result = await _resumeService.CreateResumeAsync(request);
+            var result = await _resumeService.DeleteResumesAsync(request, User);
             return StatusCode(result.Status, result);
         }
-    }   
+
+        /// <summary>
+        /// Lấy toàn bộ đơn ứng tuyển của người dùng hiện tại (không phân trang)
+        /// </summary>
+        /// <returns>Danh sách đơn ứng tuyển</returns>
+        [HttpPost]
+        [Route("get-all-by-user")]
+        [SwaggerOperation(Summary = "Lấy toàn bộ đơn ứng tuyển của user (dùng token)")]
+        public async Task<IActionResult> GetAllResumesByUser()
+        {
+            var result = await _resumeService.GetResumesByUserAsync(User);
+            return StatusCode(result.Status, result);
+        }
+
+
+
+
+
+
+
+    }
 }
