@@ -176,7 +176,7 @@ export function ApplicationSidebar({
               </CardHeader>
               <CardContent>
                 <Button variant="outline" className="w-full" asChild>
-                  <a href={application.fileUrl} target="_blank" rel="noopener noreferrer">
+                  <a href={`https://localhost:7152${application.fileUrl}`} target="_blank" rel="noopener noreferrer">
                     Xem CV
                   </a>
                 </Button>

@@ -170,6 +170,7 @@ export function DataTableJobs({ data, onUpdateJob, onDeleteJob, onSelectJob, sel
                 />
               </TableHead>
               <TableHead>Tên công việc</TableHead>
+              <TableHead>Công ty</TableHead>
               <TableHead>Kỹ năng</TableHead>
               <TableHead>Địa điểm</TableHead>
               <TableHead>Mức lương</TableHead>
@@ -190,6 +191,7 @@ export function DataTableJobs({ data, onUpdateJob, onDeleteJob, onSelectJob, sel
                   />
                 </TableCell>
                 <TableCell className="font-medium">{job.name}</TableCell>
+                <TableCell>{job.companyName || "N/A"}</TableCell>
                 <TableCell>
                   <div className="flex flex-wrap gap-1">
                     {job.skillsList.map((skill) => (

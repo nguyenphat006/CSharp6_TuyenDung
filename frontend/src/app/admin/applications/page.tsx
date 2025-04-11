@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { DataTable } from "@/components/ui/data-table";
 import { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,12 @@ import axios from "axios";
 import { toast } from "sonner";
 import { Trash2 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
+import { DataTableViewOptions } from "@/components/ui/data-table-view-options";
+import { useReactTable, getCoreRowModel, getPaginationRowModel, getSortedRowModel, getFilteredRowModel } from "@tanstack/react-table";
+import { Table, TableHeader, TableBody, TableCell, TableHead, TableRow } from "@/components/ui/table";
+import { flexRender } from "@tanstack/react-table";
+import { DataTablePagination } from "@/components/ui/data-table-pagination";
+import React from "react";
 
 interface ApiResponse {
   result: boolean;
@@ -126,8 +132,28 @@ export default function ApplicationsPage() {
     pageNumber: 1,
     pageSize: 10,
   });
+  const [debounceTimeout, setDebounceTimeout] = useState<NodeJS.Timeout | null>(null);
 
   const queryClient = useQueryClient();
+
+  const handleFilterChange = (key: keyof FilterParams, value: string | number) => {
+    setFilters(prev => {
+      const newFilters = { ...prev, [key]: value, pageNumber: 1 };
+      
+      // Clear timeout cũ nếu có
+      if (debounceTimeout) {
+        clearTimeout(debounceTimeout);
+      }
+      
+      // Set timeout mới
+      const timeout = setTimeout(() => {
+        refetch();
+      }, 300);
+      
+      setDebounceTimeout(timeout);
+      return newFilters;
+    });
+  };
 
   const { data, isLoading, refetch } = useQuery<ApiResponse>({
     queryKey: ["applications", filters],
@@ -137,9 +163,45 @@ export default function ApplicationsPage() {
         if (value) params.append(key, value.toString());
       });
       
-      const response = await axios.get(`https://localhost:7152/api/Resume?${params.toString()}`);
-      return response.data;
+      try {
+        const response = await axios.get(`https://localhost:7152/api/Resume?${params.toString()}`);
+        return response.data;
+      } catch (error) {
+        console.error("Error fetching applications:", error);
+        toast.error("Có lỗi xảy ra khi tải dữ liệu");
+        return {
+          result: false,
+          status: 500,
+          data: {
+            currentPage: 1,
+            pageSize: 10,
+            totalRecords: 0,
+            totalPages: 0,
+            items: []
+          },
+          message: "Error"
+        };
+      }
     },
+    staleTime: 30000, // Cache trong 30 giây
+    gcTime: 5 * 60 * 1000, // Cache trong 5 phút
+  });
+
+  const table = useReactTable({
+    data: data?.data?.items || [],
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    state: {
+      pagination: {
+        pageIndex: filters.pageNumber - 1,
+        pageSize: filters.pageSize,
+      },
+    },
+    manualPagination: true,
+    pageCount: data?.data?.totalPages || 0,
   });
 
   const { mutate: deleteResumes, isPending: isDeleting } = useMutation({
@@ -160,10 +222,6 @@ export default function ApplicationsPage() {
     },
   });
 
-  const handleFilterChange = (key: keyof FilterParams, value: string | number) => {
-    setFilters(prev => ({ ...prev, [key]: value, pageNumber: 1 }));
-  };
-
   const handleDeleteSelected = () => {
     if (selectedRows.length === 0) {
       toast.warning("Vui lòng chọn ít nhất một đơn ứng tuyển để xóa");
@@ -182,6 +240,15 @@ export default function ApplicationsPage() {
     onPageChange: (page: number) => handleFilterChange("pageNumber", page),
   };
 
+  // Cleanup timeout khi component unmount
+  useEffect(() => {
+    return () => {
+      if (debounceTimeout) {
+        clearTimeout(debounceTimeout);
+      }
+    };
+  }, [debounceTimeout]);
+
   return (
     <div className="container mx-auto py-10">
       <div className="flex justify-between items-center mb-6">
@@ -199,38 +266,116 @@ export default function ApplicationsPage() {
       </div>
 
       <div className="flex gap-4 mb-4">
-        <Input
-          placeholder="Tìm theo email"
-          value={filters.email || ""}
-          onChange={(e) => handleFilterChange("email", e.target.value)}
-          className="max-w-xs"
-        />
-        <Select
-          value={filters.status}
-          onValueChange={(value) => handleFilterChange("status", value)}
-        >
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Trạng thái" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="PENDING">Đang chờ</SelectItem>
-            <SelectItem value="APPROVED">Đã duyệt</SelectItem>
-            <SelectItem value="REJECTED">Từ chối</SelectItem>
-          </SelectContent>
-        </Select>
+        <div className="flex-1 flex gap-2">
+          <Input
+            placeholder="Tìm kiếm theo email"
+            value={filters.email || ""}
+            onChange={(e) => handleFilterChange("email", e.target.value)}
+            className="w-[200px]"
+          />
+          <Select
+            value={filters.status}
+            onValueChange={(value) => handleFilterChange("status", value)}
+          >
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Trạng thái" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="PENDING">Đang chờ</SelectItem>
+              <SelectItem value="APPROVED">Đã duyệt</SelectItem>
+              <SelectItem value="REJECTED">Từ chối</SelectItem>
+            </SelectContent>
+          </Select>
+          {(filters.email || filters.status) && (
+            <Button
+              variant="outline"
+              onClick={() => {
+                setFilters(prev => ({
+                  ...prev,
+                  email: "",
+                  status: "",
+                  pageNumber: 1
+                }));
+              }}
+            >
+              Hủy bộ lọc
+            </Button>
+          )}
+          <div className="ml-auto">
+            <DataTableViewOptions table={table} />
+          </div>
+        </div>
       </div>
 
-      <DataTable
-        columns={columns}
-        data={data?.data.items || []}
-        onRowClick={(row) => {
-          setSelectedApplication(row);
-          setIsSidebarOpen(true);
-        }}
-        pagination={pagination}
-        loading={isLoading}
-        onSelectionChange={setSelectedRows}
-      />
+      <div className="rounded-md border">
+        <Table>
+          <TableHeader>
+            {table.getHeaderGroups().map((headerGroup) => (
+              <TableRow key={headerGroup.id}>
+                {headerGroup.headers.map((header) => {
+                  return (
+                    <TableHead key={header.id} colSpan={header.colSpan}>
+                      {header.isPlaceholder
+                        ? null
+                        : flexRender(
+                            header.column.columnDef.header,
+                            header.getContext()
+                          )}
+                    </TableHead>
+                  );
+                })}
+              </TableRow>
+            ))}
+          </TableHeader>
+          <TableBody>
+            {isLoading ? (
+              <TableRow>
+                <TableCell colSpan={columns.length} className="h-24 text-center">
+                  Đang tải...
+                </TableCell>
+              </TableRow>
+            ) : table.getRowModel().rows?.length ? (
+              table.getRowModel().rows.map((row) => (
+                <TableRow
+                  key={row.id}
+                  data-state={row.getIsSelected() && "selected"}
+                  onClick={() => {
+                    setSelectedApplication(row.original);
+                    setIsSidebarOpen(true);
+                  }}
+                  className="cursor-pointer"
+                >
+                  {row.getVisibleCells().map((cell) => (
+                    <TableCell key={cell.id}>
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext()
+                      )}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell
+                  colSpan={columns.length}
+                  className="h-24 text-center"
+                >
+                  Không có dữ liệu
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </div>
+      {pagination && (
+        <DataTablePagination
+          table={table}
+          currentPage={pagination.currentPage}
+          totalPages={pagination.totalPages}
+          onPageChange={pagination.onPageChange}
+        />
+      )}
 
       <ApplicationSidebar
         application={selectedApplication}
