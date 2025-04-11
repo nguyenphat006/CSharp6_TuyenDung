@@ -49,6 +49,19 @@ namespace TuyenDungAPI.Controllers.Feature
         }
 
         /// <summary>
+        /// Lấy thông tin chi tiết công ty theo ID cho Client.
+        /// </summary>
+        /// <param name="id">ID công ty cần lấy thông tin</param>
+        /// <returns>Thông tin công ty</returns>
+        [HttpGet("{id}/client")]
+        [SwaggerOperation(Summary = "Lấy thông tin chi tiết công ty theo ID dành cho Client")]
+        public async Task<IActionResult> GetCompanyByForClientId(Guid id)
+        {
+            var result = await _companyService.GetCompanyByIdForClientAsync(id);
+            return StatusCode(result.Status, result);
+        }
+
+        /// <summary>
         /// Tạo một công ty mới và thêm vào hệ thống.
         /// </summary>
         /// <param name="request">Thông tin công ty cần tạo</param>
@@ -118,6 +131,17 @@ namespace TuyenDungAPI.Controllers.Feature
             return StatusCode(response.Status, response);
         }
 
+        /// <summary>
+        /// Lấy 6 công ty mới nhất (không phân trang, không lọc)
+        /// </summary>
+        /// <returns>Danh sách 6 công ty mới nhất</returns>
+        [HttpGet("top-6-latest")]
+        [SwaggerOperation(Summary = "Lấy 6 công ty mới nhất (client view)")]
+        public async Task<IActionResult> GetTop6Companies()
+        {
+            var result = await _companyService.GetTop6CompaniesAsync();
+            return StatusCode(result.Status, result);
+        }
 
     }
 }

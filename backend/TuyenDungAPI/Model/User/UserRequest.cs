@@ -63,4 +63,16 @@ namespace TuyenDungAPI.Model.User
         public string ConfirmPassword { get; set; }
     }
 
+    public class ChangePasswordUserRequest
+    {
+        [Required]
+        [MaxLength(100)]
+        public string OldPassword { get; set; }  // Mật khẩu cũ
+
+        [Required]
+        [MaxLength(100)]
+        public string NewPassword { get; set; }  // Mật khẩu mới
+    }
+
+
 }

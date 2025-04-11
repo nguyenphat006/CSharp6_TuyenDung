@@ -40,7 +40,7 @@ namespace TuyenDungAPI.Service
 
             var response = new UserResponse(user);
             return new ApiResponse<UserResponse>(true, 200, response, "Lấy thông tin người dùng thành công");
-        }
+        }   
         public async Task<ApiResponse<UserResponse>> CreateUserAsync(CreateUserRequest request, ClaimsPrincipal currentUser)
         {
             string createdBy = currentUser?.Identity?.Name ?? "System";
@@ -255,6 +255,42 @@ namespace TuyenDungAPI.Service
             await _dbContext.SaveChangesAsync();
 
             var response = new UserResponse(user);
+            return new ApiResponse<UserResponse>(true, 200, response, "Đổi mật khẩu thành công!");
+        }
+        public async Task<ApiResponse<UserResponse>> ChangePasswordUserAsync(ChangePasswordUserRequest request, ClaimsPrincipal currentUser)
+        {
+            string updatedBy = currentUser?.Identity?.Name ?? "System";
+
+            var userIdStr = currentUser.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if (!Guid.TryParse(userIdStr, out Guid userId))
+            {
+                return new ApiResponse<UserResponse>(false, 401, null, "Token không hợp lệ hoặc thiếu UserId!");
+            }
+
+            var user = await _dbContext.Users.FirstOrDefaultAsync(u => u.Id == userId && !u.IsDeleted);
+
+            if (user == null)
+            {
+                return new ApiResponse<UserResponse>(false, 404, null, "Người dùng không tồn tại!");
+            }
+
+            // 🔒 Kiểm tra mật khẩu cũ
+            if (!BCrypt.Net.BCrypt.Verify(request.OldPassword, user.PasswordHash))
+            {
+                return new ApiResponse<UserResponse>(false, 400, null, "Mật khẩu cũ không đúng!");
+            }
+
+            // 🔐 Hash và cập nhật mật khẩu mới
+            user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
+            user.UpdatedAt = DateTime.UtcNow;
+            user.UpdatedBy = updatedBy;
+
+            _dbContext.Users.Update(user);
+            await _dbContext.SaveChangesAsync();
+
+            var response = new UserResponse(user);
+
             return new ApiResponse<UserResponse>(true, 200, response, "Đổi mật khẩu thành công!");
         }
 

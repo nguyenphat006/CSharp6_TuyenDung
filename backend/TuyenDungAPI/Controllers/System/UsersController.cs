@@ -140,6 +140,19 @@ namespace TuyenDungAPI.Controllers
             return StatusCode(result.Status, result);
         }
 
+        /// <summary>
+        /// Người dùng tự đổi mật khẩu (yêu cầu mật khẩu cũ + mới)
+        /// </summary>
+        /// <param name="request">Thông tin đổi mật khẩu</param>
+        /// <returns>Kết quả đổi mật khẩu</returns>
+        [HttpPut("change-password")]
+        [SwaggerOperation(Summary = "Người dùng đổi mật khẩu (cần nhập mật khẩu cũ)")]
+        public async Task<IActionResult> ChangePasswordUser([FromBody] ChangePasswordUserRequest request)
+        {
+            var result = await _userService.ChangePasswordUserAsync(request, User);
+            return StatusCode(result.Status, result);
+        }
+
 
 
     }

@@ -88,6 +88,21 @@ namespace TuyenDungAPI.Service
         public async Task<ApiResponse<JobResponse>> GetJobByIdAsync(Guid id)
         {
             var job = await _dbContext.Jobs
+                .Where(j => j.Id == id && !j.IsDeleted)
+                .FirstOrDefaultAsync();
+
+            if (job == null)
+            {
+                return new ApiResponse<JobResponse>(false, 404, null, "Không tìm thấy công việc với ID đã cho hoặc công việc đã bị khóa.");
+            }
+
+            var response = new JobResponse(job);
+
+            return new ApiResponse<JobResponse>(true, 200, response, "Lấy thông tin công việc thành công.");
+        }
+        public async Task<ApiResponse<JobResponse>> GetJobByIdForClientAsync(Guid id)
+        {
+            var job = await _dbContext.Jobs
                 .Where(j => j.Id == id && !j.IsDeleted && j.IsActive)
                 .FirstOrDefaultAsync();
 
@@ -232,6 +247,24 @@ namespace TuyenDungAPI.Service
             }
 
             return new ApiResponse<List<JobResponse>>(true, 200, jobs, "Lấy danh sách công việc theo công ty thành công.");
+        }
+        public async Task<ApiResponse<List<JobResponse>>> GetTop6LatestJobsAsync()
+        {
+            var jobs = await _dbContext.Jobs
+                .Include(j => j.Company)                 // 🔥 Join luôn Company
+                .Where(j => !j.IsDeleted && j.IsActive)   // 🔥 Chỉ lấy Job chưa xóa và đang Active
+                .OrderByDescending(j => j.CreatedAt)      // 🔥 Mới nhất lên đầu
+                .Take(6)                                  // 🔥 Lấy 6 job đầu tiên
+                .ToListAsync();
+
+            var response = jobs.Select(j => new JobResponse(j)).ToList();
+
+            if (!response.Any())
+            {
+                return new ApiResponse<List<JobResponse>>(true, 200, response, "Không có job nào!");
+            }
+
+            return new ApiResponse<List<JobResponse>>(true, 200, response, "Lấy 6 job mới nhất thành công!");
         }
 
 

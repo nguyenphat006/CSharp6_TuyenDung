@@ -29,13 +29,24 @@ namespace TuyenDungAPI.Controllers.Feature
         }
 
         /// <summary>
-        /// Lấy thông tin chi tiết công việc theo ID
+        /// Lấy chi tiết công việc theo ID (dành cho admin)
         /// </summary>
         [HttpGet("{id}")]
         [SwaggerOperation(Summary = "Lấy chi tiết công việc theo ID (dành cho admin)")]
         public async Task<IActionResult> GetJobById(Guid id)
         {
             var result = await _jobService.GetJobByIdAsync(id);
+            return StatusCode(result.Status, result);
+        }
+
+        /// <summary>
+        /// Lấy chi tiết công việc theo ID (dành cho client)
+        /// </summary>
+        [HttpGet("{id}/client")]
+        [SwaggerOperation(Summary = "Lấy chi tiết công việc theo ID (dành cho client)")]
+        public async Task<IActionResult> GetJobByForClientId(Guid id)
+        {
+            var result = await _jobService.GetJobByIdForClientAsync(id);
             return StatusCode(result.Status, result);
         }
 
@@ -98,6 +109,19 @@ namespace TuyenDungAPI.Controllers.Feature
         public async Task<IActionResult> GetJobsByCompany(Guid companyId)
         {
             var result = await _jobService.GetJobsByCompanyAsync(companyId);
+            return StatusCode(result.Status, result);
+        }
+
+        /// <summary>
+        /// Lấy 6 công việc mới nhất (không phân trang, không lọc)
+        /// </summary>
+        /// <returns>Danh sách 6 công việc mới nhất</returns>
+        [HttpGet("top-6-latest")]
+        [SwaggerOperation(Summary = "Lấy 6 công việc mới nhất (client view)")]
+
+        public async Task<IActionResult> GetTop6LatestJobs()
+        {
+            var result = await _jobService.GetTop6LatestJobsAsync();
             return StatusCode(result.Status, result);
         }
 

@@ -71,8 +71,6 @@ public class CompanyService
 
         return new ApiResponse<PagedResult<CompanyResponse>>(true, 200, response, "Lấy danh sách công ty thành công");
     }
-
-
     public async Task<ApiResponse<CompanyResponse>> GetCompanyByIdAsync(Guid id)
     {
         var company = await _dbContext.Company
@@ -86,7 +84,19 @@ public class CompanyService
         var response = new CompanyResponse(company);
         return new ApiResponse<CompanyResponse>(true, 200, response, "Lấy thông tin công ty thành công");
     }
+    public async Task<ApiResponse<CompanyResponse>> GetCompanyByIdForClientAsync(Guid id)
+    {
+        var company = await _dbContext.Company
+            .FirstOrDefaultAsync(c => !c.IsDeleted && c.Id == id && c.IsActive);
 
+        if (company == null)
+        {
+            return new ApiResponse<CompanyResponse>(false, 404, null, "Không tìm thấy công ty!");
+        }
+
+        var response = new CompanyResponse(company);
+        return new ApiResponse<CompanyResponse>(true, 200, response, "Lấy thông tin công ty thành công");
+    }
     public async Task<ApiResponse<CompanyResponse>> CreateCompanyAsync(CreateCompanyRequest request, ClaimsPrincipal currentUser)
     {
         var existingCompany = await _dbContext.Company
@@ -122,7 +132,6 @@ public class CompanyService
         var response = new CompanyResponse(newCompany);
         return new ApiResponse<CompanyResponse>(true, 201, response, "Tạo công ty thành công");
     }
-
     public async Task<ApiResponse<CompanyResponse>> UploadCompanyLogoAsync(UploadCompanyLogoRequest request, ClaimsPrincipal currentUser)
     {
         // Tìm kiếm công ty theo Id
@@ -189,7 +198,6 @@ public class CompanyService
             return new ApiResponse<CompanyResponse>(false, 500, null, $"Lỗi khi upload logo: {ex.Message}");
         }
     }
-
     public async Task<ApiResponse<CompanyResponse>> UpdateCompanyAsync(Guid id, UpdateCompanyRequest request, ClaimsPrincipal currentUser)
     {
         // Tìm công ty theo ID từ URL (không cần lấy id từ request body nữa)
@@ -218,8 +226,6 @@ public class CompanyService
         var response = new CompanyResponse(company);
         return new ApiResponse<CompanyResponse>(true, 200, response, "Cập nhật công ty thành công");
     }
-
-
     public async Task<ApiResponse<DeleteComnpanysResponse>> DeleteCompaniesAsync(DeleteCompanyRequest request, ClaimsPrincipal currentUser)
     {
         var deletedBy = currentUser?.Identity?.Name ?? "System";
@@ -262,6 +268,22 @@ public class CompanyService
 
         return new ApiResponse<DeleteComnpanysResponse>(true, 200, response, message);
     }
+    public async Task<ApiResponse<List<CompanyResponse>>> GetTop6CompaniesAsync()
+    {
+        var companies = await _dbContext.Company
+            .Where(j => !j.IsDeleted && j.IsActive)   // 🔥 Chỉ lấy Job chưa xóa và đang Active
+            .OrderByDescending(co => co.CreatedAt)     // 🔥 Mới nhất trước
+            .Take(6)                                   // 🔥 Lấy 6 công ty
+            .ToListAsync();
 
+        var response = companies.Select(co => new CompanyResponse(co)).ToList();
+
+        if (!response.Any())
+        {
+            return new ApiResponse<List<CompanyResponse>>(true, 200, response, "Không có công ty nào!");
+        }
+
+        return new ApiResponse<List<CompanyResponse>>(true, 200, response, "Lấy 6 công ty mới nhất thành công!");
+    }
 
 }
