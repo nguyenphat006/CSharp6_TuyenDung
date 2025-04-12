@@ -69,49 +69,49 @@ export function ApplicationSidebar({
 
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
-      <SheetContent className="w-[500px] sm:w-[540px]">
-        <SheetHeader>
+      <SheetContent className="w-[500px] sm:w-[540px] overflow-y-auto">
+        <SheetHeader className="border-b pb-4">
           <SheetTitle className="text-2xl font-bold">Chi tiết đơn xin việc</SheetTitle>
         </SheetHeader>
 
         <div className="space-y-6 py-6">
           {/* Thông tin ứng viên */}
-          <Card>
-            <CardHeader className="flex flex-row items-center space-x-4">
-              <Avatar className="h-16 w-16">
+          <Card className="border-none shadow-none">
+            <CardHeader className="flex flex-row items-center space-x-4 p-0">
+              <Avatar className="h-16 w-16 border-2 border-primary">
                 <AvatarImage src={`https://ui-avatars.com/api/?name=${application.user?.name || "N/A"}&background=random`} />
-                <AvatarFallback>{getInitials(application.user?.name)}</AvatarFallback>
+                <AvatarFallback className="bg-primary/10 text-primary">{getInitials(application.user?.name)}</AvatarFallback>
               </Avatar>
-              <div>
-                <CardTitle className="text-xl">{application.user?.name || "N/A"}</CardTitle>
+              <div className="space-y-1">
+                <CardTitle className="text-xl font-semibold">{application.user?.name || "N/A"}</CardTitle>
                 <div className="flex items-center text-sm text-muted-foreground">
                   <Mail className="mr-2 h-4 w-4" />
-                  {application.email}
+                  <span>{application.email}</span>
                 </div>
               </div>
             </CardHeader>
           </Card>
 
           {/* Thông tin công việc */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <Briefcase className="mr-2 h-5 w-5" />
+          <Card className="border-none shadow-none">
+            <CardHeader className="p-0">
+              <CardTitle className="flex items-center text-lg font-semibold">
+                <Briefcase className="mr-2 h-5 w-5 text-primary" />
                 Thông tin công việc
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center">
-                <Building2 className="mr-2 h-4 w-4 text-muted-foreground" />
+            <CardContent className="space-y-4 p-0 mt-4">
+              <div className="flex items-start space-x-3">
+                <Building2 className="h-5 w-5 text-muted-foreground mt-0.5" />
                 <div>
                   <p className="text-sm font-medium">Công ty</p>
                   <p className="text-sm text-muted-foreground">{application.company?.name || "N/A"}</p>
                 </div>
               </div>
-              <div className="flex items-center">
-                <Briefcase className="mr-2 h-4 w-4 text-muted-foreground" />
+              <div className="flex items-start space-x-3">
+                <Briefcase className="h-5 w-5 text-muted-foreground mt-0.5" />
                 <div>
-                  <p className="text-sm font-medium">Vị trí</p>
+                  <p className="text-sm font-medium">Công việc</p>
                   <p className="text-sm text-muted-foreground">{application.job?.name || "N/A"}</p>
                 </div>
               </div>
@@ -119,31 +119,34 @@ export function ApplicationSidebar({
           </Card>
 
           {/* Trạng thái */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <Clock className="mr-2 h-5 w-5" />
+          <Card className="border-none shadow-none">
+            <CardHeader className="p-0">
+              <CardTitle className="flex items-center text-lg font-semibold">
+                <Clock className="mr-2 h-5 w-5 text-primary" />
                 Trạng thái
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <Badge variant={application.status === "PENDING" ? "secondary" : application.status === "APPROVED" ? "success" : "destructive"}>
+            <CardContent className="p-0 mt-4">
+              <Badge 
+                variant={application.status === "PENDING" ? "secondary" : application.status === "APPROVED" ? "success" : "destructive"}
+                className="text-sm px-3 py-1"
+              >
                 {application.status === "PENDING" ? "Đang chờ" : application.status === "APPROVED" ? "Đã duyệt" : "Từ chối"}
               </Badge>
             </CardContent>
           </Card>
 
           {/* Thời gian */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <CalendarDays className="mr-2 h-5 w-5" />
+          <Card className="border-none shadow-none">
+            <CardHeader className="p-0">
+              <CardTitle className="flex items-center text-lg font-semibold">
+                <CalendarDays className="mr-2 h-5 w-5 text-primary" />
                 Thời gian
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center">
-                <Clock className="mr-2 h-4 w-4 text-muted-foreground" />
+            <CardContent className="space-y-4 p-0 mt-4">
+              <div className="flex items-start space-x-3">
+                <Clock className="h-5 w-5 text-muted-foreground mt-0.5" />
                 <div>
                   <p className="text-sm font-medium">Ngày tạo</p>
                   <p className="text-sm text-muted-foreground">
@@ -152,8 +155,8 @@ export function ApplicationSidebar({
                 </div>
               </div>
               {application.updatedAt && (
-                <div className="flex items-center">
-                  <Clock className="mr-2 h-4 w-4 text-muted-foreground" />
+                <div className="flex items-start space-x-3">
+                  <Clock className="h-5 w-5 text-muted-foreground mt-0.5" />
                   <div>
                     <p className="text-sm font-medium">Ngày cập nhật</p>
                     <p className="text-sm text-muted-foreground">
@@ -167,16 +170,26 @@ export function ApplicationSidebar({
 
           {/* File CV */}
           {application.fileUrl && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Briefcase className="mr-2 h-5 w-5" />
+            <Card className="border-none shadow-none">
+              <CardHeader className="p-0">
+                <CardTitle className="flex items-center text-lg font-semibold">
+                  <Briefcase className="mr-2 h-5 w-5 text-primary" />
                   File CV
                 </CardTitle>
               </CardHeader>
-              <CardContent>
-                <Button variant="outline" className="w-full" asChild>
-                  <a href={`https://localhost:7152${application.fileUrl}`} target="_blank" rel="noopener noreferrer">
+              <CardContent className="p-0 mt-4">
+                <Button 
+                  variant="outline" 
+                  className="w-full hover:bg-primary/5" 
+                  asChild
+                >
+                  <a 
+                    href={`https://localhost:7152${application.fileUrl}`} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-center"
+                  >
+                    <Briefcase className="mr-2 h-4 w-4" />
                     Xem CV
                   </a>
                 </Button>
@@ -185,12 +198,12 @@ export function ApplicationSidebar({
           )}
 
           {/* Actions */}
-          <SheetFooter>
-            <div className="flex gap-2">
+          <SheetFooter className="border-t pt-6">
+            <div className="flex gap-2 w-full">
               <Button
                 variant="outline"
                 onClick={() => handleStatusChange("REJECTED")}
-                className="flex-1"
+                className="flex-1 hover:bg-destructive/5 hover:text-destructive hover:border-destructive"
                 disabled={isPending || application.status === "REJECTED"}
               >
                 <XCircle className="mr-2 h-4 w-4" />

@@ -25,7 +25,7 @@ export default function CompaniesPage() {
   const router = useRouter();
   const { companies, updateParams } = useCompanies();
   const [loading, setLoading] = useState(true);
-  const [rowSelection, setRowSelection] = useState<Record<string, boolean>>({});
+  const [selectedCompanies, setSelectedCompanies] = useState<string[]>([]);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
 
@@ -46,31 +46,37 @@ export default function CompaniesPage() {
     updateParams({ ...filters, pageNumber: 1 });
   };
 
-  const handleDeleteSelected = () => {
-    setShowDeleteDialog(true);
+  const handleSelectCompany = (companyId: string) => {
+    setSelectedCompanies((prev) =>
+      prev.includes(companyId)
+        ? prev.filter((id) => id !== companyId)
+        : [...prev, companyId]
+    );
   };
 
-  const confirmDeleteSelected = async () => {
+  const handleDeleteSelected = async () => {
+    if (selectedCompanies.length === 0) {
+      toast.error("Vui lòng chọn ít nhất một công ty để xóa");
+      return;
+    }
+
     try {
       setDeleteLoading(true);
-      const selectedIds = Object.keys(rowSelection).map(
-        (index) => companies.data?.items[parseInt(index)].id
-      );
-
       const response = await axiosClient.delete("/api/Company", {
         data: {
-          companysId: selectedIds
+          companysId: selectedCompanies
         }
       });
 
-      if (response.data.result) {
-        toast.success(response.data.message || "Xóa các công ty đã chọn thành công");
-        setRowSelection({});
+      if (response.data && response.data.result === true) {
+        toast.success(`Đã xóa thành công ${selectedCompanies.length} công ty`);
+        setSelectedCompanies([]);
         updateParams({ pageNumber: 1 });
       } else {
-        toast.error(response.data.message || "Có lỗi xảy ra khi xóa các công ty đã chọn");
+        toast.error(response.data?.message || "Có lỗi xảy ra khi xóa các công ty đã chọn");
       }
     } catch (error: any) {
+      console.error("Error deleting companies:", error);
       toast.error(error.response?.data?.message || "Có lỗi xảy ra khi xóa các công ty đã chọn");
     } finally {
       setDeleteLoading(false);
@@ -88,14 +94,14 @@ export default function CompaniesPage() {
           </p>
         </div>
         <div className="flex items-center space-x-2">
-          {Object.keys(rowSelection).length > 0 && (
+          {selectedCompanies.length > 0 && (
             <Button
               variant="destructive"
-              onClick={handleDeleteSelected}
+              onClick={() => setShowDeleteDialog(true)}
               disabled={deleteLoading}
             >
               <Trash className="mr-2 h-4 w-4" />
-              Xóa {Object.keys(rowSelection).length} công ty
+              Xóa {selectedCompanies.length} công ty
             </Button>
           )}
           <Button onClick={() => router.push("/admin/companies/add")}>
@@ -109,7 +115,7 @@ export default function CompaniesPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Xác nhận xóa nhiều</AlertDialogTitle>
             <AlertDialogDescription>
-              Bạn có chắc chắn muốn xóa {Object.keys(rowSelection).length} công ty đã chọn?
+              Bạn có chắc chắn muốn xóa {selectedCompanies.length} công ty đã chọn?
               <br />
               Hành động này không thể hoàn tác.
             </AlertDialogDescription>
@@ -117,7 +123,7 @@ export default function CompaniesPage() {
           <AlertDialogFooter>
             <AlertDialogCancel disabled={deleteLoading}>Hủy</AlertDialogCancel>
             <AlertDialogAction
-              onClick={confirmDeleteSelected}
+              onClick={handleDeleteSelected}
               disabled={deleteLoading}
               className="bg-red-600 hover:bg-red-700"
             >
@@ -129,8 +135,6 @@ export default function CompaniesPage() {
 
       <DataTableCompany
         data={companies.data?.items || []}
-        loading={companies.loading}
-        error={companies.error}
         pagination={{
           currentPage: companies.data?.currentPage || 1,
           pageSize: companies.data?.pageSize || 10,
@@ -140,7 +144,9 @@ export default function CompaniesPage() {
         onPageChange={handlePageChange}
         onPageSizeChange={handlePageSizeChange}
         onFiltersChange={handleFiltersChange}
-        onRowSelectionChange={setRowSelection}
+        onSelectCompany={handleSelectCompany}
+        selectedCompanies={selectedCompanies}
+        onRefresh={() => updateParams({ pageNumber: 1 })}
       />
     </div>
   );

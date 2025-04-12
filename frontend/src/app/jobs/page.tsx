@@ -12,6 +12,7 @@ import Link from "next/link";
 import Header from "@/components/layout/UserComponents/Header/Header";
 import Footer from "@/components/layout/UserComponents/Footer/Footer";
 import Search from "@/components/layout/UserComponents/SearchComponents/Search";
+import { ApplyJobDialog } from "@/components/jobs/ApplyJobDialog";
 
 const BASE_URL = 'https://localhost:7152';
 
@@ -28,6 +29,7 @@ export default function JobsPage() {
 
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [jobDetailLoading, setJobDetailLoading] = useState(false);
+  const [isApplyDialogOpen, setIsApplyDialogOpen] = useState(false);
 
   // Fetch job detail when jobId changes
   useEffect(() => {
@@ -80,6 +82,10 @@ export default function JobsPage() {
       level: searchParams.level,
       pageNumber: 1
     });
+  };
+
+  const handleApplyClick = () => {
+    setIsApplyDialogOpen(true);
   };
 
   if (error) {
@@ -223,6 +229,7 @@ export default function JobsPage() {
                   <div className="mt-8">
                     <Button
                       className="w-full md:w-auto bg-red-600 hover:bg-red-700 text-white font-semibold py-3 px-8 rounded-lg"
+                      onClick={handleApplyClick}
                     >
                       Ứng tuyển ngay
                     </Button>
@@ -256,7 +263,7 @@ export default function JobsPage() {
                 </div>
               ) : (
                 <div className="bg-white rounded-xl shadow-sm p-8 text-center">
-                  <p className="text-gray-500">Vui lòng chọn một công việc để xem chi tiết</p>
+                  <p className="text-gray-500">Không tìm thấy thông tin công việc</p>
                 </div>
               )}
             </div>
@@ -264,6 +271,17 @@ export default function JobsPage() {
         </div>
       </div>
       <Footer />
+
+      {/* Apply Job Dialog */}
+      {selectedJob && (
+        <ApplyJobDialog
+          isOpen={isApplyDialogOpen}
+          onClose={() => setIsApplyDialogOpen(false)}
+          jobId={selectedJob.id}
+          jobName={selectedJob.name}
+          companyName={selectedJob.companyName}
+        />
+      )}
     </>
   );
 } 

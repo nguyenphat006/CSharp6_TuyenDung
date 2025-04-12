@@ -16,6 +16,7 @@ import { logout } from "@/redux/features/authSlice";
 import { toast } from "sonner";
 import { RootState } from "@/redux/store";
 import { IoSettingsOutline, IoLogOutOutline, IoHomeOutline } from "react-icons/io5";
+import { LogOut, User, Settings, LayoutDashboard, FileText } from "lucide-react";
 
 export function UserAvatar() {
   const [isOpen, setIsOpen] = useState(false);
@@ -68,6 +69,15 @@ export function UserAvatar() {
           >
             <IoHomeOutline className="w-5 h-5" />
             Trang quản trị
+          </DropdownMenuItem>
+        )}
+        {user?.role === "HR" && (
+          <DropdownMenuItem 
+            onClick={() => router.push("/admin/applications")}
+            className="px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-3 transition-colors"
+          >
+            <FileText className="w-5 h-5" />
+            Quản lý đơn xin việc
           </DropdownMenuItem>
         )}
         <DropdownMenuSeparator className="my-2" />

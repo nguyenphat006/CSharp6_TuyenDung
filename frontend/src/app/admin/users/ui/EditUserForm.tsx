@@ -179,6 +179,7 @@ export function EditUserForm({
                     </FormControl>
                     <SelectContent>
                       <SelectItem value="Admin">Quản trị viên</SelectItem>
+                      <SelectItem value="HR">HR</SelectItem>
                       <SelectItem value="User">Người dùng</SelectItem>
                     </SelectContent>
                   </Select>

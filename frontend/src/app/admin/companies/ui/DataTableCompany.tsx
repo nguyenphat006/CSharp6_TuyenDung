@@ -13,7 +13,7 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { ArrowUpDown, ChevronDown, MoreHorizontal, Pencil, Trash, Eye, ChevronLeft, ChevronRight, Search } from "lucide-react";
+import { ArrowUpDown, ChevronDown, MoreHorizontal, Pencil, Trash, Eye, ChevronLeft, ChevronRight, Search, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -51,7 +51,7 @@ import { useRouter } from "next/navigation";
 import { format } from "date-fns";
 import { axiosClient } from "@/lib/axios-client";
 import { toast } from "sonner";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Select,
   SelectContent,
@@ -67,11 +67,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 
 interface DataTableCompanyProps {
   data: Company[];
   onRefresh: () => void;
-  onRowSelectionChange?: (selection: Record<string, boolean>) => void;
+  onSelectCompany: (companyId: string) => void;
+  selectedCompanies: string[];
   pagination: {
     currentPage: number;
     pageSize: number;
@@ -88,96 +90,50 @@ interface DataTableCompanyProps {
   }) => void;
 }
 
-export function DataTableCompany({ 
-  data, 
+export function DataTableCompany({
+  data,
   onRefresh,
-  onRowSelectionChange,
+  onSelectCompany,
+  selectedCompanies = [],
   pagination,
   onPageChange,
   onPageSizeChange,
-  onFiltersChange
+  onFiltersChange,
 }: DataTableCompanyProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const [sorting, setSorting] = React.useState<SortingState>([]);
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
-  const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
-  const [rowSelection, setRowSelection] = React.useState<Record<string, boolean>>({});
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [companyToDelete, setCompanyToDelete] = useState<Company | null>(null);
   const [showDeleteSelectedDialog, setShowDeleteSelectedDialog] = useState(false);
-  const [showDescription, setShowDescription] = useState(false);
-  const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [editingCompany, setEditingCompany] = useState<Company | null>(null);
+  const [sorting, setSorting] = useState<SortingState>([]);
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [filters, setFilters] = useState({
     keyword: "",
     industry: "",
     companySize: "",
-    address: ""
+    address: "",
   });
 
-  // Notify parent component when row selection changes
-  React.useEffect(() => {
-    onRowSelectionChange?.(rowSelection);
-  }, [rowSelection, onRowSelectionChange]);
-
-  // Update filters when column filters change
-  React.useEffect(() => {
-    const newFilters = {
-      keyword: "",
-      industry: "",
-      companySize: "",
-      address: ""
-    };
-
-    columnFilters.forEach((filter) => {
-      if (filter.id === "name") {
-        newFilters.keyword = filter.value as string;
-      } else if (filter.id === "industry") {
-        newFilters.industry = filter.value as string;
-      } else if (filter.id === "companySize") {
-        newFilters.companySize = filter.value as string;
-      } else if (filter.id === "address") {
-        newFilters.address = filter.value as string;
+  const handleSelectAll = (checked: boolean) => {
+    if (typeof onSelectCompany === 'function') {
+      if (checked) {
+        data.forEach(company => onSelectCompany(company.id));
+      } else {
+        data.forEach(company => onSelectCompany(company.id));
       }
-    });
-
-    // Chỉ cập nhật khi có sự thay đổi
-    if (
-      newFilters.keyword !== filters.keyword ||
-      newFilters.industry !== filters.industry ||
-      newFilters.companySize !== filters.companySize ||
-      newFilters.address !== filters.address
-    ) {
-      setFilters(newFilters);
-      onFiltersChange(newFilters);
     }
-  }, [columnFilters]);
+  };
 
-  // Lấy danh sách unique các giá trị cho bộ lọc
-  const uniqueLocations = React.useMemo(() => {
-    return Array.from(
-      new Set(
-        data
-          .map((company) => company.address)
-          .filter((address) => address && address.trim() !== "")
-      )
-    ).sort();
-  }, [data]);
+  const handleSelectCompany = (companyId: string) => {
+    if (typeof onSelectCompany === 'function') {
+      onSelectCompany(companyId);
+    }
+  };
 
-  const uniqueIndustries = React.useMemo(() => {
-    return Array.from(
-      new Set(
-        data
-          .map((company) => company.industry)
-          .filter((industry) => industry && industry.trim() !== "")
-      )
-    ).sort();
-  }, [data]);
-
-  const companyModels = ["Onsite", "Remote", "Hybrid"];
-  const companySizes = ["1-50", "51-150", "151-300", "301-500", "500+"];
-
-  const handleDelete = async (company: Company) => {
+  const handleDelete = (company: Company) => {
     setCompanyToDelete(company);
     setShowDeleteDialog(true);
   };
@@ -193,21 +149,19 @@ export function DataTableCompany({
         }
       });
 
-      // Kiểm tra phản hồi từ server
       if (response.data && response.data.result === true) {
-        // Chỉ cập nhật UI khi xóa thành công
-        await onRefresh(); // Đợi refresh hoàn tất
         toast.success(response.data.message || "Xóa công ty thành công");
         setShowDeleteDialog(false);
         setCompanyToDelete(null);
+        if (typeof onRefresh === 'function') {
+          await onRefresh();
+        }
       } else {
-        // Nếu có lỗi từ server, không cập nhật UI
         toast.error(response.data?.message || "Có lỗi xảy ra khi xóa công ty");
         setShowDeleteDialog(false);
       }
     } catch (error: any) {
       console.error("Error deleting company:", error);
-      // Nếu có lỗi từ API, không cập nhật UI
       toast.error(error.response?.data?.message || "Có lỗi xảy ra khi xóa công ty");
       setShowDeleteDialog(false);
     } finally {
@@ -215,38 +169,27 @@ export function DataTableCompany({
     }
   };
 
-  const handleDeleteSelected = () => {
-    setShowDeleteSelectedDialog(true);
-  };
-
   const confirmDeleteSelected = async () => {
     try {
       setLoading(true);
-      const selectedIds = Object.keys(rowSelection).map(
-        (index) => data[parseInt(index)].id
-      );
-
       const response = await axiosClient.delete("/api/Company", {
         data: {
-          companysId: selectedIds
+          companysId: selectedCompanies
         }
       });
 
-      // Kiểm tra phản hồi từ server
       if (response.data && response.data.result === true) {
-        // Chỉ cập nhật UI khi xóa thành công
-        await onRefresh(); // Đợi refresh hoàn tất
         toast.success(response.data.message || "Xóa các công ty đã chọn thành công");
-        setRowSelection({});
         setShowDeleteSelectedDialog(false);
+        if (typeof onRefresh === 'function') {
+          await onRefresh();
+        }
       } else {
-        // Nếu có lỗi từ server, không cập nhật UI
         toast.error(response.data?.message || "Có lỗi xảy ra khi xóa các công ty đã chọn");
         setShowDeleteSelectedDialog(false);
       }
     } catch (error: any) {
       console.error("Error deleting selected companies:", error);
-      // Nếu có lỗi từ API, không cập nhật UI
       toast.error(error.response?.data?.message || "Có lỗi xảy ra khi xóa các công ty đã chọn");
       setShowDeleteSelectedDialog(false);
     } finally {
@@ -254,27 +197,40 @@ export function DataTableCompany({
     }
   };
 
-  const handleFilterChange = (columnId: string, value: string) => {
-    const newFilters = { ...filters };
-    if (columnId === "name") {
-      newFilters.keyword = value;
-    } else if (columnId === "industry") {
-      newFilters.industry = value === "all" ? "" : value;
-    } else if (columnId === "companySize") {
-      newFilters.companySize = value === "all" ? "" : value;
-    } else if (columnId === "address") {
-      newFilters.address = value === "all" ? "" : value;
-    }
+  const handleEdit = (company: Company) => {
+    setEditingCompany(company);
+    setShowEditDialog(true);
+  };
 
-    // Chỉ cập nhật khi có sự thay đổi
-    if (
-      newFilters.keyword !== filters.keyword ||
-      newFilters.industry !== filters.industry ||
-      newFilters.companySize !== filters.companySize ||
-      newFilters.address !== filters.address
-    ) {
-      setFilters(newFilters);
-      onFiltersChange(newFilters);
+  // Thêm hàm để xử lý URL logo
+  const getLogoUrl = (logo: string | null): string => {
+    if (!logo) return "/img/company/default.png";
+    if (logo.startsWith('http')) return logo;
+    return `https://localhost:7152${logo}`;
+  };
+
+  const handleEditSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingCompany) return;
+
+    try {
+      setLoading(true);
+      const response = await axiosClient.put("/api/Company", editingCompany);
+
+      if (response.data && response.data.result === true) {
+        toast.success(response.data.message || "Cập nhật công ty thành công");
+        setShowEditDialog(false);
+        await onRefresh();
+      } else {
+        toast.error(response.data?.message || "Có lỗi xảy ra khi cập nhật công ty");
+        setShowEditDialog(false);
+      }
+    } catch (error: any) {
+      console.error("Error editing company:", error);
+      toast.error(error.response?.data?.message || "Có lỗi xảy ra khi cập nhật công ty");
+      setShowEditDialog(false);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -284,18 +240,23 @@ export function DataTableCompany({
       header: ({ table }) => (
         <Checkbox
           checked={
-            table.getIsAllPageRowsSelected() ||
-            (table.getIsSomePageRowsSelected() && "indeterminate")
+            data.length > 0 && selectedCompanies.length === data.length
           }
-          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-          aria-label="Select all"
+          onCheckedChange={(checked) => {
+            if (checked) {
+              data.forEach((company) => onSelectCompany(company.id));
+            } else {
+              data.forEach((company) => onSelectCompany(company.id));
+            }
+          }}
+          aria-label="Chọn tất cả"
         />
       ),
       cell: ({ row }) => (
         <Checkbox
-          checked={row.getIsSelected()}
-          onCheckedChange={(value) => row.toggleSelected(!!value)}
-          aria-label="Select row"
+          checked={selectedCompanies.includes(row.original.id)}
+          onCheckedChange={() => onSelectCompany(row.original.id)}
+          aria-label="Chọn hàng"
         />
       ),
       enableSorting: false,
@@ -430,8 +391,7 @@ export function DataTableCompany({
               <DropdownMenuItem
                 onClick={() => {
                   if (company.description) {
-                    setSelectedCompany(company);
-                    setShowDescription(true);
+                    onSelectCompany(company.id);
                   }
                 }}
                 className="flex items-center"
@@ -460,15 +420,14 @@ export function DataTableCompany({
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     onColumnVisibilityChange: setColumnVisibility,
-    onRowSelectionChange: setRowSelection,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
     state: {
       sorting,
       columnFilters,
       columnVisibility,
-      rowSelection,
     },
   });
 
@@ -481,60 +440,60 @@ export function DataTableCompany({
             placeholder="Tìm kiếm công ty..."
             className="pl-8"
             value={filters.keyword}
-            onChange={(e) => handleFilterChange("name", e.target.value)}
-            onKeyDown={(e) => {
+            onChange={(e) => {
+              setFilters({ ...filters, keyword: e.target.value });
+              onFiltersChange({ ...filters, keyword: e.target.value });
+            }}
+            onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
               if (e.key === "Enter") {
-                handleFilterChange("name", e.target.value);
+                onFiltersChange({ ...filters, keyword: e.currentTarget.value });
               }
             }}
           />
         </div>
         <Select
           value={filters.industry || "all"}
-          onValueChange={(value) => handleFilterChange("industry", value)}
+          onValueChange={(value) => {
+            setFilters({ ...filters, industry: value });
+            onFiltersChange({ ...filters, industry: value });
+          }}
         >
           <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="Ngành nghề" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Tất cả</SelectItem>
-            {uniqueIndustries.map((industry) => (
-              <SelectItem key={industry} value={industry}>
-                {industry}
-              </SelectItem>
-            ))}
+            {/* Add industry options here */}
           </SelectContent>
         </Select>
         <Select
           value={filters.companySize || "all"}
-          onValueChange={(value) => handleFilterChange("companySize", value)}
+          onValueChange={(value) => {
+            setFilters({ ...filters, companySize: value });
+            onFiltersChange({ ...filters, companySize: value });
+          }}
         >
           <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="Quy mô" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Tất cả</SelectItem>
-            {companySizes.map((size) => (
-              <SelectItem key={size} value={size}>
-                {size}
-              </SelectItem>
-            ))}
+            {/* Add company size options here */}
           </SelectContent>
         </Select>
         <Select
           value={filters.address || "all"}
-          onValueChange={(value) => handleFilterChange("address", value)}
+          onValueChange={(value) => {
+            setFilters({ ...filters, address: value });
+            onFiltersChange({ ...filters, address: value });
+          }}
         >
           <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="Địa điểm" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Tất cả</SelectItem>
-            {uniqueLocations.map((location) => (
-              <SelectItem key={location} value={location}>
-                {location}
-              </SelectItem>
-            ))}
+            {/* Add location options here */}
           </SelectContent>
         </Select>
       </div>
@@ -543,19 +502,16 @@ export function DataTableCompany({
           <TableHeader>
             <TableRow>
               <TableHead className="w-[50px]">
-                <input
-                  type="checkbox"
-                  className="h-4 w-4"
-                  checked={Object.keys(rowSelection).length === data.length}
-                  onChange={(e) => {
-                    const newSelection: Record<string, boolean> = {};
-                    if (e.target.checked) {
-                      data.forEach((_, index) => {
-                        newSelection[index] = true;
-                      });
+                <Checkbox
+                  checked={
+                    data.length > 0 && selectedCompanies.length === data.length
+                  }
+                  onCheckedChange={(checked) => {
+                    if (checked) {
+                      data.forEach((company) => onSelectCompany(company.id));
+                    } else {
+                      data.forEach((company) => onSelectCompany(company.id));
                     }
-                    setRowSelection(newSelection);
-                    onRowSelectionChange?.(newSelection);
                   }}
                 />
               </TableHead>
@@ -572,17 +528,9 @@ export function DataTableCompany({
             {data.map((company, index) => (
               <TableRow key={company.id}>
                 <TableCell>
-                  <input
-                    type="checkbox"
-                    className="h-4 w-4"
-                    checked={rowSelection[index] || false}
-                    onChange={(e) => {
-                      setRowSelection((prev) => ({
-                        ...prev,
-                        [index]: e.target.checked,
-                      }));
-                      onRowSelectionChange?.(rowSelection);
-                    }}
+                  <Checkbox
+                    checked={selectedCompanies.includes(company.id)}
+                    onCheckedChange={() => onSelectCompany(company.id)}
                   />
                 </TableCell>
                 <TableCell>
@@ -630,8 +578,7 @@ export function DataTableCompany({
                       </DropdownMenuItem>
                       <DropdownMenuItem
                         onClick={() => {
-                          setSelectedCompany(company);
-                          setShowDescription(true);
+                          onSelectCompany(company.id);
                         }}
                       >
                         <Eye className="mr-2 h-4 w-4" />
@@ -724,7 +671,7 @@ export function DataTableCompany({
           <AlertDialogHeader>
             <AlertDialogTitle>Xác nhận xóa nhiều</AlertDialogTitle>
             <AlertDialogDescription>
-              Bạn có chắc chắn muốn xóa {Object.keys(rowSelection).length} công ty đã chọn?
+              Bạn có chắc chắn muốn xóa {selectedCompanies?.length || 0} công ty đã chọn?
               <br />
               Hành động này không thể hoàn tác.
             </AlertDialogDescription>
@@ -742,15 +689,38 @@ export function DataTableCompany({
         </AlertDialogContent>
       </AlertDialog>
 
-      <Dialog open={showDescription} onOpenChange={setShowDescription}>
-        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+      <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Mô tả công ty</DialogTitle>
+            <DialogTitle>Chỉnh sửa công ty</DialogTitle>
           </DialogHeader>
-          <div 
-            className="prose prose-stone dark:prose-invert max-w-none [&>ul]:list-disc [&>ul]:pl-10 [&>ol]:list-decimal [&>ol]:pl-10 [&>*:first-child]:mt-0 [&>*:last-child]:mb-0 [&_li]:pl-2 [&_ul]:my-2 [&_ol]:my-2"
-            dangerouslySetInnerHTML={{ __html: selectedCompany?.description || "" }}
-          />
+          <form onSubmit={handleEditSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label>Logo</Label>
+              {editingCompany?.logoUrl && (
+                <div className="mb-2">
+                  <img
+                    src={getLogoUrl(editingCompany.logoUrl)}
+                    alt="Company logo"
+                    className="w-32 h-32 object-contain"
+                  />
+                </div>
+              )}
+              <Input
+                type="file"
+                accept="image/*"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    setEditingCompany((prev) => ({
+                      ...prev!,
+                      logo: URL.createObjectURL(file),
+                    }));
+                  }
+                }}
+              />
+            </div>
+          </form>
         </DialogContent>
       </Dialog>
     </div>

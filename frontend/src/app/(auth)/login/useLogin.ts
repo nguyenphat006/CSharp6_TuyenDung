@@ -7,6 +7,7 @@ import { LoginSchema } from '../schema/index'
 import { toast } from 'sonner'
 import { useDispatch } from 'react-redux'
 import { setUser, setToken } from '@/redux/features/authSlice'
+import Cookies from 'js-cookie'
 
 export const useLogin = () => {
   const [isLoading, setIsLoading] = useState(false)
@@ -31,9 +32,11 @@ export const useLogin = () => {
         throw new Error(data.message || "Đăng nhập thất bại")
       }
 
-      // Lưu token và refreshToken vào localStorage
+      // Lưu token và refreshToken vào cả localStorage và cookie
       localStorage.setItem("token", data.data.token)
       localStorage.setItem("refreshToken", data.data.refreshToken)
+      Cookies.set('token', data.data.token, { expires: 7 })
+      Cookies.set('refreshToken', data.data.refreshToken, { expires: 7 })
       dispatch(setToken(data.data.token))
 
       // Lấy thông tin chi tiết của user theo ID
@@ -52,8 +55,9 @@ export const useLogin = () => {
         throw new Error(userData.message || "Không thể lấy thông tin người dùng")
       }
 
-      // Lưu thông tin chi tiết user vào localStorage
+      // Lưu thông tin chi tiết user vào cả localStorage và cookie
       localStorage.setItem("user", JSON.stringify(userData.data))
+      Cookies.set('user', JSON.stringify(userData.data), { expires: 7 })
       console.log('User role from API:', userData.data.role)
       dispatch(setUser(userData.data))
 
@@ -62,7 +66,12 @@ export const useLogin = () => {
 
       // Chuyển hướng sau 2 giây
       setTimeout(() => {
-        router.push("/")
+        // Kiểm tra role và chuyển hướng phù hợp
+        if (userData.data.role === 'HR') {
+          router.push("/admin/applications")
+        } else {
+          router.push("/")
+        }
       }, 2000)
 
     } catch (error: any) {

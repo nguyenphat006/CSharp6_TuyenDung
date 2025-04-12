@@ -11,7 +11,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { LogOut, User, Settings, LayoutDashboard } from "lucide-react";
+import { LogOut, User, Settings, LayoutDashboard, FileText } from "lucide-react";
 
 export function UserAvatar() {
   const router = useRouter();
@@ -58,10 +58,16 @@ export function UserAvatar() {
           <User className="mr-2 h-4 w-4" />
           <span>Thông tin cá nhân</span>
         </DropdownMenuItem>
-        {user.role === 'Admin' && (
+        {(user.role === 'Admin' || user.role === 'HR') && (
           <DropdownMenuItem onClick={() => router.push('/admin')}>
             <LayoutDashboard className="mr-2 h-4 w-4" />
             <span>Trang quản trị</span>
+          </DropdownMenuItem>
+        )}
+        {user.role === 'HR' && (
+          <DropdownMenuItem onClick={() => router.push('/admin/applications')}>
+            <FileText className="mr-2 h-4 w-4" />
+            <span>Quản lý đơn xin việc</span>
           </DropdownMenuItem>
         )}
         <DropdownMenuItem onClick={() => router.push('/settings')}>
