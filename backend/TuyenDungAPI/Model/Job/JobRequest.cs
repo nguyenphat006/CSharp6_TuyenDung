@@ -90,5 +90,15 @@ namespace TuyenDungAPI.Model.Job
         public int PageNumber { get; set; } = 1;
         public int PageSize { get; set; } = 10;
     }
+    public class JobSearchRequest
+    {
+        public string? Keyword { get; set; }       // 🔥 Ô input gõ tự do
+        public string? Location { get; set; }      // 🔥 Dropdown lọc theo địa điểm
+        public string? Level { get; set; }         // 🔥 Dropdown lọc cấp độ
+        public decimal? MinSalary { get; set; }    // 🔥 Khoảng lương tối thiểu
+        public decimal? MaxSalary { get; set; }    // 🔥 Khoảng lương tối đa
+        public int PageNumber { get; set; } = 1;
+        public int PageSize { get; set; } = 10;
+    }
 
 }

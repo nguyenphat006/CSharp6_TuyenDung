@@ -10,6 +10,7 @@ import { styled } from '@mui/material/styles';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import GoogleIcon from '@mui/icons-material/Google';
+import { useState, useEffect } from 'react';
 
 const SectionTitleStyled = styled(Typography)({
   fontSize: '18px',
@@ -45,6 +46,16 @@ const SettingsTab: React.FC<SettingsTabProps> = ({
   onPasswordChange,
   onNotificationSettings,
 }) => {
+  const [userEmail, setUserEmail] = useState('');
+
+  useEffect(() => {
+    const userData = localStorage.getItem('user');
+    if (userData) {
+      const user = JSON.parse(userData);
+      setUserEmail(user.email);
+    }
+  }, []);
+
   return (
     <>
       <Box sx={{ mb: 4 }}>
@@ -54,7 +65,7 @@ const SettingsTab: React.FC<SettingsTabProps> = ({
             Email (không thể thay đổi)
           </Typography>
           <Typography variant="body1" sx={{ color: '#333', fontWeight: 600 }}>
-            example@email.com
+            {userEmail}
           </Typography>
         </Box>
         <Button

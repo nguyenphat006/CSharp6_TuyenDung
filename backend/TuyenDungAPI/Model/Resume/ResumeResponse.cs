@@ -9,7 +9,7 @@ namespace TuyenDungAPI.Model.Resume
         public UserResponse User { get; set; }
         public string Status { get; set; }
         public CompanyResumeResponse Company { get; set; }
-        public JobResponse Job { get; set; }
+        public JobResumeResponse Job { get; set; }
         public List<ResumeHistoryResponse> History { get; set; } = new();
         public string FileUrl { get; set; }
     }
@@ -24,12 +24,14 @@ namespace TuyenDungAPI.Model.Resume
     {
         public Guid Id { get; set; }
         public string? Name { get; set; }
+        public string? Address { get; set; }
     }
 
-    public class JobResponse
+    public class JobResumeResponse
     {
         public Guid Id { get; set; }
         public string? Name { get; set; }
+        public decimal Salary { get; set; }
     }
 
     public class ResumeHistoryResponse

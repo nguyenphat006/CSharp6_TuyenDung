@@ -125,7 +125,19 @@ namespace TuyenDungAPI.Controllers.Feature
             return StatusCode(result.Status, result);
         }
 
-
+        /// <summary>
+        /// Tìm kiếm danh sách công việc theo nhiều tiêu chí (Keyword, Location, Level, Salary).
+        /// </summary>
+        /// <param name="request">Tiêu chí tìm kiếm công việc</param>
+        /// <returns>Danh sách công việc phù hợp</returns>
+        [HttpPost("search")]
+        [SwaggerOperation(Summary = "Tìm kiếm công việc (Jobs) theo từ khóa, địa điểm, mức lương, cấp độ")]
+        [ProducesResponseType(typeof(ApiResponse<PagedResult<JobResponse>>), StatusCodes.Status200OK)]
+        public async Task<IActionResult> SearchJobs([FromBody] JobSearchRequest request)
+        {
+            var result = await _jobService.SearchJobsAsync(request);
+            return StatusCode(result.Status, result);
+        }
 
 
     }

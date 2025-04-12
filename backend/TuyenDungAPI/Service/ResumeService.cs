@@ -5,6 +5,8 @@ using TuyenDungAPI.Model.Resume;
 using TuyenDungAPI.Model.Company;
 using System.Security.Claims;
 using Org.BouncyCastle.Utilities.Collections;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
+using TuyenDungAPI.Model.Job;
 
 
 namespace TuyenDungAPI.Service
@@ -113,7 +115,7 @@ namespace TuyenDungAPI.Service
                 FileUrl = resume.FileUrl,
                 CreatedAt = resume.CreatedAt,
                 Company = new CompanyResumeResponse { Id = company.Id, Name = company.Name },
-                Job = new JobResponse { Id = job.Id, Name = job.Name },
+                Job = new JobResumeResponse { Id = job.Id, Name = job.Name },
                 History = new List<ResumeHistoryResponse> { new ResumeHistoryResponse(history) }
             };
 
@@ -176,7 +178,7 @@ namespace TuyenDungAPI.Service
                     Id = r.Company.Id,
                     Name = r.Company.Name
                 },
-                Job = new JobResponse
+                Job = new JobResumeResponse
                 {
                     Id = r.Job.Id,
                     Name = r.Job.Name
@@ -225,7 +227,7 @@ namespace TuyenDungAPI.Service
                     Id = resume.Company.Id,
                     Name = resume.Company.Name
                 },
-                Job = new JobResponse
+                Job = new JobResumeResponse
                 {
                     Id = resume.Job.Id,
                     Name = resume.Job.Name
@@ -278,7 +280,7 @@ namespace TuyenDungAPI.Service
                 FileUrl = resume.FileUrl,
                 CreatedAt = resume.CreatedAt,
                 Company = new CompanyResumeResponse { Id = resume.Company.Id, Name = resume.Company.Name },
-                Job = new JobResponse { Id = resume.Job.Id, Name = resume.Job.Name },
+                Job = new JobResumeResponse { Id = resume.Job.Id, Name = resume.Job.Name },
                 History = resume.History.OrderByDescending(h => h.CreatedAt).Select(h => new ResumeHistoryResponse(h)).ToList()
             };
 
@@ -345,12 +347,14 @@ namespace TuyenDungAPI.Service
                 Company = new CompanyResumeResponse
                 {
                     Id = r.Company.Id,
-                    Name = r.Company.Name
+                    Name = r.Company.Name,
+                    Address = r.Company.Address
                 },
-                Job = new JobResponse
+                Job = new JobResumeResponse
                 {
                     Id = r.Job.Id,
-                    Name = r.Job.Name
+                    Name = r.Job.Name,
+                    Salary = r.Job.Salary
                 },
             }).ToList();
 

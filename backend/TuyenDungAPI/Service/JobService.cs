@@ -267,6 +267,72 @@ namespace TuyenDungAPI.Service
             return new ApiResponse<List<JobResponse>>(true, 200, response, "Lấy 6 job mới nhất thành công!");
         }
 
+        public async Task<ApiResponse<PagedResult<JobResponse>>> SearchJobsAsync(JobSearchRequest query)
+        {
+            var jobsQuery = _dbContext.Jobs
+                .Include(j => j.Company)
+                .Where(j => !j.IsDeleted && j.IsActive)
+                .AsQueryable();
+
+            // 🔍 Search theo keyword (Jobs + Company)
+            if (!string.IsNullOrWhiteSpace(query.Keyword))
+            {
+                jobsQuery = jobsQuery.Where(j =>
+                    j.Name.Contains(query.Keyword) ||
+                    j.Skills.Contains(query.Keyword) ||
+                    j.Description.Contains(query.Keyword) ||
+                    j.Level.Contains(query.Keyword) ||
+                    j.Company.Name.Contains(query.Keyword) ||
+                    j.Company.Industry.Contains(query.Keyword) ||
+                    j.Company.CompanySize.Contains(query.Keyword) ||
+                    j.Company.CompanyModel.Contains(query.Keyword) ||
+                    j.Location.Contains(query.Keyword)
+                );
+            }
+
+            // 🔍 Filter theo Location
+            if (!string.IsNullOrWhiteSpace(query.Location))
+            {
+                jobsQuery = jobsQuery.Where(j => j.Location.Contains(query.Location));
+            }
+
+            // 🔍 Filter theo Level
+            if (!string.IsNullOrWhiteSpace(query.Level))
+            {
+                jobsQuery = jobsQuery.Where(j => j.Level == query.Level);
+            }
+
+            // 🔍 Filter theo khoảng Salary
+            if (query.MinSalary.HasValue)
+            {
+                jobsQuery = jobsQuery.Where(j => j.Salary >= query.MinSalary.Value);
+            }
+
+            if (query.MaxSalary.HasValue)
+            {
+                jobsQuery = jobsQuery.Where(j => j.Salary <= query.MaxSalary.Value);
+            }
+
+            var totalRecords = await jobsQuery.CountAsync();
+
+            var jobs = await jobsQuery
+                .OrderByDescending(j => j.CreatedAt)
+                .Skip((query.PageNumber - 1) * query.PageSize)
+                .Take(query.PageSize)
+                .ToListAsync();
+
+            var response = new PagedResult<JobResponse>
+            {
+                CurrentPage = query.PageNumber,
+                PageSize = query.PageSize,
+                TotalRecords = totalRecords,
+                Items = jobs.Select(j => new JobResponse(j)).ToList()
+            };
+
+            return new ApiResponse<PagedResult<JobResponse>>(true, 200, response, "Tìm kiếm job thành công!");
+        }
+
+
 
 
     }
