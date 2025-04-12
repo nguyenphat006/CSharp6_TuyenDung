@@ -1,14 +1,21 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import Logo from "./Logo";
 import DesktopNavigation from "./DesktopNavigation";
 import MobileNavigation from "./MobileNavigation";
+import { UserAvatar } from "@/components/layout/Header/UserAvatar";
 
 const Header = () => {
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
   const [activeSubmenu, setActiveSubmenu] = useState<string | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    setIsLoggedIn(!!token);
+  }, []);
 
   // Hàm xử lý hover menu chính
   const handleMenuMouseEnter = (menu: string) => {
@@ -52,19 +59,25 @@ const Header = () => {
               Nhà Tuyển Dụng
             </Link>
             <div className="flex items-center space-x-4">
-              <Link
-                href="/login"
-                className="text-white hover:text-gray-300 transition-colors duration-200 text-sm font-medium"
-              >
-                Đăng Nhập
-              </Link>
-              <span className="text-gray-400">/</span>
-              <Link
-                href="/register"
-                className="text-white hover:text-gray-300 transition-colors duration-200 text-sm font-medium"
-              >
-                Đăng Ký
-              </Link>
+              {isLoggedIn ? (
+                <UserAvatar />
+              ) : (
+                <>
+                  <Link
+                    href="/login"
+                    className="text-white hover:text-gray-300 transition-colors duration-200 text-sm font-medium"
+                  >
+                    Đăng Nhập
+                  </Link>
+                  <span className="text-gray-400">/</span>
+                  <Link
+                    href="/register"
+                    className="text-white hover:text-gray-300 transition-colors duration-200 text-sm font-medium"
+                  >
+                    Đăng Ký
+                  </Link>
+                </>
+              )}
             </div>
           </div>
 

@@ -7,6 +7,7 @@ import { SidebarProvider } from "@/lib/context/SidebarContext";
 import { PageTitleProvider } from "@/lib/context/PageTitleContext";
 import { useSidebar } from "@/lib/context/SidebarContext";
 import { cn } from "@/lib/utils";
+import { AdminProtected } from "@/components/admin-protected";
 
 function AdminLayoutContent({ children }: { children: React.ReactNode }) {
   const { isExpanded, isMobileOpen } = useSidebar();
@@ -36,10 +37,12 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   return (
-    <SidebarProvider>
-      <PageTitleProvider>
-        <AdminLayoutContent>{children}</AdminLayoutContent>
-      </PageTitleProvider>
-    </SidebarProvider>
+    <AdminProtected>
+      <SidebarProvider>
+        <PageTitleProvider>
+          <AdminLayoutContent>{children}</AdminLayoutContent>
+        </PageTitleProvider>
+      </SidebarProvider>
+    </AdminProtected>
   );
 }

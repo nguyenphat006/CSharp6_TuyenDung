@@ -10,6 +10,9 @@ import { AdminProfileModal } from "./AdminProfileModal";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { IoLogOutOutline, IoSettingsOutline } from "react-icons/io5";
+import { Button } from "@/components/ui/button";
+import { Bell } from "lucide-react";
+import { UserAvatar } from "./UserAvatar";
 
 export const Header = () => {
   const { isExpanded, toggleSidebar, isMobileOpen, toggleMobileSidebar } = useSidebar();
@@ -52,20 +55,22 @@ export const Header = () => {
       )}>
         <div className="flex items-center justify-between h-full px-4 md:px-6">
           <div className="flex items-center gap-4">
-            <button
-              onClick={toggleSidebar}
-              className="p-2 rounded-lg hover:bg-gray-100 transition-all duration-200 hidden lg:block"
-              aria-label="Toggle Sidebar"
-            >
-              <MdMenu className="w-6 h-6 text-gray-500" />
-            </button>
-            <button
+            <Button
+              variant="ghost"
+              size="icon"
+              className="lg:hidden"
               onClick={toggleMobileSidebar}
-              className="p-2 rounded-lg hover:bg-gray-100 transition-all duration-200 lg:hidden"
-              aria-label="Toggle Mobile Sidebar"
             >
-              <MdMenu className="w-6 h-6 text-gray-500" />
-            </button>
+              <MdMenu className="h-6 w-6" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="hidden lg:block"
+              onClick={toggleSidebar}
+            >
+              <MdMenu className="h-6 w-6" />
+            </Button>
             <div>
               <h1 className="text-lg md:text-xl font-semibold text-gray-900">{title}</h1>
               <p className="text-xs md:text-sm text-gray-500 hidden sm:block">{subtitle}</p>
@@ -73,31 +78,15 @@ export const Header = () => {
           </div>
 
           <div className="flex items-center gap-2 md:gap-4">
+            <Button variant="ghost" size="icon">
+              <Bell className="h-6 w-6" />
+            </Button>
             <div className="relative" ref={dropdownRef}>
               <motion.div 
                 className="flex items-center gap-2 md:gap-4 p-2 rounded-lg hover:bg-gray-100 cursor-pointer transition-all duration-200"
                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
               >
-                <div className="relative">
-                  <Image
-                    src="/img/logo/logo-avat.png"
-                    alt="User"
-                    width={40}
-                    height={40}
-                    className="w-8 h-8 md:w-10 md:h-10 rounded-full ring-2 ring-white shadow-lg"
-                  />
-                  <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>
-                </div>
-                <div className="hidden md:block">
-                  <p className="text-sm font-medium text-gray-900">
-                    John Doe
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    john@example.com
-                  </p>
-                </div>
+                <UserAvatar />
               </motion.div>
 
               <AnimatePresence>
@@ -106,25 +95,23 @@ export const Header = () => {
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -10 }}
-                    transition={{ duration: 0.2 }}
-                    className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-xl py-2 z-50 border border-gray-100"
+                    className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2"
                   >
                     <button
+                      className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
                       onClick={() => {
                         setIsProfileOpen(true);
                         setIsDropdownOpen(false);
                       }}
-                      className="w-full px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-3 transition-colors"
                     >
-                      <IoSettingsOutline className="w-5 h-5" />
-                      Cài đặt tài khoản
+                      <IoSettingsOutline className="w-4 h-4" />
+                      Cài đặt
                     </button>
-                    <div className="h-px bg-gray-100 my-2"></div>
                     <button
+                      className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-gray-100 flex items-center gap-2"
                       onClick={handleLogout}
-                      className="w-full px-4 py-2.5 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-3 transition-colors"
                     >
-                      <IoLogOutOutline className="w-5 h-5" />
+                      <IoLogOutOutline className="w-4 h-4" />
                       Đăng xuất
                     </button>
                   </motion.div>

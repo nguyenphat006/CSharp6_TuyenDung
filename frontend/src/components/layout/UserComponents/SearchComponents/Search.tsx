@@ -28,13 +28,49 @@ const cities = [
   "Quy Nhơn"
 ];
 
-const Search = () => {
+const levels = [
+  "Tất cả cấp độ",
+  "Thực tập sinh",
+  "Fresher",
+  "Junior",
+  "Middle",
+  "Senior"
+];
+
+interface SearchProps {
+  onSearch?: (params: { keyword: string; location: string; level: string }) => void;
+  showTags?: boolean;
+  title?: string;
+  subtitle?: string;
+}
+
+const Search = ({ onSearch, showTags = true, title = "Nơi hội tụ Developer \"Chất\" – Cơ hội IT hấp dẫn", subtitle = "966 Việc làm IT cho Developer" }: SearchProps) => {
   const [selectedCity, setSelectedCity] = useState(cities[0]);
+  const [selectedLevel, setSelectedLevel] = useState(levels[0]);
   const [searchKeyword, setSearchKeyword] = useState("");
 
   const handleSearch = () => {
-    // Xử lý tìm kiếm ở đây
-    console.log("Searching with:", { city: selectedCity, keyword: searchKeyword });
+    if (onSearch) {
+      onSearch({
+        keyword: searchKeyword,
+        location: selectedCity === "Tất cả thành phố" ? "" : selectedCity,
+        level: selectedLevel === "Tất cả cấp độ" ? "" : selectedLevel
+      });
+    } else {
+      // Xử lý tìm kiếm mặc định
+      console.log("Searching with:", { city: selectedCity, level: selectedLevel, keyword: searchKeyword });
+    }
+  };
+
+  const handleTagClick = (tag: string) => {
+    setSearchKeyword(tag);
+    if (onSearch) {
+      onSearch({
+        keyword: tag,
+        location: selectedCity === "Tất cả thành phố" ? "" : selectedCity,
+        level: selectedLevel === "Tất cả cấp độ" ? "" : selectedLevel
+      });
+    }
   };
 
   return (
@@ -45,10 +81,10 @@ const Search = () => {
       <div className="max-w-5xl mx-auto text-center">
         {/* Tiêu đề */}
         <h1 className="text-3xl md:text-4xl font-semibold text-white mb-4">
-          Nơi hội tụ Developer <span className="text-white">&ldquo;Chất&rdquo;</span> – Cơ hội IT hấp dẫn
+          {title}
         </h1>
         <p className="text-xl text-white font-semibold mb-8">
-          966 Việc làm IT cho Developer
+          {subtitle}
         </p>
 
         {/* Thanh tìm kiếm */}
@@ -76,6 +112,44 @@ const Search = () => {
               {cities.map((city) => (
                 <option key={city} value={city} className="bg-[#121212] text-white">
                   {city}
+                </option>
+              ))}
+            </select>
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ duration: 0.2, delay: 0.1 }}
+            >
+              <FontAwesomeIcon 
+                icon={faChevronDown} 
+                className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none w-4 h-4"
+              />
+            </motion.div>
+          </div>
+
+          {/* Dropdown cấp độ */}
+          <div className="relative flex-1">
+            <div className="absolute left-4 top-1/2 transform -translate-y-1/2 flex items-center gap-2">
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ duration: 0.2 }}
+              >
+                <FontAwesomeIcon 
+                  icon={faChevronDown} 
+                  className="text-gray-400 w-4 h-4"
+                />
+              </motion.div>
+              <span className="text-gray-400">|</span>
+            </div>
+            <select
+              value={selectedLevel}
+              onChange={(e) => setSelectedLevel(e.target.value)}
+              className="w-full pl-16 pr-10 py-3 bg-white/10 border border-white/30 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-white/50 appearance-none"
+            >
+              {levels.map((level) => (
+                <option key={level} value={level} className="bg-[#121212] text-white">
+                  {level}
                 </option>
               ))}
             </select>
@@ -121,22 +195,25 @@ const Search = () => {
         </div>
 
         {/* Tags tìm kiếm phổ biến */}
-        <div className="flex items-center justify-center gap-4">
-          <p className="text-gray-400 text-sm whitespace-nowrap">Mọi người đang tìm kiếm:</p>
-          <div className="flex flex-wrap gap-3">
-            {popularTags.map((tag, index) => (
-              <motion.button
-                key={tag}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.2, delay: index * 0.05 }}
-                className="px-4 py-2 bg-black/50 border border-white/30 rounded-lg text-white text-sm hover:bg-white/10 transition-colors duration-200"
-              >
-                {tag}
-              </motion.button>
-            ))}
+        {showTags && (
+          <div className="flex items-center justify-center gap-4">
+            <p className="text-gray-400 text-sm whitespace-nowrap">Mọi người đang tìm kiếm:</p>
+            <div className="flex flex-wrap gap-3">
+              {popularTags.map((tag, index) => (
+                <motion.button
+                  key={tag}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.2, delay: index * 0.05 }}
+                  className="px-4 py-2 bg-black/50 border border-white/30 rounded-lg text-white text-sm hover:bg-white/10 transition-colors duration-200"
+                  onClick={() => handleTagClick(tag)}
+                >
+                  {tag}
+                </motion.button>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );

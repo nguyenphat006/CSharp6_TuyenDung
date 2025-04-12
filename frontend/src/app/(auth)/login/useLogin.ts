@@ -5,10 +5,13 @@ import { useRouter } from 'next/navigation'
 import { z } from 'zod'
 import { LoginSchema } from '../schema/index'
 import { toast } from 'sonner'
+import { useDispatch } from 'react-redux'
+import { setUser, setToken } from '@/redux/features/authSlice'
 
 export const useLogin = () => {
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
+  const dispatch = useDispatch()
 
   const login = async (email: string, password: string) => {
     try {
@@ -22,21 +25,45 @@ export const useLogin = () => {
       })
 
       const data = await response.json()
+      console.log('Login Response:', data)
 
       if (!data.result) {
         throw new Error(data.message || "Đăng nhập thất bại")
       }
 
+      // Lưu token và refreshToken vào localStorage
       localStorage.setItem("token", data.data.token)
       localStorage.setItem("refreshToken", data.data.refreshToken)
-      
+      dispatch(setToken(data.data.token))
+
+      // Lấy thông tin chi tiết của user theo ID
+      const userId = data.data.data.id
+      const userResponse = await fetch(`https://localhost:7152/api/users/${userId}`, {
+        headers: {
+          'Authorization': `Bearer ${data.data.token}`,
+          'Content-Type': 'application/json'
+        }
+      })
+
+      const userData = await userResponse.json()
+      console.log('User Detail Response:', userData)
+
+      if (!userData.result) {
+        throw new Error(userData.message || "Không thể lấy thông tin người dùng")
+      }
+
+      // Lưu thông tin chi tiết user vào localStorage
+      localStorage.setItem("user", JSON.stringify(userData.data))
+      console.log('User role from API:', userData.data.role)
+      dispatch(setUser(userData.data))
+
       // Hiển thị thông báo thành công
       toast.success("Đăng nhập thành công! Đang chuyển hướng...")
-      
-      // Chuyển hướng sau 5 giây
+
+      // Chuyển hướng sau 2 giây
       setTimeout(() => {
-        router.push("/admin/users")
-      }, 5000)
+        router.push("/")
+      }, 2000)
 
     } catch (error: any) {
       toast.error(error.message || "Đăng nhập thất bại")

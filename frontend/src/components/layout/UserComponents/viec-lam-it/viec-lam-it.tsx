@@ -247,6 +247,19 @@ const ViecLamIT: React.FC = () => {
           lineHeight: 1.3,
         }}
       >
+        123 việc làm IT hot nhất hôm nay
+      </Typography>
+
+      <Typography
+        variant="subtitle1"
+        sx={{
+          textAlign: 'center',
+          mb: 8,
+          color: '#4B5563',
+          fontFamily: 'Inter, sans-serif',
+        }}
+      >
+        Cập nhật liên tục các cơ hội việc làm hấp dẫn cho Developer
       </Typography>
 
       <Grid container spacing={3}>
@@ -259,6 +272,13 @@ const ViecLamIT: React.FC = () => {
                 onClick={() => setSelectedJob(index)}
                 sx={{
                   backgroundColor: selectedJob === index ? '#F9FAFB' : 'transparent',
+                  border: '1px solid #E5E7EB',
+                  borderRadius: '12px',
+                  mb: 2,
+                  '&:hover': {
+                    borderColor: '#2563EB',
+                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+                  },
                 }}
               >
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>

@@ -24,6 +24,7 @@ export interface Job {
   level: string;
   companyId: string;
   companyName: string;
+  companyLogo: string;
   description: string;
   startDate: string;
   endDate: string;

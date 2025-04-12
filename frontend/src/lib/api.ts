@@ -2,6 +2,7 @@ import axios from "axios";
 
 // API Base URLs
 export const API_BASE_URL = 'https://localhost:7152/api';
+export const API_BASE_LOCAL_URL = 'https://localhost:7152/api';
 
 // API Endpoints
 export const API_ENDPOINTS = {

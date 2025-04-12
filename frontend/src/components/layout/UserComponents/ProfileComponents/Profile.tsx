@@ -32,7 +32,7 @@ import UploadFileIcon from '@mui/icons-material/UploadFile';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { toast } from 'react-toastify';
+import { toast } from 'sonner';
 
 // Import các component tab
 import OverviewTab from './tabs/OverviewTab';
@@ -194,10 +194,10 @@ const Profile: React.FC = () => {
   const [deleteAccountDialog, setDeleteAccountDialog] = useState(false);
   const [profileDialog, setProfileDialog] = useState(false);
   const [profileInfo, setProfileInfo] = useState<ProfileInfo>({
-    fullName: 'Nguyễn Văn A',
-    email: 'example@email.com',
-    age: '25',
-    gender: 'Nam'
+    fullName: '',
+    email: '',
+    age: '',
+    gender: ''
   });
   const [upgradeProfileDialog, setUpgradeProfileDialog] = useState(false);
   const [passwordDialog, setPasswordDialog] = useState(false);
@@ -237,6 +237,20 @@ const Profile: React.FC = () => {
     { id: 'attachments', label: 'Thông tin cá nhân', icon: <AttachFileIcon /> },
     { id: 'settings', label: 'Cài đặt', icon: <SettingsIcon /> },
   ];
+
+  // Lấy thông tin user từ localStorage khi component mount
+  useEffect(() => {
+    const userData = localStorage.getItem('user');
+    if (userData) {
+      const user = JSON.parse(userData);
+      setProfileInfo({
+        fullName: user.name,
+        email: user.email,
+        age: user.age.toString(),
+        gender: user.gender
+      });
+    }
+  }, []);
 
   // Xử lý thay đổi tab và cập nhật URL
   useEffect(() => {
@@ -397,10 +411,55 @@ const Profile: React.FC = () => {
     setDeleteAccountDialog(false);
   };
 
-  const handleUpdateProfile = () => {
-    // TODO: Implement update profile functionality
-    toast.success('Cập nhật thông tin thành công');
-    setProfileDialog(false);
+  const handleUpdateProfile = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const userData = JSON.parse(localStorage.getItem('user') || '{}');
+      
+      const response = await fetch('https://localhost:7152/api/users', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          id: userData.id,
+          name: profileInfo.fullName,
+          email: profileInfo.email,
+          age: parseInt(profileInfo.age),
+          gender: profileInfo.gender,
+          role: userData.role,
+          isActive: true
+        })
+      });
+
+      const data = await response.json();
+      
+      if (!data.result) {
+        throw new Error(data.message || "Cập nhật thông tin thất bại");
+      }
+
+      // Cập nhật thông tin user trong localStorage
+      localStorage.setItem('user', JSON.stringify(data.data));
+      
+      // Đóng dialog
+      setProfileDialog(false);
+
+      // Hiển thị thông báo thành công
+      toast.success("Cập nhật thông tin thành công!", {
+        description: "Trang sẽ được tải lại sau 1 giây",
+        duration: 1500
+      });
+      
+      // Reload trang sau 1 giây
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
+    } catch (error: any) {
+      toast.error("Có lỗi xảy ra!", {
+        description: error.message || "Không thể cập nhật thông tin"
+      });
+    }
   };
 
   const handleUpdateProfileClick = () => {
@@ -432,6 +491,10 @@ const Profile: React.FC = () => {
 
   const handleProfileInfoChange = (field: keyof ProfileInfo, value: string) => {
     setProfileInfo(prev => ({...prev, [field]: value}));
+  };
+
+  const handleEditClick = () => {
+    setProfileDialog(true);
   };
 
   return (
@@ -471,6 +534,7 @@ const Profile: React.FC = () => {
               <AttachmentsTab
                 profileInfo={profileInfo}
                 onProfileInfoChange={handleProfileInfoChange}
+                onEditClick={handleEditClick}
               />
             )}
 
