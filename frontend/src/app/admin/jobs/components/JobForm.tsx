@@ -67,7 +67,7 @@ export function JobForm({ initialData, onSubmit, onCancel }: JobFormProps) {
 
   const fetchCompanies = async () => {
     try {
-      const response = await axiosClient.get("/api/Company");
+      const response = await axiosClient.get("/Company");
       if (response.data.result) {
         setCompanies(response.data.data.items);
       } else {

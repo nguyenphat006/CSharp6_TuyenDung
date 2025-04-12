@@ -1,15 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { Loader2, Upload, X, CheckCircle2 } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { Badge } from '@/components/ui/badge';
+import { useSearchParams } from 'next/navigation';
 
 interface ApplyJobFormProps {
   jobId: string;
@@ -20,24 +18,41 @@ interface ApplyJobFormProps {
 
 export function ApplyJobForm({ jobId, jobName, companyName, onClose }: ApplyJobFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [formData, setFormData] = useState({
-    fullName: '',
-    email: '',
-    phone: '',
-    coverLetter: '',
-    resume: null as File | null,
-  });
+  const [resume, setResume] = useState<File | null>(null);
   const [fileName, setFileName] = useState<string | null>(null);
+  const [companyId, setCompanyId] = useState<string | null>(null);
+  const searchParams = useSearchParams();
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+  const getHeaders = () => {
+    const token = localStorage.getItem('token');
+    return {
+      'Authorization': `Bearer ${token}`,
+    };
   };
+
+  useEffect(() => {
+    const fetchJobDetail = async () => {
+      try {
+        const response = await fetch(`https://localhost:7152/api/Job/${jobId}`, {
+          headers: getHeaders()
+        });
+        const data = await response.json();
+        if (data.result && data.data) {
+          setCompanyId(data.data.companyId);
+        }
+      } catch (error) {
+        console.error('Error fetching job detail:', error);
+        toast.error('Không thể lấy thông tin công việc');
+      }
+    };
+
+    fetchJobDetail();
+  }, [jobId]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
-      setFormData(prev => ({ ...prev, resume: file }));
+      setResume(file);
       setFileName(file.name);
     }
   };
@@ -45,9 +60,14 @@ export function ApplyJobForm({ jobId, jobName, companyName, onClose }: ApplyJobF
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Kiểm tra form
-    if (!formData.fullName || !formData.email || !formData.phone || !formData.resume) {
-      toast.error('Vui lòng điền đầy đủ thông tin');
+    // Kiểm tra file và companyId
+    if (!resume) {
+      toast.error('Vui lòng tải lên CV của bạn');
+      return;
+    }
+
+    if (!companyId) {
+      toast.error('Không thể lấy thông tin công ty');
       return;
     }
 
@@ -56,22 +76,37 @@ export function ApplyJobForm({ jobId, jobName, companyName, onClose }: ApplyJobF
       
       // Tạo FormData để gửi file
       const formDataToSend = new FormData();
-      formDataToSend.append('jobId', jobId);
-      formDataToSend.append('fullName', formData.fullName);
-      formDataToSend.append('email', formData.email);
-      formDataToSend.append('phone', formData.phone);
-      formDataToSend.append('coverLetter', formData.coverLetter);
-      if (formData.resume) {
-        formDataToSend.append('resume', formData.resume);
+      formDataToSend.append('CompanyId', companyId.toUpperCase());
+      formDataToSend.append('JobId', jobId.toUpperCase());
+      formDataToSend.append('File', resume, resume.name);
+
+      // Log FormData để debug
+      for (let [key, value] of formDataToSend.entries()) {
+        console.log(key, value);
       }
 
       // Gửi request
-      const response = await fetch('https://localhost:7152/api/applications', {
+      const response = await fetch('https://localhost:7152/api/Resume', {
         method: 'POST',
+        headers: {
+          'accept': '*/*',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
         body: formDataToSend,
       });
 
+      // Log response để debug
+      console.log('Response status:', response.status);
+      console.log('Response headers:', response.headers);
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('Error response:', errorData);
+        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+      }
+
       const data = await response.json();
+      console.log('Response data:', data); // Log response để debug
 
       if (!data.result) {
         throw new Error(data.message || 'Có lỗi xảy ra khi gửi đơn ứng tuyển');
@@ -108,61 +143,6 @@ export function ApplyJobForm({ jobId, jobName, companyName, onClose }: ApplyJobF
       </CardHeader>
       <CardContent className="p-6">
         <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <Label htmlFor="fullName" className="text-gray-700 font-medium">Họ và tên</Label>
-              <Input
-                id="fullName"
-                name="fullName"
-                value={formData.fullName}
-                onChange={handleChange}
-                placeholder="Nhập họ và tên của bạn"
-                className="border-gray-300 focus:border-red-500 focus:ring-red-500"
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="email" className="text-gray-700 font-medium">Email</Label>
-              <Input
-                id="email"
-                name="email"
-                type="email"
-                value={formData.email}
-                onChange={handleChange}
-                placeholder="Nhập email của bạn"
-                className="border-gray-300 focus:border-red-500 focus:ring-red-500"
-                required
-              />
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="phone" className="text-gray-700 font-medium">Số điện thoại</Label>
-            <Input
-              id="phone"
-              name="phone"
-              value={formData.phone}
-              onChange={handleChange}
-              placeholder="Nhập số điện thoại của bạn"
-              className="border-gray-300 focus:border-red-500 focus:ring-red-500"
-              required
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="coverLetter" className="text-gray-700 font-medium">Thư xin việc</Label>
-            <Textarea
-              id="coverLetter"
-              name="coverLetter"
-              value={formData.coverLetter}
-              onChange={handleChange}
-              placeholder="Giới thiệu ngắn gọn về bản thân và lý do bạn muốn ứng tuyển vị trí này"
-              rows={5}
-              className="border-gray-300 focus:border-red-500 focus:ring-red-500"
-            />
-          </div>
-
           <div className="space-y-2">
             <Label htmlFor="resume" className="text-gray-700 font-medium">CV/Resume</Label>
             <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg hover:border-red-400 transition-colors">
