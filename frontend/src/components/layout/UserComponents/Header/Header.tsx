@@ -52,12 +52,6 @@ const Header = () => {
 
           {/* Right Side Navigation - Ẩn trên mobile */}
           <div className="hidden lg:flex items-center ml-auto mr-8 space-x-6">
-            <Link
-              href="/employer"
-              className="text-white hover:text-gray-300 transition-colors duration-200 text-sm font-medium"
-            >
-              Nhà Tuyển Dụng
-            </Link>
             <div className="flex items-center space-x-4">
               {isLoggedIn ? (
                 <UserAvatar />

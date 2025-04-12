@@ -275,15 +275,6 @@ const MobileNavigation = ({
             </div>
           )}
         </div>
-
-        {/* Menu Nhà Tuyển Dụng */}
-        <Link 
-          href="/employer" 
-          className="block text-white py-2"
-        >
-          Nhà Tuyển Dụng
-        </Link>
-
         {/* Menu Đăng nhập/Đăng ký */}
         <div className="pt-4 border-t border-gray-700 space-y-2">
           <Link 
