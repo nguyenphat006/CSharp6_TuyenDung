@@ -19,10 +19,16 @@ import {
 
 interface DataTablePaginationProps<TData> {
   table: Table<TData>;
+  currentPage: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
 }
 
 export function DataTablePagination<TData>({
   table,
+  currentPage,
+  totalPages,
+  onPageChange,
 }: DataTablePaginationProps<TData>) {
   return (
     <div className="flex items-center justify-between px-2">
@@ -52,15 +58,14 @@ export function DataTablePagination<TData>({
           </Select>
         </div>
         <div className="flex w-[100px] items-center justify-center text-sm font-medium">
-          Trang {table.getState().pagination.pageIndex + 1} trong{" "}
-          {table.getPageCount()}
+          Trang {currentPage} trong {totalPages}
         </div>
         <div className="flex items-center space-x-2">
           <Button
             variant="outline"
             className="hidden h-8 w-8 p-0 lg:flex"
-            onClick={() => table.setPageIndex(0)}
-            disabled={!table.getCanPreviousPage()}
+            onClick={() => onPageChange(1)}
+            disabled={currentPage === 1}
           >
             <span className="sr-only">Đi đến trang đầu</span>
             <DoubleArrowLeftIcon className="h-4 w-4" />
@@ -68,8 +73,8 @@ export function DataTablePagination<TData>({
           <Button
             variant="outline"
             className="h-8 w-8 p-0"
-            onClick={() => table.previousPage()}
-            disabled={!table.getCanPreviousPage()}
+            onClick={() => onPageChange(currentPage - 1)}
+            disabled={currentPage === 1}
           >
             <span className="sr-only">Đi đến trang trước</span>
             <ChevronLeftIcon className="h-4 w-4" />
@@ -77,8 +82,8 @@ export function DataTablePagination<TData>({
           <Button
             variant="outline"
             className="h-8 w-8 p-0"
-            onClick={() => table.nextPage()}
-            disabled={!table.getCanNextPage()}
+            onClick={() => onPageChange(currentPage + 1)}
+            disabled={currentPage === totalPages}
           >
             <span className="sr-only">Đi đến trang sau</span>
             <ChevronRightIcon className="h-4 w-4" />
@@ -86,8 +91,8 @@ export function DataTablePagination<TData>({
           <Button
             variant="outline"
             className="hidden h-8 w-8 p-0 lg:flex"
-            onClick={() => table.setPageIndex(table.getPageCount() - 1)}
-            disabled={!table.getCanNextPage()}
+            onClick={() => onPageChange(totalPages)}
+            disabled={currentPage === totalPages}
           >
             <span className="sr-only">Đi đến trang cuối</span>
             <DoubleArrowRightIcon className="h-4 w-4" />

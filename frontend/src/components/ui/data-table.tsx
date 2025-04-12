@@ -32,12 +32,23 @@ interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
   onRowClick?: (row: TData) => void;
+  pagination?: {
+    currentPage: number;
+    totalPages: number;
+    pageSize: number;
+    onPageChange: (page: number) => void;
+  };
+  loading?: boolean;
+  onSelectionChange?: (rows: TData[]) => void;
 }
 
 export function DataTable<TData, TValue>({
   columns,
   data,
   onRowClick,
+  pagination,
+  loading,
+  onSelectionChange,
 }: DataTableProps<TData, TValue>) {
   const [rowSelection, setRowSelection] = React.useState({});
   const [columnVisibility, setColumnVisibility] =
@@ -55,6 +66,10 @@ export function DataTable<TData, TValue>({
       columnVisibility,
       rowSelection,
       columnFilters,
+      pagination: pagination ? {
+        pageIndex: pagination.currentPage - 1,
+        pageSize: pagination.pageSize,
+      } : undefined,
     },
     enableRowSelection: true,
     onRowSelectionChange: setRowSelection,
@@ -67,7 +82,16 @@ export function DataTable<TData, TValue>({
     getSortedRowModel: getSortedRowModel(),
     getFacetedRowModel: getFacetedRowModel(),
     getFacetedUniqueValues: getFacetedUniqueValues(),
+    manualPagination: !!pagination,
+    pageCount: pagination?.totalPages,
   });
+
+  React.useEffect(() => {
+    if (onSelectionChange) {
+      const selectedRows = table.getSelectedRowModel().rows.map(row => row.original);
+      onSelectionChange(selectedRows);
+    }
+  }, [rowSelection, table, onSelectionChange]);
 
   return (
     <div className="space-y-4">
@@ -93,13 +117,19 @@ export function DataTable<TData, TValue>({
             ))}
           </TableHeader>
           <TableBody>
-            {table.getRowModel().rows?.length ? (
+            {loading ? (
+              <TableRow>
+                <TableCell colSpan={columns.length} className="h-24 text-center">
+                  Đang tải...
+                </TableCell>
+              </TableRow>
+            ) : table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
                 <TableRow
                   key={row.id}
                   data-state={row.getIsSelected() && "selected"}
-                  className={onRowClick ? "cursor-pointer" : ""}
                   onClick={() => onRowClick?.(row.original)}
+                  className={onRowClick ? "cursor-pointer" : ""}
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
@@ -117,14 +147,21 @@ export function DataTable<TData, TValue>({
                   colSpan={columns.length}
                   className="h-24 text-center"
                 >
-                  Không có dữ liệu.
+                  Không có dữ liệu
                 </TableCell>
               </TableRow>
             )}
           </TableBody>
         </Table>
       </div>
-      <DataTablePagination table={table} />
+      {pagination && (
+        <DataTablePagination
+          table={table}
+          currentPage={pagination.currentPage}
+          totalPages={pagination.totalPages}
+          onPageChange={pagination.onPageChange}
+        />
+      )}
     </div>
   );
 } 

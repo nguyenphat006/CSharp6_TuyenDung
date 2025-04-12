@@ -31,11 +31,6 @@ export const menuItems: MenuSection[] = [
         icon: MdBusiness,
       },
       {
-        title: "Quản lý nhà tuyển dụng",
-        path: "/admin/employer",
-        icon: MdBusinessCenter,
-      },
-      {
         title: "Quản lý việc làm",
         path: "/admin/jobs",
         icon: MdWork,

@@ -193,18 +193,25 @@ export function DataTableCompany({
         }
       });
 
-      if (response.data.result) {
+      // Kiểm tra phản hồi từ server
+      if (response.data && response.data.result === true) {
+        // Chỉ cập nhật UI khi xóa thành công
+        await onRefresh(); // Đợi refresh hoàn tất
         toast.success(response.data.message || "Xóa công ty thành công");
-        onRefresh();
+        setShowDeleteDialog(false);
+        setCompanyToDelete(null);
       } else {
-        toast.error(response.data.message || "Có lỗi xảy ra khi xóa công ty");
+        // Nếu có lỗi từ server, không cập nhật UI
+        toast.error(response.data?.message || "Có lỗi xảy ra khi xóa công ty");
+        setShowDeleteDialog(false);
       }
     } catch (error: any) {
+      console.error("Error deleting company:", error);
+      // Nếu có lỗi từ API, không cập nhật UI
       toast.error(error.response?.data?.message || "Có lỗi xảy ra khi xóa công ty");
+      setShowDeleteDialog(false);
     } finally {
       setLoading(false);
-      setShowDeleteDialog(false);
-      setCompanyToDelete(null);
     }
   };
 
@@ -225,18 +232,25 @@ export function DataTableCompany({
         }
       });
 
-      if (response.data.result) {
+      // Kiểm tra phản hồi từ server
+      if (response.data && response.data.result === true) {
+        // Chỉ cập nhật UI khi xóa thành công
+        await onRefresh(); // Đợi refresh hoàn tất
         toast.success(response.data.message || "Xóa các công ty đã chọn thành công");
         setRowSelection({});
-        onRefresh();
+        setShowDeleteSelectedDialog(false);
       } else {
-        toast.error(response.data.message || "Có lỗi xảy ra khi xóa các công ty đã chọn");
+        // Nếu có lỗi từ server, không cập nhật UI
+        toast.error(response.data?.message || "Có lỗi xảy ra khi xóa các công ty đã chọn");
+        setShowDeleteSelectedDialog(false);
       }
     } catch (error: any) {
+      console.error("Error deleting selected companies:", error);
+      // Nếu có lỗi từ API, không cập nhật UI
       toast.error(error.response?.data?.message || "Có lỗi xảy ra khi xóa các công ty đã chọn");
+      setShowDeleteSelectedDialog(false);
     } finally {
       setLoading(false);
-      setShowDeleteSelectedDialog(false);
     }
   };
 
@@ -293,21 +307,21 @@ export function DataTableCompany({
       cell: ({ row }) => {
         const logo = row.getValue("logoUrl") as string;
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || "https://localhost:7152";
+        const logoUrl = logo ? `${apiUrl}${logo}` : "/img/company/default.png";
+        
         return (
           <div className="relative w-10 h-10">
             {logo ? (
-              <div className="w-full h-full">
-                <img
-                  src={`${apiUrl}${logo}`}
-                  alt={`${row.getValue("name")} logo`}
-                  className="w-full h-full object-contain rounded-lg"
-                  onError={(e) => {
-                    const target = e.target as HTMLImageElement;
-                    target.onerror = null; // Prevent infinite loop
-                    target.src = "/img/company/default.png"; // Fallback image
-                  }}
-                />
-              </div>
+              <img
+                src={logoUrl}
+                alt={`${row.getValue("name")} logo`}
+                className="w-full h-full object-contain rounded-lg"
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.onerror = null;
+                  target.src = "/img/company/default.png";
+                }}
+              />
             ) : (
               <div className="w-full h-full flex items-center justify-center bg-muted rounded-lg">
                 <span className="text-xs text-muted-foreground">No logo</span>
@@ -545,6 +559,7 @@ export function DataTableCompany({
                   }}
                 />
               </TableHead>
+              <TableHead>Logo</TableHead>
               <TableHead>Tên công ty</TableHead>
               <TableHead>Ngành nghề</TableHead>
               <TableHead>Quy mô</TableHead>
@@ -569,6 +584,26 @@ export function DataTableCompany({
                       onRowSelectionChange?.(rowSelection);
                     }}
                   />
+                </TableCell>
+                <TableCell>
+                  <div className="relative w-10 h-10">
+                    {company.logoUrl ? (
+                      <img
+                        src={`${process.env.NEXT_PUBLIC_API_URL}${company.logoUrl}`}
+                        alt={`${company.name} logo`}
+                        className="w-full h-full object-contain rounded-lg"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.onerror = null;
+                          target.src = "/img/company/default.png";
+                        }}
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center bg-muted rounded-lg">
+                        <span className="text-xs text-muted-foreground">No logo</span>
+                      </div>
+                    )}
+                  </div>
                 </TableCell>
                 <TableCell className="font-medium">{company.name}</TableCell>
                 <TableCell>{company.industry}</TableCell>
