@@ -1,8 +1,10 @@
 "use client";
 import { useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faMapMarkerAlt, faSearch, faChevronDown } from "@fortawesome/free-solid-svg-icons";
+import { faMapMarkerAlt, faSearch, faChevronDown, faFilter } from "@fortawesome/free-solid-svg-icons";
 import { motion } from "framer-motion";
+import { useRouter } from "next/navigation";
+import { Dialog, DialogContent, DialogTitle, DialogActions, Button, TextField, MenuItem } from "@mui/material";
 
 const popularTags = [
   "Java",
@@ -45,32 +47,64 @@ interface SearchProps {
 }
 
 const Search = ({ onSearch, showTags = true, title = "Nơi hội tụ Developer \"Chất\" – Cơ hội IT hấp dẫn", subtitle = "966 Việc làm IT cho Developer" }: SearchProps) => {
+  const router = useRouter();
   const [selectedCity, setSelectedCity] = useState(cities[0]);
   const [selectedLevel, setSelectedLevel] = useState(levels[0]);
   const [searchKeyword, setSearchKeyword] = useState("");
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [filters, setFilters] = useState({
+    minSalary: "",
+    maxSalary: "",
+    level: ""
+  });
 
   const handleSearch = () => {
-    if (onSearch) {
-      onSearch({
-        keyword: searchKeyword,
-        location: selectedCity === "Tất cả thành phố" ? "" : selectedCity,
-        level: selectedLevel === "Tất cả cấp độ" ? "" : selectedLevel
-      });
-    } else {
-      // Xử lý tìm kiếm mặc định
-      console.log("Searching with:", { city: selectedCity, level: selectedLevel, keyword: searchKeyword });
+    const searchParams = new URLSearchParams();
+    
+    if (searchKeyword) {
+      searchParams.set('keyword', searchKeyword);
     }
+    
+    if (selectedCity !== "Tất cả thành phố") {
+      searchParams.set('location', selectedCity);
+    }
+
+    // Thêm các tham số lọc nếu có
+    if (filters.minSalary) {
+      searchParams.set('minSalary', filters.minSalary);
+    }
+    if (filters.maxSalary) {
+      searchParams.set('maxSalary', filters.maxSalary);
+    }
+    if (filters.level) {
+      searchParams.set('level', filters.level);
+    }
+
+    router.push(`/jobs?${searchParams.toString()}`);
+  };
+
+  const handleFilterChange = (field: string, value: string) => {
+    setFilters(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const handleFilterSubmit = () => {
+    setIsFilterOpen(false);
+    handleSearch();
   };
 
   const handleTagClick = (tag: string) => {
     setSearchKeyword(tag);
-    if (onSearch) {
-      onSearch({
-        keyword: tag,
-        location: selectedCity === "Tất cả thành phố" ? "" : selectedCity,
-        level: selectedLevel === "Tất cả cấp độ" ? "" : selectedLevel
-      });
+    const searchParams = new URLSearchParams();
+    searchParams.set('keyword', tag);
+    
+    if (selectedCity !== "Tất cả thành phố") {
+      searchParams.set('location', selectedCity);
     }
+
+    router.push(`/jobs?${searchParams.toString()}`);
   };
 
   return (
@@ -108,48 +142,11 @@ const Search = ({ onSearch, showTags = true, title = "Nơi hội tụ Developer 
               value={selectedCity}
               onChange={(e) => setSelectedCity(e.target.value)}
               className="w-full pl-16 pr-10 py-3 bg-white/10 border border-white/30 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-white/50 appearance-none"
+              aria-label="Chọn thành phố"
             >
               {cities.map((city) => (
                 <option key={city} value={city} className="bg-[#121212] text-white">
                   {city}
-                </option>
-              ))}
-            </select>
-            <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              transition={{ duration: 0.2, delay: 0.1 }}
-            >
-              <FontAwesomeIcon 
-                icon={faChevronDown} 
-                className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none w-4 h-4"
-              />
-            </motion.div>
-          </div>
-
-          {/* Dropdown cấp độ */}
-          <div className="relative flex-1">
-            <div className="absolute left-4 top-1/2 transform -translate-y-1/2 flex items-center gap-2">
-              <motion.div
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ duration: 0.2 }}
-              >
-                <FontAwesomeIcon 
-                  icon={faChevronDown} 
-                  className="text-gray-400 w-4 h-4"
-                />
-              </motion.div>
-              <span className="text-gray-400">|</span>
-            </div>
-            <select
-              value={selectedLevel}
-              onChange={(e) => setSelectedLevel(e.target.value)}
-              className="w-full pl-16 pr-10 py-3 bg-white/10 border border-white/30 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-white/50 appearance-none"
-            >
-              {levels.map((level) => (
-                <option key={level} value={level} className="bg-[#121212] text-white">
-                  {level}
                 </option>
               ))}
             </select>
@@ -192,6 +189,23 @@ const Search = ({ onSearch, showTags = true, title = "Nơi hội tụ Developer 
             </motion.div>
             <span>Tìm Kiếm</span>
           </motion.button>
+
+          {/* Nút lọc */}
+          <motion.button
+            onClick={() => setIsFilterOpen(true)}
+            className="px-8 py-3 bg-white/10 text-white rounded-lg hover:bg-white/20 transition-colors duration-200 flex items-center justify-center gap-2 min-w-[120px]"
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+          >
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ duration: 0.2, delay: 0.2 }}
+            >
+              <FontAwesomeIcon icon={faFilter} className="w-4 h-4" />
+            </motion.div>
+            <span>Lọc</span>
+          </motion.button>
         </div>
 
         {/* Tags tìm kiếm phổ biến */}
@@ -215,6 +229,76 @@ const Search = ({ onSearch, showTags = true, title = "Nơi hội tụ Developer 
           </div>
         )}
       </div>
+
+      {/* Dialog lọc nâng cao */}
+      <Dialog 
+        open={isFilterOpen} 
+        onClose={() => setIsFilterOpen(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle className="bg-[#121212] text-white">Lọc nâng cao</DialogTitle>
+        <DialogContent className="bg-[#121212] text-white">
+          <div className="space-y-4 mt-4">
+            <TextField
+              fullWidth
+              label="Mức lương tối thiểu (VNĐ)"
+              type="number"
+              value={filters.minSalary}
+              onChange={(e) => handleFilterChange('minSalary', e.target.value)}
+              InputProps={{
+                className: "text-white",
+              }}
+              InputLabelProps={{
+                className: "text-gray-400",
+              }}
+            />
+            <TextField
+              fullWidth
+              label="Mức lương tối đa (VNĐ)"
+              type="number"
+              value={filters.maxSalary}
+              onChange={(e) => handleFilterChange('maxSalary', e.target.value)}
+              InputProps={{
+                className: "text-white",
+              }}
+              InputLabelProps={{
+                className: "text-gray-400",
+              }}
+            />
+            <TextField
+              fullWidth
+              select
+              label="Cấp độ"
+              value={filters.level}
+              onChange={(e) => handleFilterChange('level', e.target.value)}
+              InputProps={{
+                className: "text-white",
+              }}
+              InputLabelProps={{
+                className: "text-gray-400",
+              }}
+            >
+              {levels.map((level) => (
+                <MenuItem key={level} value={level} className="bg-[#121212] text-white">
+                  {level}
+                </MenuItem>
+              ))}
+            </TextField>
+          </div>
+        </DialogContent>
+        <DialogActions className="bg-[#121212]">
+          <Button onClick={() => setIsFilterOpen(false)} className="text-white">
+            Hủy
+          </Button>
+          <Button 
+            onClick={handleFilterSubmit} 
+            className="bg-[#FF0000] text-white hover:bg-red-600"
+          >
+            Áp dụng
+          </Button>
+        </DialogActions>
+      </Dialog>
     </div>
   );
 };

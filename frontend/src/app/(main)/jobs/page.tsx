@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useJobs } from "@/hooks/useJobs";
+import { searchJobs, SearchParams } from "@/services/jobSearchService";
 import { Job } from "@/services/jobService";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
@@ -21,15 +21,52 @@ export default function JobsPage() {
   const searchParams = useSearchParams();
   const jobId = searchParams.get('id');
   
-  const { jobs, loading, error, params, updateParams } = useJobs({
-    pageNumber: 1,
-    pageSize: 10,
-    isActive: true
-  });
-
+  const [jobs, setJobs] = useState<Job[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [totalRecords, setTotalRecords] = useState(0);
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [jobDetailLoading, setJobDetailLoading] = useState(false);
   const [isApplyDialogOpen, setIsApplyDialogOpen] = useState(false);
+
+  // Fetch jobs based on search params
+  useEffect(() => {
+    const fetchJobs = async () => {
+      setLoading(true);
+      try {
+        const params: SearchParams = {
+          keyword: searchParams.get('keyword') || undefined,
+          location: searchParams.get('location') || undefined,
+          level: searchParams.get('level') || undefined,
+          minSalary: searchParams.get('minSalary') ? Number(searchParams.get('minSalary')) : undefined,
+          maxSalary: searchParams.get('maxSalary') ? Number(searchParams.get('maxSalary')) : undefined,
+          pageNumber: 1,
+          pageSize: 10
+        };
+
+        const response = await searchJobs(params);
+        if (response.result) {
+          setJobs(response.data.items);
+          setTotalRecords(response.data.totalRecords);
+          
+          // Nếu có jobId trong URL, tìm và chọn job đó
+          if (jobId) {
+            const job = response.data.items.find(job => job.id === jobId);
+            if (job) {
+              setSelectedJob(job);
+            }
+          }
+        }
+      } catch (error) {
+        setError('Đã có lỗi xảy ra khi tải danh sách công việc');
+        console.error("Error fetching jobs:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchJobs();
+  }, [searchParams, jobId]);
 
   // Fetch job detail when jobId changes
   useEffect(() => {
@@ -56,32 +93,31 @@ export default function JobsPage() {
     fetchJobDetail();
   }, [jobId]);
 
-  // Set initial selected job if jobId is provided
-  useEffect(() => {
-    if (jobId && jobs?.data?.items) {
-      const job = jobs.data.items.find(job => job.id === jobId);
-      if (job) {
-        setSelectedJob(job);
-      }
-    } else if (jobs?.data?.items && jobs.data.items.length > 0 && !selectedJob) {
-      // Select first job by default if no job is selected
-      setSelectedJob(jobs.data.items[0]);
-      router.push(`/jobs?id=${jobs.data.items[0].id}`);
-    }
-  }, [jobId, jobs, router, selectedJob]);
-
   const handleJobClick = (job: Job) => {
-    setSelectedJob(job);
-    router.push(`/jobs?id=${job.id}`);
+    // Tạo URL mới với các tham số tìm kiếm hiện tại và thêm jobId
+    const newSearchParams = new URLSearchParams(searchParams.toString());
+    newSearchParams.set('id', job.id);
+    router.push(`/jobs?${newSearchParams.toString()}`);
   };
 
   const handleSearch = (searchParams: { keyword: string; location: string; level: string }) => {
-    updateParams({
-      keyword: searchParams.keyword,
-      location: searchParams.location,
-      level: searchParams.level,
-      pageNumber: 1
-    });
+    const params = new URLSearchParams();
+    
+    if (searchParams.keyword) {
+      params.set('keyword', searchParams.keyword);
+    }
+    
+    if (searchParams.location) {
+      params.set('location', searchParams.location);
+    }
+    
+    if (searchParams.level) {
+      params.set('level', searchParams.level);
+    }
+
+    // Xóa jobId khi thực hiện tìm kiếm mới
+    params.delete('id');
+    router.push(`/jobs?${params.toString()}`);
   };
 
   const handleApplyClick = () => {
@@ -113,7 +149,7 @@ export default function JobsPage() {
         <Search 
           onSearch={handleSearch}
           title="Tìm kiếm công việc"
-          subtitle={`${jobs?.data?.totalRecords || 0} Việc làm IT cho Developer`}
+          subtitle={`${totalRecords} Việc làm IT cho Developer`}
         />
 
         {/* Main Content */}
@@ -136,7 +172,7 @@ export default function JobsPage() {
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    {jobs?.data?.items.map((job) => (
+                    {jobs.map((job) => (
                       <div
                         key={job.id}
                         className={`p-4 border rounded-lg cursor-pointer transition-all ${
