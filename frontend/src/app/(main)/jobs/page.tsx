@@ -13,6 +13,7 @@ import Header from "@/components/layout/UserComponents/Header/Header";
 import Footer from "@/components/layout/UserComponents/Footer/Footer";
 import Search from "@/components/layout/UserComponents/SearchComponents/Search";
 import { ApplyJobDialog } from "@/components/jobs/ApplyJobDialog";
+import { toast } from "react-hot-toast";
 
 const BASE_URL = 'https://localhost:7152';
 
@@ -121,6 +122,12 @@ export default function JobsPage() {
   };
 
   const handleApplyClick = () => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      toast.error('Hãy đăng nhập để được ứng tuyển');
+      router.push('/login');
+      return;
+    }
     setIsApplyDialogOpen(true);
   };
 

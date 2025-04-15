@@ -70,7 +70,7 @@ export const useLogin = () => {
       }, 2000)
 
     } catch (error: any) {
-      toast.error(error.message || "Đăng nhập thất bại")
+      toast.error("Email hoặc mật khẩu không tồn tại")
     } finally {
       setIsLoading(false)
     }
