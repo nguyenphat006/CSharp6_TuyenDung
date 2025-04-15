@@ -33,8 +33,8 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
 
         try {
           const userData = JSON.parse(userCookie);
-          if (userData.role !== 'Admin' && userData.role !== 'HR') {
-            console.log('User is not admin or HR, redirecting to home');
+          if (userData.role !== 'Admin') {
+            console.log('User is not admin, redirecting to home');
             router.push('/');
             return;
           }
@@ -43,8 +43,8 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
           router.push('/login');
           return;
         }
-      } else if (user.role !== 'Admin' && user.role !== 'HR') {
-        console.log('User is not admin or HR, redirecting to home');
+      } else if (user.role !== 'Admin') {
+        console.log('User is not admin, redirecting to home');
         router.push('/');
         return;
       }
@@ -53,8 +53,8 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
     checkAuth();
   }, [user, router]);
 
-  // Nếu không có user hoặc không phải admin/HR, không render gì cả
-  if (!user || (user.role !== 'Admin' && user.role !== 'HR')) {
+  // Nếu không có user hoặc không phải admin, không render gì cả
+  if (!user || user.role !== 'Admin') {
     return null;
   }
 

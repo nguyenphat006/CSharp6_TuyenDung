@@ -66,12 +66,7 @@ export const useLogin = () => {
 
       // Chuyển hướng sau 2 giây
       setTimeout(() => {
-        // Kiểm tra role và chuyển hướng phù hợp
-        if (userData.data.role === 'HR') {
-          router.push("/admin/applications")
-        } else {
-          router.push("/")
-        }
+        router.push("/")
       }, 2000)
 
     } catch (error: any) {
