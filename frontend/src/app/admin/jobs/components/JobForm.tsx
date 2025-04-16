@@ -27,7 +27,7 @@ import { RichTextEditor } from "@/components/RichTextEditor";
 import { Job, CreateJobRequest } from "@/services/jobService";
 import { Company, companyService } from "@/services/companyService";
 import { toast } from "sonner";
-import { Eye } from "lucide-react";
+import { Eye, Plus, X } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -265,15 +265,62 @@ export function JobForm({ initialData, onSubmit, onCancel }: JobFormProps) {
                     <FormItem>
                       <FormLabel>Kỹ năng</FormLabel>
                       <FormControl>
-                        <Input
-                          value={field.value.join(", ")}
-                          onChange={(e) =>
-                            field.onChange(
-                              e.target.value.split(",").map((s) => s.trim())
-                            )
-                          }
-                          placeholder="Nhập kỹ năng, phân cách bằng dấu phẩy"
-                        />
+                        <div className="space-y-2">
+                          <div className="flex gap-2">
+                            <Input
+                              placeholder="Nhập kỹ năng"
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") {
+                                  e.preventDefault();
+                                  const input = e.target as HTMLInputElement;
+                                  const newSkill = input.value.trim();
+                                  if (newSkill) {
+                                    field.onChange([...field.value, newSkill]);
+                                    input.value = "";
+                                  }
+                                }
+                              }}
+                            />
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="icon"
+                              onClick={() => {
+                                const input = document.querySelector('input[placeholder="Nhập kỹ năng"]') as HTMLInputElement;
+                                const newSkill = input.value.trim();
+                                if (newSkill) {
+                                  field.onChange([...field.value, newSkill]);
+                                  input.value = "";
+                                }
+                              }}
+                            >
+                              <Plus className="h-4 w-4" />
+                            </Button>
+                          </div>
+                          <div className="flex flex-wrap gap-2">
+                            {field.value.map((skill, index) => (
+                              <div
+                                key={index}
+                                className="flex items-center gap-1 rounded-md border px-2 py-1 text-sm"
+                              >
+                                <span>{skill}</span>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-4 w-4"
+                                  onClick={() => {
+                                    const newSkills = [...field.value];
+                                    newSkills.splice(index, 1);
+                                    field.onChange(newSkills);
+                                  }}
+                                >
+                                  <X className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
                       </FormControl>
                       <FormMessage />
                     </FormItem>
