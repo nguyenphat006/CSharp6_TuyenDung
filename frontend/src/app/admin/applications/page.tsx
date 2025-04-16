@@ -21,6 +21,16 @@ import { useReactTable, getCoreRowModel, getPaginationRowModel, getSortedRowMode
 import { Table, TableHeader, TableBody, TableCell, TableHead, TableRow } from "@/components/ui/table";
 import { flexRender } from "@tanstack/react-table";
 import { DataTablePagination } from "@/components/ui/data-table-pagination";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import React from "react";
 
 interface ApiResponse {
@@ -127,7 +137,9 @@ const columns: ColumnDef<Application>[] = [
 export default function ApplicationsPage() {
   const [selectedApplication, setSelectedApplication] = useState<Application | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [selectedRows, setSelectedRows] = useState<Application[]>([]);
+  const [rowSelection, setRowSelection] = useState({});
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
   const [filters, setFilters] = useState<FilterParams>({
     pageNumber: 1,
     pageSize: 10,
@@ -135,25 +147,6 @@ export default function ApplicationsPage() {
   const [debounceTimeout, setDebounceTimeout] = useState<NodeJS.Timeout | null>(null);
 
   const queryClient = useQueryClient();
-
-  const handleFilterChange = (key: keyof FilterParams, value: string | number) => {
-    setFilters(prev => {
-      const newFilters = { ...prev, [key]: value, pageNumber: 1 };
-      
-      // Clear timeout cũ nếu có
-      if (debounceTimeout) {
-        clearTimeout(debounceTimeout);
-      }
-      
-      // Set timeout mới
-      const timeout = setTimeout(() => {
-        refetch();
-      }, 300);
-      
-      setDebounceTimeout(timeout);
-      return newFilters;
-    });
-  };
 
   const { data, isLoading, refetch } = useQuery<ApiResponse>({
     queryKey: ["applications", filters],
@@ -204,10 +197,15 @@ export default function ApplicationsPage() {
         pageIndex: filters.pageNumber - 1,
         pageSize: filters.pageSize,
       },
+      rowSelection,
     },
+    onRowSelectionChange: setRowSelection,
+    enableRowSelection: true,
     manualPagination: true,
     pageCount: data?.data?.totalPages || 0,
   });
+
+  const selectedRows = table.getSelectedRowModel().rows.map(row => row.original.id);
 
   const { mutate: deleteResumes, isPending: isDeleting } = useMutation({
     mutationFn: async (resumeIds: string[]) => {
@@ -223,11 +221,13 @@ export default function ApplicationsPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["applications"] });
       toast.success("Xóa đơn ứng tuyển thành công");
-      setSelectedRows([]);
+      setRowSelection({});
+      setShowDeleteDialog(false);
     },
     onError: (error: Error) => {
       console.error("Failed to delete resumes:", error);
       toast.error("Xóa đơn ứng tuyển thất bại");
+      setShowDeleteDialog(false);
     },
   });
 
@@ -236,10 +236,11 @@ export default function ApplicationsPage() {
       toast.warning("Vui lòng chọn ít nhất một đơn ứng tuyển để xóa");
       return;
     }
+    setShowDeleteDialog(true);
+  };
 
-    if (window.confirm(`Bạn có chắc chắn muốn xóa ${selectedRows.length} đơn ứng tuyển đã chọn?`)) {
-      deleteResumes(selectedRows.map(row => row.id));
-    }
+  const confirmDelete = () => {
+    deleteResumes(selectedRows);
   };
 
   const pagination: PaginationProps = {
@@ -258,21 +259,66 @@ export default function ApplicationsPage() {
     };
   }, [debounceTimeout]);
 
+  const handleFilterChange = (key: keyof FilterParams, value: string | number) => {
+    setFilters(prev => {
+      const newFilters = { ...prev, [key]: value, pageNumber: 1 };
+      
+      // Clear timeout cũ nếu có
+      if (debounceTimeout) {
+        clearTimeout(debounceTimeout);
+      }
+      
+      // Set timeout mới
+      const timeout = setTimeout(() => {
+        refetch();
+      }, 300);
+      
+      setDebounceTimeout(timeout);
+      return newFilters;
+    });
+  };
+
   return (
     <div className="container mx-auto py-10">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Quản lý đơn xin việc</h1>
-        {selectedRows.length > 0 && (
-          <Button
-            variant="destructive"
-            onClick={handleDeleteSelected}
-            disabled={isDeleting}
-          >
-            <Trash2 className="mr-2 h-4 w-4" />
-            Xóa ({selectedRows.length})
-          </Button>
-        )}
+        <div className="flex items-center space-x-2">
+          {selectedRows.length > 0 && (
+            <Button
+              variant="destructive"
+              onClick={handleDeleteSelected}
+              disabled={deleteLoading}
+              className="flex items-center gap-2"
+            >
+              <Trash2 className="h-4 w-4" />
+              <span>Xóa {selectedRows.length} đơn ứng tuyển</span>
+            </Button>
+          )}
+        </div>
       </div>
+
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Xác nhận xóa nhiều</AlertDialogTitle>
+            <AlertDialogDescription>
+              Bạn có chắc chắn muốn xóa {selectedRows.length} đơn ứng tuyển đã chọn?
+              <br />
+              Hành động này không thể hoàn tác.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteLoading}>Hủy</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDelete}
+              disabled={deleteLoading}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {deleteLoading ? "Đang xử lý..." : "Xóa"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <div className="flex gap-4 mb-4">
         <div className="flex-1 flex gap-2">
@@ -347,7 +393,7 @@ export default function ApplicationsPage() {
               table.getRowModel().rows.map((row) => (
                 <TableRow
                   key={row.id}
-                  data-state={row.getIsSelected() && "selected"}
+                  data-state={selectedRows.includes(row.original.id) && "selected"}
                   onClick={() => {
                     setSelectedApplication(row.original);
                     setIsSidebarOpen(true);
@@ -355,7 +401,14 @@ export default function ApplicationsPage() {
                   className="cursor-pointer"
                 >
                   {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
+                    <TableCell 
+                      key={cell.id}
+                      onClick={(e) => {
+                        if (cell.column.id === "select") {
+                          e.stopPropagation();
+                        }
+                      }}
+                    >
                       {flexRender(
                         cell.column.columnDef.cell,
                         cell.getContext()
