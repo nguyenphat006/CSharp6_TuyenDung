@@ -196,7 +196,7 @@ export function CompanyForm({
                   <div className="relative w-32 h-32 border rounded-lg overflow-hidden">
                     {previewUrl ? (
                       <img
-                        src={getLogoUrl(previewUrl)}
+                        src={previewUrl}
                         alt="Preview logo"
                         className="w-full h-full object-contain"
                         onError={(e) => {
