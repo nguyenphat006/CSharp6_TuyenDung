@@ -656,14 +656,6 @@ export function DataTableCompany({
                         Chỉnh sửa
                       </DropdownMenuItem>
                       <DropdownMenuItem
-                        onClick={() => {
-                          onSelectCompany(company.id);
-                        }}
-                      >
-                        <Eye className="mr-2 h-4 w-4" />
-                        Xem mô tả
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
                         onClick={() => handleDelete(company)}
                         className="text-red-600"
                       >
