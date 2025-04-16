@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { Upload, Eye } from "lucide-react";
+import { Upload, Eye, Search } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -35,6 +35,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { getProvinces } from "@/services/locationService";
 
 const formSchema = z.object({
   name: z.string().min(1, "Vui lòng nhập tên công ty"),
@@ -90,6 +91,8 @@ export function CompanyForm({
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | undefined>(defaultLogoUrl);
   const [showDescription, setShowDescription] = useState(false);
+  const [provinces, setProvinces] = useState<{ name: string; code: number }[]>([]);
+  const [searchLocation, setSearchLocation] = useState("");
 
   const handleLogoSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -132,6 +135,18 @@ export function CompanyForm({
       setPreviewUrl(defaultLogoUrl);
     }
   }, [defaultLogoUrl]);
+
+  useEffect(() => {
+    const fetchProvinces = async () => {
+      const data = await getProvinces();
+      setProvinces(data);
+    };
+    fetchProvinces();
+  }, []);
+
+  const filteredProvinces = provinces.filter(province => 
+    province.name.toLowerCase().includes(searchLocation.toLowerCase())
+  );
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -323,9 +338,43 @@ export function CompanyForm({
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Địa chỉ</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Nhập địa chỉ công ty" {...field} />
-                      </FormControl>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Chọn địa điểm" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent className="max-h-[300px]">
+                          <div className="sticky top-0 z-10 bg-background p-2">
+                            <div className="relative">
+                              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                              <Input
+                                placeholder="Tìm kiếm..."
+                                className="pl-8 h-8"
+                                value={searchLocation}
+                                onChange={(e) => setSearchLocation(e.target.value)}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  e.preventDefault();
+                                }}
+                                onKeyDown={(e) => {
+                                  e.stopPropagation();
+                                }}
+                              />
+                            </div>
+                          </div>
+                          <div className="overflow-y-auto max-h-[250px]">
+                            {filteredProvinces.map((province) => (
+                              <SelectItem key={province.code} value={province.name}>
+                                {province.name}
+                              </SelectItem>
+                            ))}
+                          </div>
+                        </SelectContent>
+                      </Select>
                       <FormMessage />
                     </FormItem>
                   )}
