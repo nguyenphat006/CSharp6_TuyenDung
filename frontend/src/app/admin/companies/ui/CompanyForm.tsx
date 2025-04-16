@@ -67,7 +67,8 @@ const industries = [
   "Phát triển trò chơi (Game Development)",
   "Thiết kế giao diện người dùng (UI/UX)",
   "Quản trị hệ thống và mạng",
-  "Khoa học máy tính ứng dụng"
+  "Khoa học máy tính ứng dụng",
+  "Sản xuất phần mềm"
 ];
 
 
@@ -196,7 +197,7 @@ export function CompanyForm({
                   <div className="relative w-32 h-32 border rounded-lg overflow-hidden">
                     {previewUrl ? (
                       <img
-                        src={previewUrl}
+                        src={getLogoUrl(previewUrl)}
                         alt="Preview logo"
                         className="w-full h-full object-contain"
                         onError={(e) => {

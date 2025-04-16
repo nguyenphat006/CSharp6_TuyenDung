@@ -106,7 +106,8 @@ const industries = [
   "Phát triển trò chơi (Game Development)",
   "Thiết kế giao diện người dùng (UI/UX)",
   "Quản trị hệ thống và mạng",
-  "Khoa học máy tính ứng dụng"
+  "Khoa học máy tính ứng dụng",
+  "Sản xuất phần mềm"
 ];
 
 const companySizes = [
