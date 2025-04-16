@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 using TuyenDungAPI.Model.Company;
@@ -9,6 +10,7 @@ namespace TuyenDungAPI.Controllers.Feature
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class CompanyController : ControllerBase
     {
         private readonly CompanyService _companyService;
