@@ -68,6 +68,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
+import { getProvinces } from "@/services/locationService";
 
 interface DataTableCompanyProps {
   data: Company[];
@@ -84,11 +85,37 @@ interface DataTableCompanyProps {
   onPageSizeChange: (size: number) => void;
   onFiltersChange: (filters: {
     keyword: string;
-    industry: string;
+    industry?: string;
     companySize: string;
     address: string;
   }) => void;
 }
+
+const industries = [
+  "Công nghệ thông tin",
+  "Phát triển phần mềm",
+  "Dịch vụ CNTT",
+  "Thương mại điện tử",
+  "An ninh mạng",
+  "Điện toán đám mây (Cloud Computing)",
+  "Trí tuệ nhân tạo (AI)",
+  "Học máy (Machine Learning)",
+  "Blockchain",
+  "Phân tích dữ liệu (Data Analytics)",
+  "Internet vạn vật (IoT)",
+  "Phát triển trò chơi (Game Development)",
+  "Thiết kế giao diện người dùng (UI/UX)",
+  "Quản trị hệ thống và mạng",
+  "Khoa học máy tính ứng dụng"
+];
+
+const companySizes = [
+  "1-50",
+  "51-150",
+  "151-300",
+  "301-500",
+  "500+"
+];
 
 export function DataTableCompany({
   data,
@@ -110,12 +137,27 @@ export function DataTableCompany({
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
-  const [filters, setFilters] = useState({
+  const [filters, setFilters] = useState<{
+    keyword: string;
+    industry?: string;
+    companySize: string;
+    address: string;
+  }>({
     keyword: "",
-    industry: "",
+    industry: undefined,
     companySize: "",
     address: "",
   });
+  const [provinces, setProvinces] = useState<{ name: string; code: number }[]>([]);
+  const [searchLocation, setSearchLocation] = useState("");
+
+  useEffect(() => {
+    const fetchProvinces = async () => {
+      const data = await getProvinces();
+      setProvinces(data);
+    };
+    fetchProvinces();
+  }, []);
 
   const handleSelectAll = (checked: boolean) => {
     if (typeof onSelectCompany === 'function') {
@@ -423,6 +465,10 @@ export function DataTableCompany({
     },
   });
 
+  const filteredProvinces = provinces.filter(province => 
+    province.name.toLowerCase().includes(searchLocation.toLowerCase())
+  );
+
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-4">
@@ -444,22 +490,25 @@ export function DataTableCompany({
           />
         </div>
         <Select
-          value={filters.industry || "all"}
+          value={filters.industry || ""}
           onValueChange={(value) => {
             setFilters({ ...filters, industry: value });
             onFiltersChange({ ...filters, industry: value });
           }}
         >
           <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Ngành nghề" />
+            <SelectValue placeholder="Lĩnh vực" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Tất cả</SelectItem>
-            {/* Add industry options here */}
+            {industries.map((industry) => (
+              <SelectItem key={industry} value={industry}>
+                {industry}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
         <Select
-          value={filters.companySize || "all"}
+          value={filters.companySize || ""}
           onValueChange={(value) => {
             setFilters({ ...filters, companySize: value });
             onFiltersChange({ ...filters, companySize: value });
@@ -469,12 +518,15 @@ export function DataTableCompany({
             <SelectValue placeholder="Quy mô" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Tất cả</SelectItem>
-            {/* Add company size options here */}
+            {companySizes.map((size) => (
+              <SelectItem key={size} value={size}>
+                {size} nhân viên
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
         <Select
-          value={filters.address || "all"}
+          value={filters.address || ""}
           onValueChange={(value) => {
             setFilters({ ...filters, address: value });
             onFiltersChange({ ...filters, address: value });
@@ -483,11 +535,52 @@ export function DataTableCompany({
           <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="Địa điểm" />
           </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Tất cả</SelectItem>
-            {/* Add location options here */}
+          <SelectContent className="max-h-[300px]">
+            <div className="sticky top-0 z-10 bg-background p-2">
+              <div className="relative">
+                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Tìm kiếm..."
+                  className="pl-8 h-8"
+                  value={searchLocation}
+                  onChange={(e) => setSearchLocation(e.target.value)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                  }}
+                  onKeyDown={(e) => {
+                    e.stopPropagation();
+                  }}
+                />
+              </div>
+            </div>
+            <div className="overflow-y-auto max-h-[250px]">
+              {filteredProvinces.map((province) => (
+                <SelectItem key={province.code} value={province.name}>
+                  {province.name}
+                </SelectItem>
+              ))}
+            </div>
           </SelectContent>
         </Select>
+        {(filters.keyword || filters.industry || filters.companySize || filters.address) && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              const newFilters = {
+                keyword: "",
+                industry: "",
+                companySize: "",
+                address: ""
+              };
+              setFilters(newFilters);
+              onFiltersChange(newFilters);
+            }}
+          >
+            Xóa bộ lọc
+          </Button>
+        )}
       </div>
       <div className="rounded-md border">
         <Table>

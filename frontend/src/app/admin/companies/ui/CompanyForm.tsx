@@ -51,6 +51,24 @@ type FormValues = z.infer<typeof formSchema>;
 
 const companyModels = ["Onsite", "Remote", "Hybrid"];
 const companySizes = ["1-50", "51-150", "151-300", "301-500", "500+"];
+const industries = [
+  "Công nghệ thông tin",
+  "Phát triển phần mềm",
+  "Dịch vụ CNTT",
+  "Thương mại điện tử",
+  "An ninh mạng",
+  "Điện toán đám mây (Cloud Computing)",
+  "Trí tuệ nhân tạo (AI)",
+  "Học máy (Machine Learning)",
+  "Blockchain",
+  "Phân tích dữ liệu (Data Analytics)",
+  "Internet vạn vật (IoT)",
+  "Phát triển trò chơi (Game Development)",
+  "Thiết kế giao diện người dùng (UI/UX)",
+  "Quản trị hệ thống và mạng",
+  "Khoa học máy tính ứng dụng"
+];
+
 
 interface CompanyFormProps {
   companyId?: string;
@@ -255,9 +273,20 @@ export function CompanyForm({
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Lĩnh vực</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Nhập lĩnh vực hoạt động" {...field} />
-                      </FormControl>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Chọn lĩnh vực" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {industries.map((industry) => (
+                            <SelectItem key={industry} value={industry}>
+                              {industry}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                       <FormMessage />
                     </FormItem>
                   )}
