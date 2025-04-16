@@ -28,6 +28,7 @@ export default function CompaniesPage() {
   const [selectedCompanies, setSelectedCompanies] = useState<string[]>([]);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handlePageChange = (page: number) => {
     updateParams({ pageNumber: page });
@@ -54,6 +55,19 @@ export default function CompaniesPage() {
     );
   };
 
+  const fetchCompanies = async () => {
+    try {
+      setLoading(true);
+      const response = await axiosClient.get('/api/Company');
+      updateParams(response.data);
+    } catch (error) {
+      console.error('Error fetching companies:', error);
+      setError('Failed to fetch companies');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleDeleteSelected = async () => {
     if (selectedCompanies.length === 0) {
       toast.error("Vui lòng chọn ít nhất một công ty để xóa");
@@ -62,22 +76,15 @@ export default function CompaniesPage() {
 
     try {
       setDeleteLoading(true);
-      const response = await axiosClient.delete("/api/Company", {
-        data: {
-          companysId: selectedCompanies
-        }
+      await axiosClient.delete('/api/Company', {
+        data: selectedCompanies
       });
-
-      if (response.data && response.data.result === true) {
-        toast.success(`Đã xóa thành công ${selectedCompanies.length} công ty`);
-        setSelectedCompanies([]);
-        updateParams({ pageNumber: 1 });
-      } else {
-        toast.error(response.data?.message || "Có lỗi xảy ra khi xóa các công ty đã chọn");
-      }
-    } catch (error: any) {
-      console.error("Error deleting companies:", error);
-      toast.error(error.response?.data?.message || "Có lỗi xảy ra khi xóa các công ty đã chọn");
+      await fetchCompanies();
+      setSelectedCompanies([]);
+      toast.success(`Đã xóa thành công ${selectedCompanies.length} công ty`);
+    } catch (error) {
+      console.error('Error deleting companies:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to delete companies');
     } finally {
       setDeleteLoading(false);
       setShowDeleteDialog(false);

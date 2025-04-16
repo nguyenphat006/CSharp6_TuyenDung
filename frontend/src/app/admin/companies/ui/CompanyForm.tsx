@@ -134,6 +134,12 @@ export function CompanyForm({
     }
   };
 
+  const getLogoUrl = (logo: string | null): string => {
+    if (!logo) return "/img/company/default.jpg";
+    if (logo.startsWith('http')) return logo;
+    return `${process.env.NEXT_PUBLIC_API_URL || 'https://localhost:7152'}${logo}`;
+  };
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
@@ -156,13 +162,15 @@ export function CompanyForm({
                 <div className="flex items-center gap-4">
                   <div className="relative w-32 h-32 border rounded-lg overflow-hidden">
                     {previewUrl ? (
-                      <Image
-                        src={previewUrl}
+                      <img
+                        src={getLogoUrl(previewUrl)}
                         alt="Preview logo"
-                        fill
-                        className="object-contain"
-                        sizes="(max-width: 128px) 100vw, 128px"
-                        unoptimized={previewUrl.startsWith('blob:')}
+                        className="w-full h-full object-contain"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.onerror = null;
+                          target.src = "/img/company/default.jpg";
+                        }}
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center bg-muted">
@@ -187,6 +195,7 @@ export function CompanyForm({
                       accept="image/png,image/jpeg,image/gif"
                       onChange={handleLogoSelect}
                       disabled={loading}
+                      aria-label="Upload company logo"
                     />
                     <p className="text-sm text-muted-foreground">
                       Chấp nhận file: JPG, PNG, GIF. Tối đa 2MB

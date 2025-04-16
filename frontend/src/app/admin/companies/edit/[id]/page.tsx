@@ -33,7 +33,7 @@ export default function EditCompanyPage({ params }: EditCompanyPageProps) {
             description: companyData.description,
             workingTime: companyData.workingTime,
             isActive: companyData.isActive,
-            logoUrl: companyData.logoUrl ? `${process.env.NEXT_PUBLIC_API_URL}${companyData.logoUrl}` : undefined
+            logoUrl: companyData.logoUrl
           });
         } else {
           toast.error("Không tìm thấy thông tin công ty");

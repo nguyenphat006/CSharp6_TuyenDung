@@ -1,22 +1,22 @@
 "use client";
 
 import Company from "./company";
-import { useCompanies } from "@/hooks/useCompanies";
+import { useCompany } from "@/hooks/useCompany";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useState, useEffect } from "react";
 
 const BASE_URL = 'https://localhost:7152';
 
 const CompanyList = () => {
-  const { companies } = useCompanies();
+  const { topCompanies, loading, error } = useCompany();
   const [jobCounts, setJobCounts] = useState<Record<string, number>>({});
 
   useEffect(() => {
     const fetchJobCounts = async () => {
       const counts: Record<string, number> = {};
       
-      if (companies.data?.items) {
-        for (const company of companies.data.items) {
+      if (topCompanies) {
+        for (const company of topCompanies) {
           try {
             const response = await fetch(`${BASE_URL}/api/Job/${company.id}/jobsBycompany`);
             if (response.ok) {
@@ -35,12 +35,12 @@ const CompanyList = () => {
       }
     };
 
-    if (companies.data?.items && companies.data.items.length > 0) {
+    if (topCompanies && topCompanies.length > 0) {
       fetchJobCounts();
     }
-  }, [companies.data?.items]);
+  }, [topCompanies]);
 
-  if (companies.error) {
+  if (error) {
     return (
       <div className="text-center py-10">
         <p className="text-red-500">Đã có lỗi xảy ra khi tải dữ liệu</p>
@@ -54,7 +54,7 @@ const CompanyList = () => {
         Nhà tuyển dụng hàng đầu
       </h2>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {companies.loading ? (
+        {loading ? (
           // Loading skeleton
           Array.from({ length: 6 }).map((_, index) => (
             <div key={index} className="bg-white rounded-lg shadow-md p-6">
@@ -71,8 +71,8 @@ const CompanyList = () => {
               </div>
             </div>
           ))
-        ) : companies.data?.items ? (
-          companies.data.items.map((company) => (
+        ) : topCompanies ? (
+          topCompanies.map((company) => (
             <Company
               key={company.id}
               logo={`${BASE_URL}${company.logoUrl}`}

@@ -14,6 +14,7 @@ import Footer from "@/components/layout/UserComponents/Footer/Footer";
 import Search from "@/components/layout/UserComponents/SearchComponents/Search";
 import { ApplyJobDialog } from "@/components/jobs/ApplyJobDialog";
 import { toast } from "react-hot-toast";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 
 const BASE_URL = 'https://localhost:7152';
 
@@ -29,6 +30,7 @@ export default function JobsPage() {
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [jobDetailLoading, setJobDetailLoading] = useState(false);
   const [isApplyDialogOpen, setIsApplyDialogOpen] = useState(false);
+  const [isLoginDialogOpen, setIsLoginDialogOpen] = useState(false);
 
   // Fetch jobs based on search params
   useEffect(() => {
@@ -124,11 +126,15 @@ export default function JobsPage() {
   const handleApplyClick = () => {
     const token = localStorage.getItem('token');
     if (!token) {
-      toast.error('Hãy đăng nhập để được ứng tuyển');
-      router.push('/login');
+      setIsLoginDialogOpen(true);
       return;
     }
     setIsApplyDialogOpen(true);
+  };
+
+  const handleLoginClick = () => {
+    setIsLoginDialogOpen(false);
+    router.push('/login');
   };
 
   if (error) {
@@ -325,6 +331,33 @@ export default function JobsPage() {
           companyName={selectedJob.companyName}
         />
       )}
+
+      {/* Login Required Dialog */}
+      <Dialog open={isLoginDialogOpen} onOpenChange={setIsLoginDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold text-center">Đăng nhập để ứng tuyển</DialogTitle>
+            <DialogDescription className="text-center mt-2">
+              Bạn cần đăng nhập để có thể ứng tuyển vào vị trí này
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col items-center gap-4 py-4">
+            <Button 
+              onClick={handleLoginClick}
+              className="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-3 px-8 rounded-lg"
+            >
+              Đăng nhập ngay
+            </Button>
+            <Button 
+              variant="outline"
+              onClick={() => setIsLoginDialogOpen(false)}
+              className="w-full"
+            >
+              Để sau
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   );
 } 

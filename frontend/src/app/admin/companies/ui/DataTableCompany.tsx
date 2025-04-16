@@ -202,11 +202,10 @@ export function DataTableCompany({
     setShowEditDialog(true);
   };
 
-  // Thêm hàm để xử lý URL logo
   const getLogoUrl = (logo: string | null): string => {
-    if (!logo) return "/img/company/default.png";
+    if (!logo) return "/img/company/default.jpg";
     if (logo.startsWith('http')) return logo;
-    return `https://localhost:7152${logo}`;
+    return `${process.env.NEXT_PUBLIC_API_URL || 'https://localhost:7152'}${logo}`;
   };
 
   const handleEditSubmit = async (e: React.FormEvent) => {
@@ -267,27 +266,20 @@ export function DataTableCompany({
       header: "Logo",
       cell: ({ row }) => {
         const logo = row.getValue("logoUrl") as string;
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "https://localhost:7152";
-        const logoUrl = logo ? `${apiUrl}${logo}` : "/img/company/default.png";
+        const logoUrl = getLogoUrl(logo);
         
         return (
           <div className="relative w-10 h-10">
-            {logo ? (
-              <img
-                src={logoUrl}
-                alt={`${row.getValue("name")} logo`}
-                className="w-full h-full object-contain rounded-lg"
-                onError={(e) => {
-                  const target = e.target as HTMLImageElement;
-                  target.onerror = null;
-                  target.src = "/img/company/default.png";
-                }}
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center bg-muted rounded-lg">
-                <span className="text-xs text-muted-foreground">No logo</span>
-              </div>
-            )}
+            <img
+              src={logoUrl}
+              alt={`${row.getValue("name")} logo`}
+              className="w-full h-full object-contain rounded-lg"
+              onError={(e) => {
+                const target = e.target as HTMLImageElement;
+                target.onerror = null;
+                target.src = "https://via.placeholder.com/40x40?text=No+Logo";
+              }}
+            />
           </div>
         );
       },
@@ -535,22 +527,16 @@ export function DataTableCompany({
                 </TableCell>
                 <TableCell>
                   <div className="relative w-10 h-10">
-                    {company.logoUrl ? (
-                      <img
-                        src={`${process.env.NEXT_PUBLIC_API_URL}${company.logoUrl}`}
-                        alt={`${company.name} logo`}
-                        className="w-full h-full object-contain rounded-lg"
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement;
-                          target.onerror = null;
-                          target.src = "/img/company/default.png";
-                        }}
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center bg-muted rounded-lg">
-                        <span className="text-xs text-muted-foreground">No logo</span>
-                      </div>
-                    )}
+                    <img
+                      src={getLogoUrl(company.logoUrl)}
+                      alt={`${company.name} logo`}
+                      className="w-full h-full object-contain rounded-lg"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.onerror = null;
+                        target.src = "https://via.placeholder.com/40x40?text=No+Logo";
+                      }}
+                    />
                   </div>
                 </TableCell>
                 <TableCell className="font-medium">{company.name}</TableCell>
