@@ -17,9 +17,18 @@ export const SidebarItem: React.FC<SidebarItemProps> = ({ item }) => {
   const [isSubmenuOpen, setIsSubmenuOpen] = useState(false);
   const { isExpanded, setActiveItem, isMobileOpen } = useSidebar();
   const pathname = usePathname();
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
 
   const isActive = item.path === pathname || 
     (item.submenu?.some(subItem => subItem.path === pathname));
+
+  // Kiểm tra quyền truy cập
+  const hasAccess = !item.roles || item.roles.includes(user.role);
+
+  // Nếu không có quyền truy cập, không hiển thị item
+  if (!hasAccess) {
+    return null;
+  }
 
   // Tự động mở submenu nếu có item con đang active
   useEffect(() => {

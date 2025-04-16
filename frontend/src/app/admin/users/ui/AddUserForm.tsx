@@ -202,6 +202,7 @@ export function AddUserForm({ onSubmit, onCancel }: AddUserFormProps) {
                 </FormControl>
                 <SelectContent>
                   <SelectItem value="Admin">Admin</SelectItem>
+                  <SelectItem value="HR">HR</SelectItem>
                   <SelectItem value="User">User</SelectItem>
                 </SelectContent>
               </Select>

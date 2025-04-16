@@ -1,31 +1,36 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
-export function middleware(request: NextRequest) {
-  // Lấy thông tin user từ cookie
-  const userStr = request.cookies.get('user')?.value
-  const token = request.cookies.get('token')?.value
+// Định nghĩa các route cần kiểm tra quyền
+const protectedRoutes = {
+  '/admin/dashboard': ['Admin', 'HR'],
+  '/admin/companies': ['Admin'],
+  '/admin/jobs': ['Admin'],
+  '/admin/applications': ['Admin', 'HR'],
+  '/admin/users': ['Admin'],
+  '/admin/roles': ['Admin'],
+  '/admin/settings': ['Admin'],
+}
 
-  // Kiểm tra nếu đang truy cập trang admin
+export function middleware(request: NextRequest) {
+  const token = request.cookies.get('token')?.value
+  const user = request.cookies.get('user')?.value
+  const userData = user ? JSON.parse(user) : null
+
+  // Kiểm tra nếu là route admin
   if (request.nextUrl.pathname.startsWith('/admin')) {
-    // Nếu không có token hoặc user, chuyển về trang login
-    if (!token || !userStr) {
-      console.log('No token or user found, redirecting to login')
+    // Nếu chưa đăng nhập, chuyển về trang login
+    if (!token) {
       return NextResponse.redirect(new URL('/login', request.url))
     }
 
-    try {
-      const user = JSON.parse(userStr)
-      console.log('User from cookie:', user)
-      
-      // Kiểm tra role
-      if (user.role !== 'Admin') {
-        console.log('User is not admin, redirecting to home')
-        return NextResponse.redirect(new URL('/', request.url))
-      }
-    } catch (error) {
-      console.error('Error parsing user cookie:', error)
-      return NextResponse.redirect(new URL('/login', request.url))
+    // Kiểm tra quyền truy cập
+    const route = request.nextUrl.pathname
+    const allowedRoles = protectedRoutes[route as keyof typeof protectedRoutes]
+
+    if (allowedRoles && !allowedRoles.includes(userData?.role)) {
+      // Nếu không có quyền, chuyển về trang dashboard
+      return NextResponse.redirect(new URL('/admin/dashboard', request.url))
     }
   }
 
