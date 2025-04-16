@@ -316,12 +316,30 @@ const Search = ({ onSearch, showTags = true, title = "Nơi hội tụ Developer 
                 }}
                 SelectProps={{
                   MenuProps: {
-                    className: "bg-[#121212]",
+                    sx: {
+                      '& .MuiPaper-root': {
+                        backgroundColor: '#121212',
+                        color: 'white',
+                        zIndex: 1301, // Higher than Dialog's z-index
+                      },
+                      '& .MuiMenuItem-root': {
+                        color: 'white',
+                        '&:hover': {
+                          backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                        },
+                        '&.Mui-selected': {
+                          backgroundColor: '#FF0000',
+                          '&:hover': {
+                            backgroundColor: '#FF0000',
+                          },
+                        },
+                      },
+                    },
                   },
                 }}
               >
                 {levels.map((level) => (
-                  <MenuItem key={level} value={level} className="bg-[#121212] text-white">
+                  <MenuItem key={level} value={level}>
                     {level}
                   </MenuItem>
                 ))}
