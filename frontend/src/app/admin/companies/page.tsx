@@ -76,15 +76,22 @@ export default function CompaniesPage() {
 
     try {
       setDeleteLoading(true);
-      await axiosClient.delete('/api/Company', {
-        data: selectedCompanies
+      const response = await axiosClient.delete('/api/Company', {
+        data: {
+          companysId: selectedCompanies
+        }
       });
-      await fetchCompanies();
-      setSelectedCompanies([]);
-      toast.success(`Đã xóa thành công ${selectedCompanies.length} công ty`);
-    } catch (error) {
+      
+      if (response.data && response.data.result === true) {
+        await fetchCompanies();
+        setSelectedCompanies([]);
+        toast.success(response.data.message || `Đã xóa thành công ${selectedCompanies.length} công ty`);
+      } else {
+        toast.error(response.data?.message || "Có lỗi xảy ra khi xóa các công ty đã chọn");
+      }
+    } catch (error: any) {
       console.error('Error deleting companies:', error);
-      toast.error(error instanceof Error ? error.message : 'Failed to delete companies');
+      toast.error(error.response?.data?.message || "Có lỗi xảy ra khi xóa các công ty đã chọn");
     } finally {
       setDeleteLoading(false);
       setShowDeleteDialog(false);
