@@ -10,7 +10,6 @@ namespace TuyenDungAPI.Controllers.Feature
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize]
     public class CompanyController : ControllerBase
     {
         private readonly CompanyService _companyService;
