@@ -19,51 +19,27 @@ export interface ResumeResponse {
 
 export const resumeService = {
   getAll: async (): Promise<Resume[]> => {
-    const token = localStorage.getItem('token');
-    const response = await api.get("/api/Resume", {
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
-    });
+    const response = await api.get("/api/Resume");
     return response.data.data;
   },
 
   getById: async (id: string): Promise<Resume> => {
-    const token = localStorage.getItem('token');
-    const response = await api.get(`/api/Resume/${id}`, {
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
-    });
+    const response = await api.get(`/api/Resume/${id}`);
     return response.data.data;
   },
 
   updateStatus: async (id: string, status: string): Promise<Resume> => {
-    const token = localStorage.getItem('token');
-    const response = await api.put(`/api/Resume/${id}/status`, { status }, {
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
-    });
+    const response = await api.put(`/api/Resume/${id}/status`, { status });
     return response.data.data;
   },
 
   delete: async (id: string): Promise<void> => {
-    const token = localStorage.getItem('token');
-    await api.delete(`/api/Resume/${id}`, {
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
-    });
+    await api.delete(`/api/Resume/${id}`);
   },
 
   deleteMany: async (resumeIds: string[]): Promise<void> => {
-    const token = localStorage.getItem('token');
     await api.delete("/api/Resume/delete", {
       data: { resumeIds },
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
     });
   },
 }; 

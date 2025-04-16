@@ -164,12 +164,7 @@ export default function ApplicationsPage() {
       });
       
       try {
-        const token = localStorage.getItem('token');
-        const response = await axios.get(`https://localhost:7152/api/Resume?${params.toString()}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
+        const response = await axios.get(`https://localhost:7152/api/Resume?${params.toString()}`);
         return response.data;
       } catch (error) {
         console.error("Error fetching applications:", error);
@@ -211,12 +206,8 @@ export default function ApplicationsPage() {
 
   const { mutate: deleteResumes, isPending: isDeleting } = useMutation({
     mutationFn: async (resumeIds: string[]) => {
-      const token = localStorage.getItem('token');
       const response = await axios.delete("https://localhost:7152/api/Resume", {
-        data: { resumeIds },
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
+        data: { resumeIds }
       });
       return response.data;
     },

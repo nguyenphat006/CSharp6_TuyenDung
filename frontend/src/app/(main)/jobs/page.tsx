@@ -6,7 +6,7 @@ import { searchJobs, SearchParams } from "@/services/jobSearchService";
 import { Job } from "@/services/jobService";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { Briefcase, MapPin, Clock, DollarSign, Building2, GraduationCap, Award, Search as SearchIcon } from "lucide-react";
+import { Briefcase, MapPin, Clock, DollarSign, Building2, GraduationCap, Award, Search as SearchIcon, ChevronLeft, ChevronRight } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import Header from "@/components/layout/UserComponents/Header/Header";
@@ -31,6 +31,8 @@ export default function JobsPage() {
   const [jobDetailLoading, setJobDetailLoading] = useState(false);
   const [isApplyDialogOpen, setIsApplyDialogOpen] = useState(false);
   const [isLoginDialogOpen, setIsLoginDialogOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
 
   // Fetch jobs based on search params
   useEffect(() => {
@@ -43,7 +45,7 @@ export default function JobsPage() {
           level: searchParams.get('level') || undefined,
           minSalary: searchParams.get('minSalary') ? Number(searchParams.get('minSalary')) : undefined,
           maxSalary: searchParams.get('maxSalary') ? Number(searchParams.get('maxSalary')) : undefined,
-          pageNumber: 1,
+          pageNumber: currentPage,
           pageSize: 10
         };
 
@@ -51,6 +53,7 @@ export default function JobsPage() {
         if (response.result) {
           setJobs(response.data.items);
           setTotalRecords(response.data.totalRecords);
+          setTotalPages(Math.ceil(response.data.totalRecords / 10));
           
           // Nếu có jobId trong URL, tìm và chọn job đó
           if (jobId) {
@@ -69,7 +72,7 @@ export default function JobsPage() {
     };
 
     fetchJobs();
-  }, [searchParams, jobId]);
+  }, [searchParams, jobId, currentPage]);
 
   // Fetch job detail when jobId changes
   useEffect(() => {
@@ -81,7 +84,12 @@ export default function JobsPage() {
 
       setJobDetailLoading(true);
       try {
-        const response = await fetch(`${BASE_URL}/api/Job/${jobId}`);
+        const token = localStorage.getItem('token');
+        const response = await fetch(`${BASE_URL}/api/Job/${jobId}/client`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
         const data = await response.json();
         if (data.result) {
           setSelectedJob(data.data);
@@ -137,6 +145,11 @@ export default function JobsPage() {
     router.push('/login');
   };
 
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   if (error) {
     return (
       <>
@@ -184,137 +197,176 @@ export default function JobsPage() {
                     ))}
                   </div>
                 ) : (
-                  <div className="space-y-4">
-                    {jobs.map((job) => (
-                      <div
-                        key={job.id}
-                        className={`p-4 border rounded-lg cursor-pointer transition-all ${
-                          selectedJob?.id === job.id
-                            ? "border-red-500 bg-red-50"
-                            : "border-gray-100 hover:border-red-300 hover:bg-red-50/30"
-                        }`}
-                        onClick={() => handleJobClick(job)}
-                      >
-                        <h3 className="font-semibold text-gray-900 mb-1">{job.name}</h3>
-                        <p className="text-sm text-red-600 mb-2">{job.companyName}</p>
-                        <div className="flex items-center text-sm text-gray-600 mb-1">
-                          <MapPin className="w-4 h-4 mr-1" />
-                          <span>{job.location}</span>
+                  <>
+                    <div className="space-y-4">
+                      {jobs.map((job) => (
+                        <div
+                          key={job.id}
+                          className={`p-4 border rounded-lg cursor-pointer transition-all ${
+                            selectedJob?.id === job.id
+                              ? "border-red-500 bg-red-50"
+                              : "border-gray-100 hover:border-red-300 hover:bg-red-50/30"
+                          }`}
+                          onClick={() => handleJobClick(job)}
+                        >
+                          <h3 className="font-semibold text-gray-900 mb-1">{job.name}</h3>
+                          <p className="text-sm text-red-600 mb-2">{job.companyName}</p>
+                          <div className="flex items-center text-sm text-gray-600 mb-1">
+                            <MapPin className="w-4 h-4 mr-1" />
+                            <span>{job.location}</span>
+                          </div>
+                          <div className="flex items-center text-sm text-gray-600">
+                            <DollarSign className="w-4 h-4 mr-1" />
+                            <span>{job.salary.toLocaleString()} VNĐ</span>
+                          </div>
                         </div>
-                        <div className="flex items-center text-sm text-gray-600">
-                          <DollarSign className="w-4 h-4 mr-1" />
-                          <span>{job.salary.toLocaleString()} VNĐ</span>
-                        </div>
+                      ))}
+                    </div>
+                    
+                    {/* Pagination */}
+                    {totalPages > 1 && (
+                      <div className="mt-6 flex justify-center items-center gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handlePageChange(currentPage - 1)}
+                          disabled={currentPage === 1}
+                        >
+                          <ChevronLeft className="h-4 w-4" />
+                        </Button>
+                        
+                        {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                          <Button
+                            key={page}
+                            variant={currentPage === page ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => handlePageChange(page)}
+                          >
+                            {page}
+                          </Button>
+                        ))}
+                        
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handlePageChange(currentPage + 1)}
+                          disabled={currentPage === totalPages}
+                        >
+                          <ChevronRight className="h-4 w-4" />
+                        </Button>
                       </div>
-                    ))}
-                  </div>
+                    )}
+                  </>
                 )}
               </div>
             </div>
 
             {/* Right Column - Job Detail */}
             <div className="lg:col-span-2">
-              {jobDetailLoading ? (
-                <div className="bg-white rounded-xl shadow-sm p-8">
-                  <div className="flex items-center gap-8 mb-8">
-                    <Skeleton className="w-32 h-32 rounded-lg" />
-                    <div className="flex-1">
-                      <Skeleton className="h-8 w-3/4 mb-4" />
+              <div className="sticky top-4">
+                {jobDetailLoading ? (
+                  <div className="bg-white rounded-xl shadow-sm p-8">
+                    <div className="flex items-center gap-8 mb-8">
+                      <Skeleton className="w-32 h-32 rounded-lg" />
+                      <div className="flex-1">
+                        <Skeleton className="h-8 w-3/4 mb-4" />
+                        <Skeleton className="h-4 w-1/2" />
+                      </div>
+                    </div>
+                    <div className="space-y-4">
+                      <Skeleton className="h-4 w-full" />
+                      <Skeleton className="h-4 w-2/3" />
                       <Skeleton className="h-4 w-1/2" />
                     </div>
                   </div>
-                  <div className="space-y-4">
-                    <Skeleton className="h-4 w-full" />
-                    <Skeleton className="h-4 w-2/3" />
-                    <Skeleton className="h-4 w-1/2" />
-                  </div>
-                </div>
-              ) : selectedJob ? (
-                <div className="bg-white rounded-xl shadow-sm p-8">
-                  {/* Header Section */}
-                  <div className="flex items-center gap-8 mb-8">
-                    <div className="w-32 h-32 rounded-lg overflow-hidden bg-white flex items-center justify-center">
-                      {selectedJob.companyLogo ? (
-                        <Image
-                          src={`${BASE_URL}${selectedJob.companyLogo}`}
-                          alt={selectedJob.companyName}
-                          width={128}
-                          height={128}
-                          className="w-full h-full object-contain p-2"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center bg-gray-100">
-                          <Building2 className="w-12 h-12 text-gray-400" />
+                ) : selectedJob ? (
+                  <div className="bg-white rounded-xl shadow-sm p-8">
+                    {/* Header Section */}
+                    <div className="flex items-center gap-8 mb-8">
+                      <div className="w-32 h-32 rounded-lg overflow-hidden bg-white flex items-center justify-center">
+                        {selectedJob.companyLogo ? (
+                          <Image
+                            src={`${BASE_URL}${selectedJob.companyLogo}`}
+                            alt={selectedJob.companyName}
+                            width={128}
+                            height={128}
+                            className="w-full h-full object-contain p-2"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center bg-gray-100">
+                            <Building2 className="w-12 h-12 text-gray-400" />
+                          </div>
+                        )}
+                      </div>
+                      <div>
+                        <h1 className="text-3xl font-bold text-gray-900 mb-2">{selectedJob.name}</h1>
+                        <Link href={`/company/${selectedJob.companyId}`} className="text-xl text-red-600 hover:text-red-700">
+                          {selectedJob.companyName}
+                        </Link>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                      <div className="flex items-center gap-3 text-gray-600">
+                        <MapPin className="w-5 h-5" />
+                        <span>{selectedJob.location}</span>
+                      </div>
+                      <div className="flex items-center gap-3 text-gray-600">
+                        <DollarSign className="w-5 h-5" />
+                        <span>{selectedJob.salary.toLocaleString()} VNĐ</span>
+                      </div>
+                      <div className="flex items-center gap-3 text-gray-600">
+                        <Briefcase className="w-5 h-5" />
+                        <span>{selectedJob.level}</span>
+                      </div>
+                      <div className="flex items-center gap-3 text-gray-600">
+                        <Clock className="w-5 h-5" />
+                        <span>Hạn nộp: {new Date(selectedJob.endDate).toLocaleDateString('vi-VN')}</span>
+                      </div>
+                    </div>
+
+                    <div className="mt-8">
+                      <Button
+                        className="w-full md:w-auto bg-red-600 hover:bg-red-700 text-white font-semibold py-3 px-8 rounded-lg"
+                        onClick={handleApplyClick}
+                      >
+                        Ứng tuyển ngay
+                      </Button>
+                    </div>
+
+                    {/* Main Content */}
+                    <div className="mt-8">
+                      {/* Job Description */}
+                      <div className="mb-8">
+                        <h2 className="text-xl font-bold text-gray-900 mb-4">Mô tả công việc</h2>
+                        <div className="prose max-w-none">
+                          <div dangerouslySetInnerHTML={{ __html: selectedJob.description }} />
                         </div>
-                      )}
-                    </div>
-                    <div>
-                      <h1 className="text-3xl font-bold text-gray-900 mb-2">{selectedJob.name}</h1>
-                      <Link href={`/company/${selectedJob.companyId}`} className="text-xl text-red-600 hover:text-red-700">
-                        {selectedJob.companyName}
-                      </Link>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                    <div className="flex items-center gap-3 text-gray-600">
-                      <MapPin className="w-5 h-5" />
-                      <span>{selectedJob.location}</span>
-                    </div>
-                    <div className="flex items-center gap-3 text-gray-600">
-                      <DollarSign className="w-5 h-5" />
-                      <span>{selectedJob.salary.toLocaleString()} VNĐ</span>
-                    </div>
-                    <div className="flex items-center gap-3 text-gray-600">
-                      <Briefcase className="w-5 h-5" />
-                      <span>{selectedJob.level}</span>
-                    </div>
-                    <div className="flex items-center gap-3 text-gray-600">
-                      <Clock className="w-5 h-5" />
-                      <span>Hạn nộp: {new Date(selectedJob.endDate).toLocaleDateString('vi-VN')}</span>
-                    </div>
-                  </div>
-
-                  <div className="mt-8">
-                    <Button
-                      className="w-full md:w-auto bg-red-600 hover:bg-red-700 text-white font-semibold py-3 px-8 rounded-lg"
-                      onClick={handleApplyClick}
-                    >
-                      Ứng tuyển ngay
-                    </Button>
-                  </div>
-
-                  {/* Main Content */}
-                  <div className="mt-8">
-                    {/* Job Description */}
-                    <div className="mb-8">
-                      <h2 className="text-xl font-bold text-gray-900 mb-4">Mô tả công việc</h2>
-                      <div className="prose max-w-none">
-                        <div dangerouslySetInnerHTML={{ __html: selectedJob.description }} />
                       </div>
-                    </div>
 
-                    {/* Skills */}
-                    <div className="mb-8">
-                      <h2 className="text-xl font-bold text-gray-900 mb-4">Kỹ năng yêu cầu</h2>
-                      <div className="flex flex-wrap gap-2">
-                        {selectedJob.skillsList.map((skill, index) => (
-                          <span
-                            key={index}
-                            className="px-3 py-1 bg-gray-50 text-gray-700 rounded-lg text-sm font-medium"
-                          >
-                            {skill}
-                          </span>
-                        ))}
+                      {/* Skills */}
+                      <div className="mb-8">
+                        <h2 className="text-xl font-bold text-gray-900 mb-4">Kỹ năng yêu cầu</h2>
+                        <div className="flex flex-wrap gap-2">
+                          {selectedJob.skillsList.map((skill, index) => (
+                            <span
+                              key={index}
+                              className="px-3 py-1 bg-gray-50 text-gray-700 rounded-lg text-sm font-medium"
+                            >
+                              {skill}
+                            </span>
+                          ))}
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              ) : (
-                <div className="bg-white rounded-xl shadow-sm p-8 text-center">
-                  <p className="text-gray-500">Không tìm thấy thông tin công việc</p>
-                </div>
-              )}
+                ) : (
+                  <div className="bg-white rounded-xl shadow-sm p-8 text-center">
+                    <h3 className="text-xl font-semibold text-gray-900 mb-2">Chọn một công việc</h3>
+                    <p className="text-gray-600">Chọn một công việc từ danh sách bên trái để xem chi tiết</p>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>

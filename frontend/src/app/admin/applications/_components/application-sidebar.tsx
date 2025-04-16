@@ -37,15 +37,9 @@ export function ApplicationSidebar({
 
   const { mutate: updateStatus, isPending } = useMutation({
     mutationFn: async (newStatus: Application["status"]) => {
-      const token = localStorage.getItem('token');
       const response = await axios.put(
         `https://localhost:7152/api/Resume/${application.id}/change-status`,
-        { status: newStatus },
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        }
+        { status: newStatus }
       );
       return response.data;
     },

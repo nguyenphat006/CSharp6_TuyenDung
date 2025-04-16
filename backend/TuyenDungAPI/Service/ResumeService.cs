@@ -7,6 +7,7 @@ using System.Security.Claims;
 using Org.BouncyCastle.Utilities.Collections;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 using TuyenDungAPI.Model.Job;
+using Microsoft.AspNetCore.Http.HttpResults;
 
 
 namespace TuyenDungAPI.Service
@@ -159,6 +160,7 @@ namespace TuyenDungAPI.Service
                 .Include(r => r.Company)
                 .Include(r => r.Job)
                 .Include(r => r.User)
+                .Include(r => r.History)
                 .ToListAsync();
 
             var response = resumes.Select(r => new ResumeResponse
@@ -168,6 +170,9 @@ namespace TuyenDungAPI.Service
                 Status = r.Status,
                 FileUrl = r.FileUrl,
                 CreatedAt = r.CreatedAt,
+                CreatedBy = r.CreatedBy,
+                UpdatedAt = r.UpdatedAt,
+                UpdatedBy = r.UpdatedBy,
                 User = new UserResponse
                 {
                     Id = r.User.Id,
@@ -176,14 +181,21 @@ namespace TuyenDungAPI.Service
                 Company = new CompanyResumeResponse
                 {
                     Id = r.Company.Id,
-                    Name = r.Company.Name
+                    Name = r.Company.Name,
+                    Address = r.Company.Address
                 },
                 Job = new JobResumeResponse
                 {
                     Id = r.Job.Id,
-                    Name = r.Job.Name
-                }
-            }).ToList();
+                    Name = r.Job.Name,
+                    Salary = r.Job.Salary
+                },
+                History = r.History
+                .OrderByDescending(h => h.CreatedAt)
+                .Select(h => new ResumeHistoryResponse(h))
+                .ToList()
+             }).ToList();
+
 
             var pagedResult = new PagedResult<ResumeResponse>
             {
@@ -324,13 +336,27 @@ namespace TuyenDungAPI.Service
                 return new ApiResponse<List<ResumeResponse>>(false, 401, null, "Token không hợp lệ hoặc thiếu UserId!");
             }
 
+            //var resumes = await _dbContext.Resumes
+            //    .Where(r => r.UserId == userId && r.IsActive && !r.IsDeleted)
+            //    .Include(r => r.Company)
+            //    .Include(r => r.Job)
+            //    .Include(r => r.User)
+            //    .OrderByDescending(r => r.CreatedAt)  // 🆙 Mới nhất lên trước
+            //    .ToListAsync();
+
+
             var resumes = await _dbContext.Resumes
-                .Where(r => r.UserId == userId && r.IsActive && !r.IsDeleted)
-                .Include(r => r.Company)
-                .Include(r => r.Job)
-                .Include(r => r.User)
-                .OrderByDescending(r => r.CreatedAt)  // 🆙 Mới nhất lên trước
-                .ToListAsync();
+              .Where(r =>
+                  r.UserId == userId &&
+                  r.IsActive && !r.IsDeleted &&
+                  r.Company.IsActive && !r.Company.IsDeleted &&     // 🔍 Check công ty hợp lệ
+                  r.Job.IsActive && !r.Job.IsDeleted                // 🔍 Check công việc hợp lệ
+              )
+              .Include(r => r.Company)
+              .Include(r => r.Job)
+              .Include(r => r.User)
+              .OrderByDescending(r => r.CreatedAt)
+              .ToListAsync();
 
             var response = resumes.Select(r => new ResumeResponse
             {
