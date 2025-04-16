@@ -38,6 +38,7 @@ namespace TuyenDungAPI.Controllers.Feature
         /// <returns>Danh sách đơn ứng tuyển</returns>
         [HttpGet]
         [SwaggerOperation(Summary = "Danh sách đơn ứng tuyển (filter + paging) dành cho trang Admin")]
+        [Authorize]
         public async Task<IActionResult> GetAllResumes([FromQuery] ResumeQueryParameters parameters)
         {
             var result = await _resumeService.GetAllResumesAsync(parameters);
@@ -52,6 +53,7 @@ namespace TuyenDungAPI.Controllers.Feature
         [HttpGet]
         [Route("{ResumeId:guid}")]
         [SwaggerOperation(Summary = "Lấy chi tiết đơn ứng tuyển theo ID")]
+        [Authorize]
         public async Task<IActionResult> GetResumeById(Guid id)
         {
             var result = await _resumeService.GetResumeByIdAsync(id);
@@ -68,6 +70,7 @@ namespace TuyenDungAPI.Controllers.Feature
         [HttpPut]
         [Route("{ResumeId:guid}/change-status")]
         [SwaggerOperation(Summary = "Cập nhật trạng thái đơn ứng tuyển")]
+        [Authorize]
         public async Task<IActionResult> ChangeResumeStatus(Guid resumeId, [FromBody] UpdateStatusResumeRequest request)
         {
             var result = await _resumeService.ChangeResumeStatusAsync(resumeId, request, User);
@@ -81,6 +84,7 @@ namespace TuyenDungAPI.Controllers.Feature
         /// <returns>Kết quả xoá</returns>
         [HttpDelete]
         [SwaggerOperation(Summary = "Xoá mềm nhiều đơn ứng tuyển (soft delete)")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteResumes([FromBody] DeleteResumeRequest request)
         {
             var result = await _resumeService.DeleteResumesAsync(request, User);

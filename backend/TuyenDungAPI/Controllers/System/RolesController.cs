@@ -10,7 +10,7 @@ namespace TuyenDungAPI.Controllers.System
 {
     [Route("api/[controller]")]
     [ApiController]
-    //[Authorize(Roles = "Admin")]
+    [Authorize]
     public class RolesController : ControllerBase
     {
         private readonly RoleService _roleService;

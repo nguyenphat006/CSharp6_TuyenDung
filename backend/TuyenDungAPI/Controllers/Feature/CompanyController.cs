@@ -26,6 +26,7 @@ namespace TuyenDungAPI.Controllers.Feature
         /// <returns>Danh sách công ty</returns>
         [HttpGet]
         [SwaggerOperation(Summary = "Lấy danh sách toàn bộ công ty hiện tại trong hệ thống, hỗ trợ phân trang và lọc")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> GetAllCompanies([FromQuery] CompanyQueryParameters query)
         {
             // Gọi service để lấy danh sách công ty với các tham số lọc và phân trang
@@ -69,6 +70,7 @@ namespace TuyenDungAPI.Controllers.Feature
         /// <returns>Thông tin công ty mới được tạo</returns>
         [HttpPost]
         [SwaggerOperation(Summary = "Tạo một công ty mới và thêm vào hệ thống")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> CreateCompany([FromBody] CreateCompanyRequest request)
         {
             if (!ModelState.IsValid)
@@ -102,6 +104,7 @@ namespace TuyenDungAPI.Controllers.Feature
         /// <returns>Kết quả cập nhật công ty</returns>
         [HttpPut("{id}")]
         [SwaggerOperation(Summary = "Cập nhật thông tin công ty")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> UpdateCompany(Guid id, [FromBody] UpdateCompanyRequest request)
         {
             if (!ModelState.IsValid)
@@ -120,6 +123,7 @@ namespace TuyenDungAPI.Controllers.Feature
         /// <returns>Kết quả xóa công ty</returns>
         [HttpDelete]
         [SwaggerOperation(Summary = "Xóa một hoặc nhiều công ty khỏi hệ thống")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteCompanies([FromBody] DeleteCompanyRequest request)
         {
             if (!ModelState.IsValid)

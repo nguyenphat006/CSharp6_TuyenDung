@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 using TuyenDungAPI.Model.Job;
@@ -22,6 +23,7 @@ namespace TuyenDungAPI.Controllers.Feature
         /// </summary>
         [HttpGet]
         [SwaggerOperation(Summary = "Lấy danh sách tất cả job (dành cho admin, có phân trang & lọc)")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> GetAllJobs([FromQuery] JobQueryParameters query)
         {
             var result = await _jobService.GetAllJobsAsync(query);
@@ -33,6 +35,7 @@ namespace TuyenDungAPI.Controllers.Feature
         /// </summary>
         [HttpGet("{id}")]
         [SwaggerOperation(Summary = "Lấy chi tiết công việc theo ID (dành cho admin)")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> GetJobById(Guid id)
         {
             var result = await _jobService.GetJobByIdAsync(id);
@@ -57,6 +60,7 @@ namespace TuyenDungAPI.Controllers.Feature
         /// <returns>Kết quả tạo công việc.</returns>
         [HttpPost]
         [SwaggerOperation(Summary = "Tạo công việc mới (dành cho admin)")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> CreateJob([FromBody] CreateJobRequest request)
         {
             if (!ModelState.IsValid)
