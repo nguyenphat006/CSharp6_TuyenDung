@@ -24,7 +24,7 @@ export const menuItems: MenuSection[] = [
     ]
   },
   {
-    sectionTitle: "Quản lý hệ thống",
+    sectionTitle: "Danh mục tính năng",
     items: [
       {
         title: "Quản lý công ty",
@@ -59,14 +59,14 @@ export const menuItems: MenuSection[] = [
     ]
   },
   {
-    sectionTitle: "Administration",
+    sectionTitle: "Quản lý hệ thống",
     items: [
-      {
-        title: "Settings",
-        path: "/admin/settings",
-        icon: MdSettings,
-        roles: ["Admin"]
-      },
+      // {
+      //   title: "Settings",
+      //   path: "/admin/settings",
+      //   icon: MdSettings,
+      //   roles: ["Admin"]
+      // },
       {
         title: "Activity Logs",
         path: "/admin/logs",

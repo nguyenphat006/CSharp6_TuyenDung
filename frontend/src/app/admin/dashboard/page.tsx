@@ -137,11 +137,10 @@ export default function DashboardPage() {
             icon={<FileCheck className="h-4 w-4 text-muted-foreground" />}
           />
         </div>
-        <div className="grid gap-4 md:grid-cols-4">
-          <div className="md:col-span-3">
+        <div className="grid gap-4 md:grid-cols-12">
+          <div className="md:col-span-12">
             <RecentActivities />
           </div>
-          <StatsOverviewCard />
         </div>
       </div>
     </div>
