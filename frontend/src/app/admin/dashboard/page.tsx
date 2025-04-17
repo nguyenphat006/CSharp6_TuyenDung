@@ -1,77 +1,136 @@
 "use client";
 
-import React from "react";
-import { useSetPageTitle } from "@/lib/hooks/useSetPageTitle";
+import { useEffect, useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { RecentActivities } from "./ui/RecentActivities";
+import { Users, Briefcase, FileCheck, TrendingUp, BarChart } from "lucide-react";
+import { useAppDispatch } from "@/redux/hooks";
+import { fetchUsers } from "@/redux/features/userSlice";
+import { jobService, JobResponse } from "@/services/jobService";
 
-export default function DashboardPage() {
-  // Hook sẽ tự động cập nhật tiêu đề dựa trên đường dẫn
-  useSetPageTitle();
+interface StatCardProps {
+  title: string;
+  value: string;
+  description: string;
+  icon: React.ReactNode;
+}
 
+function StatCard({ title, value, description, icon }: StatCardProps) {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      <div className="bg-white p-6 rounded-lg shadow-sm">
-        <h2 className="text-lg font-semibold mb-4">Tổng số tin tuyển dụng</h2>
-        <p className="text-3xl font-bold text-[#4F46E5]">156</p>
-        <p className="text-sm text-green-500 mt-2">+8 tin mới trong tháng này</p>
-      </div>
-      
-      <div className="bg-white p-6 rounded-lg shadow-sm">
-        <h2 className="text-lg font-semibold mb-4">Ứng viên mới</h2>
-        <p className="text-3xl font-bold text-[#4F46E5]">1,245</p>
-        <p className="text-sm text-green-500 mt-2">+15% so với tháng trước</p>
-      </div>
-      
-      <div className="bg-white p-6 rounded-lg shadow-sm">
-        <h2 className="text-lg font-semibold mb-4">Tin chờ duyệt</h2>
-        <p className="text-3xl font-bold text-[#4F46E5]">23</p>
-        <p className="text-sm text-red-500 mt-2">+5 tin từ hôm qua</p>
-      </div>
-      
-      <div className="bg-white p-6 rounded-lg shadow-sm md:col-span-2">
-        <h2 className="text-lg font-semibold mb-4">Hoạt động gần đây</h2>
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardTitle className="text-sm font-medium">{title}</CardTitle>
+        {icon}
+      </CardHeader>
+      <CardContent>
+        <div className="text-2xl font-bold">{value}</div>
+        <p className="text-xs text-muted-foreground">{description}</p>
+      </CardContent>
+    </Card>
+  );
+}
+
+function StatsOverviewCard() {
+  return (
+    <Card className="col-span-1">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <BarChart className="h-5 w-5" />
+          Thống kê tổng quan
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
         <div className="space-y-4">
-          <div className="flex items-center gap-4 pb-4 border-b border-gray-200">
-            <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-              <span className="text-blue-600">📝</span>
+          <div className="space-y-2">
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">Tỷ lệ ứng tuyển</span>
+              <span className="font-medium">75%</span>
             </div>
-            <div>
-              <p className="font-medium">Tin tuyển dụng mới #1234</p>
-              <p className="text-sm text-gray-500">2 phút trước</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-4 pb-4 border-b border-gray-200">
-            <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-              <span className="text-green-600">👥</span>
-            </div>
-            <div>
-              <p className="font-medium">Ứng viên mới đăng ký</p>
-              <p className="text-sm text-gray-500">15 phút trước</p>
+            <div className="h-2 w-full rounded-full bg-secondary">
+              <div className="h-2 w-[75%] rounded-full bg-primary"></div>
             </div>
           </div>
-          <div className="flex items-center gap-4">
-            <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
-              <span className="text-purple-600">✅</span>
+          <div className="space-y-2">
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">Tỷ lệ phỏng vấn</span>
+              <span className="font-medium">45%</span>
             </div>
-            <div>
-              <p className="font-medium">Tin tuyển dụng đã được duyệt #5678</p>
-              <p className="text-sm text-gray-500">1 giờ trước</p>
+            <div className="h-2 w-full rounded-full bg-secondary">
+              <div className="h-2 w-[45%] rounded-full bg-primary"></div>
+            </div>
+          </div>
+          <div className="space-y-2">
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">Tỷ lệ tuyển dụng</span>
+              <span className="font-medium">25%</span>
+            </div>
+            <div className="h-2 w-full rounded-full bg-secondary">
+              <div className="h-2 w-[25%] rounded-full bg-primary"></div>
             </div>
           </div>
         </div>
-      </div>
-      
-      <div className="bg-white p-6 rounded-lg shadow-sm">
-        <h2 className="text-lg font-semibold mb-4">Tác vụ nhanh</h2>
-        <div className="space-y-3">
-          <button className="w-full py-2 px-4 bg-[#4F46E5] text-white rounded-lg hover:bg-[#4338CA] transition-colors">
-            Đăng tin tuyển dụng mới
-          </button>
-          <button className="w-full py-2 px-4 bg-gray-100 text-gray-800 rounded-lg hover:bg-gray-200 transition-colors">
-            Xem báo cáo thống kê
-          </button>
-          <button className="w-full py-2 px-4 bg-gray-100 text-gray-800 rounded-lg hover:bg-gray-200 transition-colors">
-            Quản lý tin tuyển dụng
-          </button>
+      </CardContent>
+    </Card>
+  );
+}
+
+export default function DashboardPage() {
+  const [totalUsers, setTotalUsers] = useState<number>(0);
+  const [totalJobs, setTotalJobs] = useState<number>(0);
+  const dispatch = useAppDispatch();
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        // Fetch users
+        const usersResponse = await dispatch(fetchUsers()).unwrap();
+        setTotalUsers(usersResponse.length);
+
+        // Fetch jobs
+        const jobsResponse = await jobService.getAllJobs({});
+        if (jobsResponse && jobsResponse.data && typeof jobsResponse.data.totalRecords === 'number') {
+          setTotalJobs(jobsResponse.data.totalRecords);
+        } else {
+          setTotalJobs(0);
+        }
+      } catch (error) {
+        console.error("Error fetching data:", error);
+        setTotalJobs(0);
+      }
+    };
+
+    fetchData();
+  }, [dispatch]);
+
+  return (
+    <div className="p-6">
+      <h2 className="text-3xl font-bold tracking-tight mb-6">Dashboard</h2>
+      <div className="grid gap-6">
+        <div className="grid gap-4 grid-cols-1 md:grid-cols-3">
+          <StatCard
+            title="Tổng người dùng"
+            value={totalUsers.toString()}
+            description="Số lượng người dùng trong hệ thống"
+            icon={<Users className="h-4 w-4 text-muted-foreground" />}
+          />
+          <StatCard
+            title="Công việc đang tuyển"
+            value={totalJobs.toString()}
+            description="Số lượng công việc đang tuyển dụng"
+            icon={<Briefcase className="h-4 w-4 text-muted-foreground" />}
+          />
+          <StatCard
+            title="Hồ sơ ứng tuyển"
+            value="50"
+            description="Số lượng hồ sơ đã nộp"
+            icon={<FileCheck className="h-4 w-4 text-muted-foreground" />}
+          />
+        </div>
+        <div className="grid gap-4 md:grid-cols-4">
+          <div className="md:col-span-3">
+            <RecentActivities />
+          </div>
+          <StatsOverviewCard />
         </div>
       </div>
     </div>
