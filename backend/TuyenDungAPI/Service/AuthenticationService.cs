@@ -102,16 +102,31 @@ namespace TuyenDungAPI.Service
         {
             var user = await _dbContext.Users.FirstOrDefaultAsync(u => u.Email == email);
 
-            if (user == null || !BCrypt.Net.BCrypt.Verify(password, user.PasswordHash))
+            if (user == null)
             {
                 return new ApiResponse<LoginResponse>(false, 401, null, "Email hoặc mật khẩu không đúng!");
             }
 
-            // Sử dụng hàm GenerateJwtToken mới với đầy đủ role từ bảng UserRoles
+            // Kiểm tra mật khẩu
+            if (!BCrypt.Net.BCrypt.Verify(password, user.PasswordHash))
+            {
+                return new ApiResponse<LoginResponse>(false, 401, null, "Email hoặc mật khẩu không đúng!");
+            }
+
+            // Kiểm tra trạng thái tài khoản
+            if (!user.IsActive)
+            {
+                return new ApiResponse<LoginResponse>(false, 403, null, "Tài khoản của bạn đang bị vô hiệu hóa!");
+            }
+
+            if (user.IsDeleted)
+            {
+                return new ApiResponse<LoginResponse>(false, 403, null, "Tài khoản của bạn đã bị xóa khỏi hệ thống!");
+            }
+
             string token = await GenerateJwtToken(user);
             string refreshToken = GenerateRefreshToken();
 
-            // Cập nhật Refresh Token & hạn sử dụng vào database
             user.RefreshToken = refreshToken;
             user.RefreshTokenExpiry = DateTime.UtcNow.AddDays(7);
             await _dbContext.SaveChangesAsync();
@@ -119,6 +134,7 @@ namespace TuyenDungAPI.Service
             var loginResponse = new LoginResponse(user, token, refreshToken);
             return new ApiResponse<LoginResponse>(true, 200, loginResponse, "Đăng nhập thành công!");
         }
+
 
         public async Task<ApiResponse<string>> LogoutAsync(string email)
         {

@@ -24,6 +24,8 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { getRoles } from "@/services/roleService";
+import { Role } from "@/types/role";
 
 const formSchema = z.object({
   name: z.string().min(1, "Vui lòng nhập tên"),
@@ -50,6 +52,7 @@ export function EditUserForm({
   onOpenChange,
 }: EditUserFormProps) {
   const [isLoading, setIsLoading] = useState(false);
+  const [roles, setRoles] = useState<Role[]>([]);
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -61,6 +64,22 @@ export function EditUserForm({
       isActive: true,
     },
   });
+
+  useEffect(() => {
+    const fetchRoles = async () => {
+      try {
+        const response = await getRoles();
+        if (response.result) {
+          setRoles(response.data);
+        }
+      } catch (error) {
+        console.error('Error fetching roles:', error);
+        toast.error('Không thể tải danh sách vai trò');
+      }
+    };
+
+    fetchRoles();
+  }, []);
 
   useEffect(() => {
     if (user) {
@@ -178,9 +197,11 @@ export function EditUserForm({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="Admin">Quản trị viên</SelectItem>
-                      <SelectItem value="HR">HR</SelectItem>
-                      <SelectItem value="User">Người dùng</SelectItem>
+                      {roles.map((role) => (
+                        <SelectItem key={role.id} value={role.name}>
+                          {role.name}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                   <FormMessage />

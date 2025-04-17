@@ -24,6 +24,8 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import { User } from "@/types/user";
+import { getRoles } from "@/services/roleService";
+import { Role } from "@/types/role";
 
 const formSchema = z.object({
   name: z.string().min(1, "Vui lòng nhập tên"),
@@ -49,6 +51,7 @@ export function AddUserForm({ onSubmit, onCancel }: AddUserFormProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
+  const [roles, setRoles] = useState<Role[]>([]);
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -62,6 +65,22 @@ export function AddUserForm({ onSubmit, onCancel }: AddUserFormProps) {
       isActive: true,
     },
   });
+
+  useEffect(() => {
+    const fetchRoles = async () => {
+      try {
+        const response = await getRoles();
+        if (response.result) {
+          setRoles(response.data);
+        }
+      } catch (error) {
+        console.error('Error fetching roles:', error);
+        toast.error('Không thể tải danh sách vai trò');
+      }
+    };
+
+    fetchRoles();
+  }, []);
 
   const handleSubmit = async (data: FormData) => {
     if (isLoading) return;
@@ -201,9 +220,11 @@ export function AddUserForm({ onSubmit, onCancel }: AddUserFormProps) {
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  <SelectItem value="Admin">Admin</SelectItem>
-                  <SelectItem value="HR">HR</SelectItem>
-                  <SelectItem value="User">User</SelectItem>
+                  {roles.map((role) => (
+                    <SelectItem key={role.id} value={role.name}>
+                      {role.name}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
               <FormMessage />
