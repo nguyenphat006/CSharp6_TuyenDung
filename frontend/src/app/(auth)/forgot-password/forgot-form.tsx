@@ -57,7 +57,7 @@ export function ForgotPasswordForm({ className, ...props }: React.ComponentProps
           />
 
           {/* Button Submit */}
-          <Button size="xl" type="submit" className="w-full bg-[#6366f1] hover:bg-[#5044ee]" disabled={loading}>
+          <Button size="lg" type="submit" className="w-full bg-[#6366f1] hover:bg-[#5044ee]" disabled={loading}>
             {loading ? 'Đang gửi...' : 'Xác nhận'}
           </Button>
         </div>

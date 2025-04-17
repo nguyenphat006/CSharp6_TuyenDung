@@ -3,83 +3,40 @@
 import React from 'react';
 import { Button } from '@mui/material';
 import { useRouter } from 'next/navigation';
-import JobCard from './JobCard';
+import Link from "next/link";
+import { Briefcase, MapPin, Clock, DollarSign } from "lucide-react";
+import { useTopJobs } from "@/hooks/useTopJobs";
+import { Skeleton } from "@/components/ui/skeleton";
 
-const Job: React.FC = () => {
+const Job = () => {
   const router = useRouter();
+  const { jobs, loading, error } = useTopJobs();
 
-  const jobs = [
-    {
-      id: 1,
-      title: 'Senior Frontend Developer',
-      company: 'Tech Solutions Inc.',
-      location: 'Hồ Chí Minh',
-      type: 'Full-time',
-      salary: '25-35M',
-      skills: ['React', 'TypeScript', 'Next.js', 'TailwindCSS'],
-      isHot: true,
-      isNew: false,
-    },
-    {
-      id: 2,
-      title: 'Backend Developer (Node.js)',
-      company: 'Digital Innovations',
-      location: 'Hà Nội',
-      type: 'Full-time',
-      salary: '20-30M',
-      skills: ['Node.js', 'Express', 'MongoDB', 'AWS'],
-      isHot: true,
-      isNew: true,
-    },
-    {
-      id: 3,
-      title: 'DevOps Engineer',
-      company: 'Cloud Systems',
-      location: 'Đà Nẵng',
-      type: 'Full-time',
-      salary: '30-40M',
-      skills: ['Docker', 'Kubernetes', 'CI/CD', 'AWS'],
-      isHot: true,
-      isNew: false,
-    },
-    {
-      id: 4,
-      title: 'Mobile Developer (React Native)',
-      company: 'App Solutions',
-      location: 'Hồ Chí Minh',
-      type: 'Full-time',
-      salary: '22-32M',
-      skills: ['React Native', 'Redux', 'Firebase', 'REST API'],
-      isHot: false,
-      isNew: true,
-    },
-    {
-      id: 5,
-      title: 'UI/UX Designer',
-      company: 'Creative Design Studio',
-      location: 'Hà Nội',
-      type: 'Full-time',
-      salary: '18-28M',
-      skills: ['Figma', 'Adobe XD', 'UI/UX', 'Prototyping'],
-      isHot: false,
-      isNew: false,
-    },
-    {
-      id: 6,
-      title: 'Full Stack Developer',
-      company: 'Web Solutions',
-      location: 'Hồ Chí Minh',
-      type: 'Full-time',
-      salary: '28-38M',
-      skills: ['React', 'Node.js', 'PostgreSQL', 'Docker'],
-      isHot: true,
-      isNew: true,
-    }
-  ];
+  if (error) {
+    return (
+      <div className="text-center py-8">
+        <p className="text-red-500">Đã có lỗi xảy ra: {error}</p>
+      </div>
+    );
+  }
 
-  const handleViewDetails = (id: number) => {
-    router.push(`/job/${id}`);
-  };
+  if (loading) {
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {[...Array(6)].map((_, index) => (
+          <div key={index} className="bg-white rounded-xl shadow-sm p-6">
+            <Skeleton className="h-6 w-3/4 mb-4" />
+            <Skeleton className="h-4 w-1/2 mb-6" />
+            <div className="space-y-3">
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-full" />
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto px-4 py-8 bg-white">
@@ -92,7 +49,61 @@ const Job: React.FC = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {jobs.map((job) => (
-          <JobCard key={job.id} job={job} onViewDetails={handleViewDetails} />
+          <Link href={`/jobs/${job.id}`} key={job.id}>
+            <div className="bg-white rounded-xl border border-gray-200 shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] hover:shadow-lg hover:border-blue-500 transition-all duration-300 p-6 cursor-pointer group h-full flex flex-col relative overflow-hidden">
+              {/* Corner Decoration */}
+              <div className="absolute -top-4 -left-4 w-32 h-32 z-20">
+                <img
+                  src="/img/card.svg"
+                  alt="corner decoration"
+                  className="w-full h-full object-contain opacity-30"
+                />
+              </div>
+
+              {/* Content */}
+              <div className="relative z-10 flex flex-col h-full">
+                {/* Job Title */}
+                <h3 className="text-xl font-bold text-black mb-2 group-hover:text-blue-600 transition-colors duration-300">
+                  {job.name}
+                </h3>
+
+                {/* Company Name */}
+                <p className="text-gray-600 mb-4">{job.companyName}</p>
+
+                {/* Job Details */}
+                <div className="space-y-3 mb-4">
+                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                    <MapPin className="w-4 h-4" />
+                    <span>{job.location}</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                    <DollarSign className="w-4 h-4" />
+                    <span>{job.salary.toLocaleString()} VNĐ</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                    <Briefcase className="w-4 h-4" />
+                    <span>{job.quantity} vị trí</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                    <Clock className="w-4 h-4" />
+                    <span>Hạn nộp: {new Date(job.endDate).toLocaleDateString('vi-VN')}</span>
+                  </div>
+                </div>
+
+                {/* Skills Tags */}
+                <div className="flex flex-wrap gap-2 mt-auto">
+                  {job.skillsList.map((skill, index) => (
+                    <span
+                      key={index}
+                      className="px-3 py-1 bg-gray-50 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-100 transition-colors duration-300"
+                    >
+                      {skill}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </Link>
         ))}
       </div>
 

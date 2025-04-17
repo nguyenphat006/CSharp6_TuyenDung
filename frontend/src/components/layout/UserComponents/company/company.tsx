@@ -1,4 +1,3 @@
-import Image from "next/image";
 import Link from "next/link";
 
 interface CompanyProps {
@@ -13,14 +12,13 @@ interface CompanyProps {
 const Company = ({ logo, name, skills, locations, jobCount, href }: CompanyProps) => {
   return (
     <Link href={href}>
-      <div className="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow duration-300 p-6 cursor-pointer group h-full flex flex-col relative overflow-hidden">
+      <div className="bg-white rounded-xl border border-gray-200 shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] hover:shadow-lg hover:border-gray-300 transition-all duration-300 p-6 cursor-pointer group h-full flex flex-col relative overflow-hidden">
         {/* Corner Decoration */}
         <div className="absolute -top-4 -left-4 w-32 h-32 z-20">
-          <Image
+          <img
             src="/img/card.svg"
             alt="corner decoration"
-            fill
-            className="object-contain opacity-30"
+            className="w-full h-full object-contain opacity-30"
           />
         </div>
 
@@ -28,12 +26,11 @@ const Company = ({ logo, name, skills, locations, jobCount, href }: CompanyProps
         <div className="relative z-10 flex flex-col h-full">
           {/* Logo Container */}
           <div className="relative w-40 h-40 mx-auto mb-4 flex-shrink-0">
-            <div className="absolute inset-0 bg-gray-50 rounded-lg opacity-50 group-hover:opacity-75 transition-opacity duration-300" />
-            <Image
+            <div className="absolute inset-0 bg-gray-50 rounded-lg opacity-30 group-hover:opacity-50 transition-opacity duration-300" />
+            <img
               src={logo}
               alt={`${name} logo`}
-              fill
-              className="object-contain p-3"
+              className="w-full h-full object-contain p-3 relative z-10"
             />
           </div>
 

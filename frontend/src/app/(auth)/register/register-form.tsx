@@ -19,7 +19,7 @@ import { RegisterSchema } from '../schema/index';
 import { useRegister } from './useRegister'
 
 export function RegisterForm({ className, ...props }: React.ComponentPropsWithoutRef<'form'>) {
-  const { loading, onSubmit } = useRegister()
+  const { register, isLoading } = useRegister()
 
   // React Hook Form + Zod
   const form = useForm<z.infer<typeof RegisterSchema>>({
@@ -27,14 +27,18 @@ export function RegisterForm({ className, ...props }: React.ComponentPropsWithou
     defaultValues: { name: '', email: '', password: '', confirmPassword: '' }
   })
 
+  const onSubmit = async (data: z.infer<typeof RegisterSchema>) => {
+    await register(data);
+  };
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className={cn('flex flex-col gap-6', className)} {...props}>
         {/* Tiêu đề */}
         <div className="flex flex-col items-center gap-2 text-center">
-          <h1 className="text-4xl font-bold">Đăng ký tài khoản</h1>
+          <h1 className="text-4xl font-bold">Tạo tài khoản</h1>
           <p className="text-balance text-md text-muted-foreground">
-            Nhập thông tin của bạn bên dưới để đăng ký tài khoản
+            Nhập thông tin của bạn để tạo tài khoản
           </p>
         </div>
 
@@ -101,8 +105,8 @@ export function RegisterForm({ className, ...props }: React.ComponentPropsWithou
           />
 
           {/* Button Submit */}
-          <Button size="xl" type="submit" className="w-full bg-[#6366f1] hover:bg-[#5044ee]" disabled={loading}>
-            {loading ? 'Đang xử lý...' : 'Đăng ký'}
+          <Button type="submit" className="w-full h-12 bg-[#6366f1] hover:bg-[#5044ee]" disabled={isLoading}>
+            {isLoading ? 'Đang đăng ký...' : 'Đăng ký'}
           </Button>
 
           {/* Hoặc login bằng Google */}
@@ -121,7 +125,7 @@ export function RegisterForm({ className, ...props }: React.ComponentPropsWithou
         <div className="text-center text-sm">
           Đã có tài khoản?{' '}
           <Link href="/login" className="underline underline-offset-4 text-blue-500 hover:text-blue-700">
-            Đăng nhập
+            Đăng nhập tại đây
           </Link>
         </div>
       </form>

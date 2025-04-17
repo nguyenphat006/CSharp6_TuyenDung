@@ -1,37 +1,42 @@
-// import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
+import type { NextRequest } from 'next/server'
 
-// export function middleware(req: NextRequest) {
-//   const isAdmin = req.cookies.get('role')?.value === 'admin'
+// Định nghĩa các route cần kiểm tra quyền
+const protectedRoutes = {
+  '/admin/dashboard': ['Admin', 'HR'],
+  '/admin/companies': ['Admin'],
+  '/admin/jobs': ['Admin'],
+  '/admin/applications': ['Admin', 'HR'],
+  '/admin/users': ['Admin'],
+  '/admin/roles': ['Admin'],
+  '/admin/settings': ['Admin'],
+}
 
-//   // Nếu user không phải Admin, redirect về trang chính
-//   if (req.nextUrl.pathname.startsWith('/admin') && !isAdmin) {
-//     return NextResponse.redirect(new URL('/', req.url))
-//   }
-// }
+export function middleware(request: NextRequest) {
+  const token = request.cookies.get('token')?.value
+  const user = request.cookies.get('user')?.value
+  const userData = user ? JSON.parse(user) : null
 
-// export const config = {
-//   matcher: ['/admin/:path*'], // Middleware chỉ áp dụng cho đường dẫn /admin/*
-// }
+  // Kiểm tra nếu là route admin
+  if (request.nextUrl.pathname.startsWith('/admin')) {
+    // Nếu chưa đăng nhập, chuyển về trang login
+    if (!token) {
+      return NextResponse.redirect(new URL('/login', request.url))
+    }
 
+    // Kiểm tra quyền truy cập
+    const route = request.nextUrl.pathname
+    const allowedRoles = protectedRoutes[route as keyof typeof protectedRoutes]
 
-import { NextRequest, NextResponse } from 'next/server'
-
-export function middleware(req: NextRequest) {
-  const isAdmin = req.cookies.get('role')?.value === 'admin'
-
-  // Thiết lập cookie role=admin nếu chưa có
-  if (!req.cookies.get('role')) {
-    const response = NextResponse.next()
-    response.cookies.set('role', 'admin', { path: '/' })
-    return response
+    if (allowedRoles && !allowedRoles.includes(userData?.role)) {
+      // Nếu không có quyền, chuyển về trang dashboard
+      return NextResponse.redirect(new URL('/admin/dashboard', request.url))
+    }
   }
 
-  // Nếu user không phải Admin, redirect về trang chính
-  if (req.nextUrl.pathname.startsWith('/admin') && !isAdmin) {
-    return NextResponse.redirect(new URL('/', req.url))
-  }
+  return NextResponse.next()
 }
 
 export const config = {
-  matcher: ['/admin/:path*'], // Middleware chỉ áp dụng cho đường dẫn /admin/*
+  matcher: '/admin/:path*',
 }

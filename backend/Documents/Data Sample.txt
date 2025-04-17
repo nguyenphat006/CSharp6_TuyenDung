@@ -1,0 +1,14 @@
+ACCOUNT:
+
+
+HR:
+email: hr2@gmail.com
+password: Hr@123
+---
+Admin:
+email: admin@gmail.om
+password: Admin@123
+---
+User:
+email: user@gmail.com
+password: User@123

@@ -1,10 +1,10 @@
 import AuthLayout from "../components/layout";
-import { ResetForm } from "./reset-form";
+import { ResetPasswordForm } from "./reset-form";
 
 export default function ResetPassword(){
   return (
     <AuthLayout>
-      <ResetForm />
+      <ResetPasswordForm />
     </AuthLayout>
   );
 }
