@@ -15,10 +15,11 @@ namespace TuyenDungAPI.Service
     public class ResumeService
     {
         private readonly DataContext _dbContext;
-
-        public ResumeService(DataContext dbContext)
+        private readonly ActivityLogService _activityLogService;
+        public ResumeService(DataContext dbContext, ActivityLogService activityLogService)
         {
             _dbContext = dbContext;
+            _activityLogService = activityLogService;
         }
 
         public async Task<ApiResponse<ResumeResponse>> CreateResumeAsync(CreateResumeRequest request, ClaimsPrincipal currentUser)
@@ -94,6 +95,15 @@ namespace TuyenDungAPI.Service
 
             _dbContext.Resumes.Add(resume);
             await _dbContext.SaveChangesAsync();
+
+            await _activityLogService.LogActivityAsync(
+                action: "SUBMIT_RESUME",
+                description: $"Ứng viên {email} đã ứng tuyển job '{job.Name}'",
+                userName: currentUser.Identity?.Name,
+                userId: userId,
+                targetType: "Resume",
+                targetId: resume.Id
+            );
 
             // ✅ Tạo lịch sử
             var history = new ResumeHistory
@@ -282,6 +292,29 @@ namespace TuyenDungAPI.Service
 
             _dbContext.ResumeHistories.Add(history);
             await _dbContext.SaveChangesAsync();
+
+            await _activityLogService.LogActivityAsync(
+            action: "UPDATE_RESUME_STATUS",
+            description: $"Cập nhật trạng thái đơn ứng tuyển '{resume.Email}' thành '{request.Status}' cho job '{resume.Job.Name}'",
+            userName: updatedBy,
+            userId: Guid.TryParse(currentUser.FindFirstValue(ClaimTypes.NameIdentifier), out var uid) ? uid : null,
+            targetType: "Resume",
+            targetId: resume.Id
+        );
+
+            // Nếu status là APPROVED, log riêng luôn:
+            if (request.Status.ToUpper() == "APPROVED")
+            {
+                await _activityLogService.LogActivityAsync(
+                    action: "APPROVE_RESUME",
+                    description: $"CV của {resume.Email} đã được duyệt cho job '{resume.Job.Name}'",
+                    userName: updatedBy,
+                    userId: Guid.TryParse(currentUser.FindFirstValue(ClaimTypes.NameIdentifier), out var uid2) ? uid2 : null,
+                    targetType: "Resume",
+                    targetId: resume.Id
+                );
+            }
+
 
             // 🚀 Chuẩn bị response
             var response = new ResumeResponse

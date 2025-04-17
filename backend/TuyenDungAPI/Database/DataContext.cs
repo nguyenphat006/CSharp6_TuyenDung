@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using TuyenDungAPI.Model;
+using TuyenDungAPI.Model.ActivityLog;
 using TuyenDungAPI.Model.Authentication;
 using TuyenDungAPI.Model.Company;
 using TuyenDungAPI.Model.Job;
@@ -22,6 +23,7 @@ namespace TuyenDungAPI.Database
         public DbSet<Job> Jobs { get; set; }
         public DbSet<Resume> Resumes { get; set; }
         public DbSet<ResumeHistory> ResumeHistories { get; set; }
+        public DbSet<ActivityLog> ActivityLogs { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

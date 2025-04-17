@@ -67,6 +67,12 @@ export const menuItems: MenuSection[] = [
         icon: MdSettings,
         roles: ["Admin"]
       },
+      {
+        title: "Activity Logs",
+        path: "/admin/logs",
+        icon: MdSettings,
+        roles: ["Admin"]
+      },
     ]
   }
 ];

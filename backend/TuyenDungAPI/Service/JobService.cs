@@ -11,10 +11,11 @@ namespace TuyenDungAPI.Service
     public class JobService
     {
         private readonly DataContext _dbContext;
-
-        public JobService(DataContext dbContext)
+        private readonly ActivityLogService _activityLogService;
+        public JobService(DataContext dbContext, ActivityLogService activityLogService)
         {
             _dbContext = dbContext;
+            _activityLogService = activityLogService;
         }
 
 
@@ -156,6 +157,18 @@ namespace TuyenDungAPI.Service
             {
                 _dbContext.Jobs.Add(job);
                 await _dbContext.SaveChangesAsync();
+
+                // ✅ Ghi log tạo job
+                Guid? userId = Guid.TryParse(currentUser.FindFirstValue(ClaimTypes.NameIdentifier), out var uid) ? uid : (Guid?)null;
+
+                await _activityLogService.LogActivityAsync(
+                    action: "CREATE_JOB",
+                    description: $"Tạo bài tuyển dụng mới: {job.Name}",
+                    userName: createdBy,
+                    userId: userId,
+                    targetType: "Job",
+                    targetId: job.Id
+                );
             }
             catch (Exception ex)
             {
