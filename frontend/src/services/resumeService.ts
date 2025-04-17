@@ -10,17 +10,30 @@ export interface Resume {
   updatedAt: string;
 }
 
+export interface ResumeListResponse {
+  result: boolean;
+  status: number;
+  data: {
+    currentPage: number;
+    pageSize: number;
+    totalRecords: number;
+    totalPages: number;
+    items: Resume[];
+  };
+  message: string;
+}
+
 export interface ResumeResponse {
   result: boolean;
   status: number;
-  data: Resume | Resume[];
+  data: Resume;
   message: string;
 }
 
 export const resumeService = {
-  getAll: async (): Promise<Resume[]> => {
+  getAll: async (): Promise<ResumeListResponse> => {
     const response = await api.get("/api/Resume");
-    return response.data.data;
+    return response.data;
   },
 
   getById: async (id: string): Promise<Resume> => {

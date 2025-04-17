@@ -7,6 +7,7 @@ import { Users, Briefcase, FileCheck, TrendingUp, BarChart } from "lucide-react"
 import { useAppDispatch } from "@/redux/hooks";
 import { fetchUsers } from "@/redux/features/userSlice";
 import { jobService, JobResponse } from "@/services/jobService";
+import { resumeService, ResumeListResponse } from "@/services/resumeService";
 
 interface StatCardProps {
   title: string;
@@ -77,6 +78,7 @@ function StatsOverviewCard() {
 export default function DashboardPage() {
   const [totalUsers, setTotalUsers] = useState<number>(0);
   const [totalJobs, setTotalJobs] = useState<number>(0);
+  const [totalResumes, setTotalResumes] = useState<number>(0);
   const dispatch = useAppDispatch();
 
   useEffect(() => {
@@ -93,9 +95,18 @@ export default function DashboardPage() {
         } else {
           setTotalJobs(0);
         }
+
+        // Fetch resumes
+        const resumesResponse = await resumeService.getAll();
+        if (resumesResponse && resumesResponse.data && typeof resumesResponse.data.totalRecords === 'number') {
+          setTotalResumes(resumesResponse.data.totalRecords);
+        } else {
+          setTotalResumes(0);
+        }
       } catch (error) {
         console.error("Error fetching data:", error);
         setTotalJobs(0);
+        setTotalResumes(0);
       }
     };
 
@@ -121,7 +132,7 @@ export default function DashboardPage() {
           />
           <StatCard
             title="Hồ sơ ứng tuyển"
-            value="50"
+            value={totalResumes.toString()}
             description="Số lượng hồ sơ đã nộp"
             icon={<FileCheck className="h-4 w-4 text-muted-foreground" />}
           />
