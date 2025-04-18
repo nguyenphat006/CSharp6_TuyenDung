@@ -23,7 +23,7 @@ namespace TuyenDungAPI.Controllers.Feature
         /// </summary>
         [HttpGet]
         [SwaggerOperation(Summary = "Lấy danh sách tất cả job (dành cho admin, có phân trang & lọc)")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin,HR")]
         public async Task<IActionResult> GetAllJobs([FromQuery] JobQueryParameters query)
         {
             var result = await _jobService.GetAllJobsAsync(query);
